@@ -1,7 +1,6 @@
 import { app } from "./express-app.js";
 import { getEnv } from "./config/env.js";
-// MCP server import added after tool stubs are created
-// import "./mcp-server.js";
+import "./mcp-server.js"; // Initialise MCP server and register tools
 
 const { PORT } = getEnv();
 
