@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { getEnv } from "./config/env.js";
 import { errorHandler } from "./middleware/error-handler.js";
+import { authRoutes } from "./routes/auth.js";
 
 const app = express();
 
@@ -24,6 +25,9 @@ app.use(express.json());
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
+
+// Auth routes
+app.use("/api/auth", authRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
