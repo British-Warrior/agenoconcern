@@ -5,32 +5,32 @@
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income -- bridging the pension gap while contributing to communities.
-**Current focus:** Phase 1: Foundation and Auth
+**Current focus:** Phase 1: Foundation and Auth -- COMPLETE
 
 ## Current Position
 
 Phase: 1 of 6 (Foundation and Auth)
-Plan: 3 of 4 in current phase
-Status: In progress
-Last activity: 2026-03-10 -- Completed 01-03-PLAN.md (Auth Backend)
+Plan: 4 of 4 in current phase
+Status: Phase complete
+Last activity: 2026-03-10 -- Completed 01-04-PLAN.md (Web UI Shell)
 
-Progress: [███░░░░░░░] 3/4 plans
+Progress: [████████████] 4/4 plans
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: 8 min
-- Total execution time: 24 min
+- Total execution time: 31 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-foundation-and-auth | 3/4 | 24 min | 8 min |
+| 01-foundation-and-auth | 4/4 | 31 min | 8 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2 min), 01-02 (11 min), 01-03 (11 min)
+- Last 5 plans: 01-01 (2 min), 01-02 (11 min), 01-03 (11 min), 01-04 (7 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -54,6 +54,10 @@ Recent decisions affecting current work:
 - [01-03]: OAuth redirect URIs use http://localhost:PORT pattern
 - [01-03]: All external services degrade gracefully with 501 when env vars missing
 - [01-03]: Combined auth service and routes in single files for simplicity at pilot scale
+- [01-04]: Tailwind v4 CSS-first config with @theme block -- no tailwind.config.js
+- [01-04]: Custom fetch wrapper with auto 401 refresh instead of axios
+- [01-04]: OAuth buttons as <a> tags to /api/auth/* for server-side redirects
+- [01-04]: ConsentBanner uses localStorage + custom event for reopening
 
 ### Pending Todos
 
@@ -68,5 +72,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-10
-Stopped at: Completed 01-03 (Auth Backend), ready for 01-04
-Resume file: .planning/phases/01-foundation-and-auth/01-04-PLAN.md
+Stopped at: Completed Phase 1 (Foundation and Auth), ready for Phase 2
+Resume file: .planning/ROADMAP.md (next phase planning)
