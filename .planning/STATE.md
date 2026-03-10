@@ -10,27 +10,27 @@ See: .planning/PROJECT.md (updated 2026-03-09)
 ## Current Position
 
 Phase: 1 of 6 (Foundation and Auth)
-Plan: 1 of 4 in current phase
+Plan: 2 of 4 in current phase
 Status: In progress
-Last activity: 2026-03-10 -- Completed 01-01-PLAN.md (Monorepo Scaffold)
+Last activity: 2026-03-10 -- Completed 01-02-PLAN.md (Express Server & MCP Tool Stubs)
 
-Progress: [█░░░░░░░░░] 1/4 plans
+Progress: [██░░░░░░░░] 2/4 plans
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 2 min
-- Total execution time: 2 min
+- Total plans completed: 2
+- Average duration: 7 min
+- Total execution time: 13 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-foundation-and-auth | 1/4 | 2 min | 2 min |
+| 01-foundation-and-auth | 2/4 | 13 min | 7 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2 min)
+- Last 5 plans: 01-01 (2 min), 01-02 (11 min)
 - Trend: -
 
 *Updated after each plan completion*
@@ -48,6 +48,9 @@ Recent decisions affecting current work:
 - [01-01]: Shared package consumed as TS source (no build step) -- simpler DX for monorepo
 - [01-01]: Lazy database connection -- server starts even without DB
 - [01-01]: cm_created auth provider for community-manager-created accounts
+- [01-02]: Auth middleware reads access_token cookie and verifies with jose -- ready for Plan 01-03
+- [01-02]: MCP server initialised on import, no HTTP transport yet -- added when needed
+- [01-02]: Tool stubs return NOT_IMPLEMENTED with received params for debugging
 
 ### Pending Todos
 
@@ -62,5 +65,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-10
-Stopped at: Completed 01-01 (Monorepo Scaffold), ready for 01-02
-Resume file: .planning/phases/01-foundation-and-auth/01-02-PLAN.md
+Stopped at: Completed 01-02 (Express Server & MCP Tool Stubs), ready for 01-03
+Resume file: .planning/phases/01-foundation-and-auth/01-03-PLAN.md
