@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-03-09)
 ## Current Position
 
 Phase: 1 of 6 (Foundation and Auth)
-Plan: 2 of 4 in current phase
+Plan: 3 of 4 in current phase
 Status: In progress
-Last activity: 2026-03-10 -- Completed 01-02-PLAN.md (Express Server & MCP Tool Stubs)
+Last activity: 2026-03-10 -- Completed 01-03-PLAN.md (Auth Backend)
 
-Progress: [██░░░░░░░░] 2/4 plans
+Progress: [███░░░░░░░] 3/4 plans
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 7 min
-- Total execution time: 13 min
+- Total plans completed: 3
+- Average duration: 8 min
+- Total execution time: 24 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-foundation-and-auth | 2/4 | 13 min | 7 min |
+| 01-foundation-and-auth | 3/4 | 24 min | 8 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2 min), 01-02 (11 min)
-- Trend: -
+- Last 5 plans: 01-01 (2 min), 01-02 (11 min), 01-03 (11 min)
+- Trend: stable
 
 *Updated after each plan completion*
 
@@ -51,6 +51,9 @@ Recent decisions affecting current work:
 - [01-02]: Auth middleware reads access_token cookie and verifies with jose -- ready for Plan 01-03
 - [01-02]: MCP server initialised on import, no HTTP transport yet -- added when needed
 - [01-02]: Tool stubs return NOT_IMPLEMENTED with received params for debugging
+- [01-03]: OAuth redirect URIs use http://localhost:PORT pattern
+- [01-03]: All external services degrade gracefully with 501 when env vars missing
+- [01-03]: Combined auth service and routes in single files for simplicity at pilot scale
 
 ### Pending Todos
 
@@ -65,5 +68,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-10
-Stopped at: Completed 01-02 (Express Server & MCP Tool Stubs), ready for 01-03
-Resume file: .planning/phases/01-foundation-and-auth/01-03-PLAN.md
+Stopped at: Completed 01-03 (Auth Backend), ready for 01-04
+Resume file: .planning/phases/01-foundation-and-auth/01-04-PLAN.md
