@@ -3,12 +3,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter @agenoconcern/server dev",
+    "dev": "pnpm run dev:server & pnpm run dev:web",
+    "dev:server": "pnpm --filter @agenoconcern/server dev",
     "dev:web": "pnpm --filter @agenoconcern/web dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "db:generate": "pnpm --filter @agenoconcern/server db:generate",
     "db:migrate": "pnpm --filter @agenoconcern/server db:migrate",
+    "db:push": "pnpm --filter @agenoconcern/server drizzle-kit push",
     "db:studio": "pnpm --filter @agenoconcern/server db:studio",
     "test": "pnpm -r test"
   },

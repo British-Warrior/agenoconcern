@@ -1,12 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { App } from "./App.js";
 
 const root = document.getElementById("root")!;
 
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
-    <div>
-      <h1>Age No Concern</h1>
-    </div>
+    <App />
   </React.StrictMode>,
 );
