@@ -139,70 +139,70 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| AUTH-03 | — | Pending |
-| AUTH-04 | — | Pending |
-| AUTH-05 | — | Pending |
-| AUTH-06 | — | Pending |
-| ONBD-01 | — | Pending |
-| ONBD-02 | — | Pending |
-| ONBD-03 | — | Pending |
-| ONBD-04 | — | Pending |
-| ONBD-05 | — | Pending |
-| ONBD-06 | — | Pending |
-| ONBD-07 | — | Pending |
-| ONBD-08 | — | Pending |
-| CHAL-01 | — | Pending |
-| CHAL-02 | — | Pending |
-| CHAL-03 | — | Pending |
-| CHAL-04 | — | Pending |
-| CHAL-05 | — | Pending |
-| CHAL-06 | — | Pending |
-| MTCH-01 | — | Pending |
-| MTCH-02 | — | Pending |
-| CIRC-01 | — | Pending |
-| CIRC-02 | — | Pending |
-| CIRC-03 | — | Pending |
-| CIRC-04 | — | Pending |
-| CIRC-05 | — | Pending |
-| CIRC-06 | — | Pending |
-| CIRC-07 | — | Pending |
-| CIRC-08 | — | Pending |
-| PAY-01 | — | Pending |
-| PAY-02 | — | Pending |
-| PAY-03 | — | Pending |
-| PAY-04 | — | Pending |
-| PAY-05 | — | Pending |
-| WELL-01 | — | Pending |
-| WELL-02 | — | Pending |
-| WELL-03 | — | Pending |
-| IMPT-01 | — | Pending |
-| IMPT-02 | — | Pending |
-| IMPT-03 | — | Pending |
-| IMPT-04 | — | Pending |
-| IMPT-05 | — | Pending |
-| IMPT-06 | — | Pending |
-| NOTF-01 | — | Pending |
-| NOTF-02 | — | Pending |
-| NOTF-03 | — | Pending |
-| NOTF-04 | — | Pending |
-| NOTF-05 | — | Pending |
-| NOTF-06 | — | Pending |
-| NOTF-07 | — | Pending |
-| PLAT-01 | — | Pending |
-| PLAT-02 | — | Pending |
-| PLAT-03 | — | Pending |
-| PLAT-04 | — | Pending |
-| PLAT-05 | — | Pending |
-| PLAT-06 | — | Pending |
-| PLAT-07 | — | Pending |
+| AUTH-01 | Phase 1 | Pending |
+| AUTH-02 | Phase 1 | Pending |
+| AUTH-03 | Phase 1 | Pending |
+| AUTH-04 | Phase 1 | Pending |
+| AUTH-05 | Phase 1 | Pending |
+| AUTH-06 | Phase 1 | Pending |
+| ONBD-01 | Phase 2 | Pending |
+| ONBD-02 | Phase 2 | Pending |
+| ONBD-03 | Phase 2 | Pending |
+| ONBD-04 | Phase 2 | Pending |
+| ONBD-05 | Phase 2 | Pending |
+| ONBD-06 | Phase 2 | Pending |
+| ONBD-07 | Phase 6 | Pending |
+| ONBD-08 | Phase 2 | Pending |
+| CHAL-01 | Phase 3 | Pending |
+| CHAL-02 | Phase 3 | Pending |
+| CHAL-03 | Phase 3 | Pending |
+| CHAL-04 | Phase 3 | Pending |
+| CHAL-05 | Phase 3 | Pending |
+| CHAL-06 | Phase 3 | Pending |
+| MTCH-01 | Phase 3 | Pending |
+| MTCH-02 | Phase 3 | Pending |
+| CIRC-01 | Phase 4 | Pending |
+| CIRC-02 | Phase 4 | Pending |
+| CIRC-03 | Phase 4 | Pending |
+| CIRC-04 | Phase 4 | Pending |
+| CIRC-05 | Phase 4 | Pending |
+| CIRC-06 | Phase 4 | Pending |
+| CIRC-07 | Phase 4 | Pending |
+| CIRC-08 | Phase 4 | Pending |
+| PAY-01 | Phase 5 | Pending |
+| PAY-02 | Phase 5 | Pending |
+| PAY-03 | Phase 5 | Pending |
+| PAY-04 | Phase 5 | Pending |
+| PAY-05 | Phase 5 | Pending |
+| WELL-01 | Phase 6 | Pending |
+| WELL-02 | Phase 6 | Pending |
+| WELL-03 | Phase 6 | Pending |
+| IMPT-01 | Phase 5 | Pending |
+| IMPT-02 | Phase 5 | Pending |
+| IMPT-03 | Phase 5 | Pending |
+| IMPT-04 | Phase 5 | Pending |
+| IMPT-05 | Phase 5 | Pending |
+| IMPT-06 | Phase 5 | Pending |
+| NOTF-01 | Phase 6 | Pending |
+| NOTF-02 | Phase 6 | Pending |
+| NOTF-03 | Phase 6 | Pending |
+| NOTF-04 | Phase 6 | Pending |
+| NOTF-05 | Phase 6 | Pending |
+| NOTF-06 | Phase 6 | Pending |
+| NOTF-07 | Phase 6 | Pending |
+| PLAT-01 | Phase 1 | Pending |
+| PLAT-02 | Phase 1 | Pending |
+| PLAT-03 | Phase 6 | Pending |
+| PLAT-04 | Phase 1 | Pending |
+| PLAT-05 | Phase 4 | Pending |
+| PLAT-06 | Phase 1 | Pending |
+| PLAT-07 | Phase 3 | Pending |
 
 **Coverage:**
 - v1 requirements: 50 total
-- Mapped to phases: 0
-- Unmapped: 50
+- Mapped to phases: 50
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-10*
-*Last updated: 2026-03-10 after initial definition*
+*Last updated: 2026-03-10 after roadmap creation*
