@@ -31,12 +31,15 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User session persists across browser refresh and user can log out from any page
   4. User can reset password via email link
   5. MCP server starts and responds to tool calls; React web UI loads with auth-gated routes
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Monorepo scaffolding, database schema, MCP server shell
-- [ ] 01-02-PLAN.md — Auth system (email/password, Google OAuth, LinkedIn OAuth, SMS, sessions, password reset, CM accounts)
-- [ ] 01-03-PLAN.md — React web UI shell with auth flows, design system (WCAG AAA), GDPR consent foundation
+- [ ] 01-01-PLAN.md — Monorepo scaffold, shared types, database schema
+- [ ] 01-02-PLAN.md — Express server, MCP tool stubs, middleware
+- [ ] 01-03-PLAN.md — Auth system (email/password, OAuth, SMS, password reset, CM accounts)
+- [ ] 01-04-PLAN.md — React web UI shell with auth flows, design system, GDPR consent
+
+**PLAT-06 note**: GDPR consent banner and consent recording are in Phase 1. Data export (Subject Access Request) and data deletion (Right to Erasure) are deferred to Phase 5/6 when all personal data stores exist -- implementing now with only auth tables would be incomplete. Privacy policy includes interim contact email for requests.
 
 ### Phase 2: Onboarding and Profiles
 **Goal**: Contributors can upload a CV and have a complete, editable profile in under 5 minutes with zero form-filling
@@ -126,7 +129,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation and Auth | 0/3 | Not started | - |
+| 1. Foundation and Auth | 0/4 | Not started | - |
 | 2. Onboarding and Profiles | 0/2 | Not started | - |
 | 3. Challenges and Matching | 0/2 | Not started | - |
 | 4. Circles and Collaboration | 0/2 | Not started | - |
