@@ -31,12 +31,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User session persists across browser refresh and user can log out from any page
   4. User can reset password via email link
   5. MCP server starts and responds to tool calls; React web UI loads with auth-gated routes
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: Monorepo scaffolding, database schema, MCP server shell
-- [ ] 01-02: Auth system (email/password, Google OAuth, LinkedIn OAuth, sessions, password reset)
-- [ ] 01-03: React web UI shell with auth flows, design system (WCAG AAA), GDPR consent foundation
+- [ ] 01-01-PLAN.md — Monorepo scaffolding, database schema, MCP server shell
+- [ ] 01-02-PLAN.md — Auth system (email/password, Google OAuth, LinkedIn OAuth, SMS, sessions, password reset, CM accounts)
+- [ ] 01-03-PLAN.md — React web UI shell with auth flows, design system (WCAG AAA), GDPR consent foundation
 
 ### Phase 2: Onboarding and Profiles
 **Goal**: Contributors can upload a CV and have a complete, editable profile in under 5 minutes with zero form-filling
