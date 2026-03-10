@@ -183,7 +183,7 @@ router.get("/google", (_req: Request, res: Response) => {
   const google = new arctic.Google(
     env.GOOGLE_CLIENT_ID,
     env.GOOGLE_CLIENT_SECRET,
-    `${env.CLIENT_URL.replace(":5173", `:${env.PORT}`)}/api/auth/callback/google`,
+    `http://localhost:${env.PORT}/api/auth/callback/google`,
   );
 
   const state = arctic.generateState();
@@ -225,7 +225,7 @@ router.get("/callback/google", async (req: Request, res: Response) => {
     const google = new arctic.Google(
       env.GOOGLE_CLIENT_ID,
       env.GOOGLE_CLIENT_SECRET,
-      `${env.CLIENT_URL.replace(":5173", `:${env.PORT}`)}/api/auth/callback/google`,
+      `http://localhost:${env.PORT}/api/auth/callback/google`,
     );
 
     const tokens = await google.validateAuthorizationCode(code, codeVerifier);
@@ -275,7 +275,7 @@ router.get("/linkedin", (_req: Request, res: Response) => {
   const linkedin = new arctic.LinkedIn(
     env.LINKEDIN_CLIENT_ID,
     env.LINKEDIN_CLIENT_SECRET,
-    `${env.CLIENT_URL.replace(":5173", `:${env.PORT}`)}/api/auth/callback/linkedin`,
+    `http://localhost:${env.PORT}/api/auth/callback/linkedin`,
   );
 
   const state = arctic.generateState();
@@ -309,7 +309,7 @@ router.get("/callback/linkedin", async (req: Request, res: Response) => {
     const linkedin = new arctic.LinkedIn(
       env.LINKEDIN_CLIENT_ID,
       env.LINKEDIN_CLIENT_SECRET,
-      `${env.CLIENT_URL.replace(":5173", `:${env.PORT}`)}/api/auth/callback/linkedin`,
+      `http://localhost:${env.PORT}/api/auth/callback/linkedin`,
     );
 
     const tokens = await linkedin.validateAuthorizationCode(code);
