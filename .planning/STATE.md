@@ -10,27 +10,27 @@ See: .planning/PROJECT.md (updated 2026-03-09)
 ## Current Position
 
 Phase: 1 of 6 (Foundation and Auth)
-Plan: 0 of 3 in current phase
-Status: Ready to plan
-Last activity: 2026-03-10 -- Roadmap created
+Plan: 1 of 4 in current phase
+Status: In progress
+Last activity: 2026-03-10 -- Completed 01-01-PLAN.md (Monorepo Scaffold)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 1/4 plans
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 2 min
+- Total execution time: 2 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01-foundation-and-auth | 1/4 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: -
+- Last 5 plans: 01-01 (2 min)
 - Trend: -
 
 *Updated after each plan completion*
@@ -45,6 +45,9 @@ Recent decisions affecting current work:
 - [Roadmap]: 6-phase structure derived from 50 requirements across 9 categories
 - [Roadmap]: Wellbeing check-ins deferred to Phase 6 (DPIA/APD legal work must precede code)
 - [Roadmap]: ONBD-07 (first wellbeing at onboarding) grouped with Phase 6 wellbeing, not Phase 2 onboarding
+- [01-01]: Shared package consumed as TS source (no build step) -- simpler DX for monorepo
+- [01-01]: Lazy database connection -- server starts even without DB
+- [01-01]: cm_created auth provider for community-manager-created accounts
 
 ### Pending Todos
 
@@ -59,5 +62,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-10
-Stopped at: Roadmap created, ready to plan Phase 1
-Resume file: None
+Stopped at: Completed 01-01 (Monorepo Scaffold), ready for 01-02
+Resume file: .planning/phases/01-foundation-and-auth/01-02-PLAN.md
