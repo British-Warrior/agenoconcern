@@ -5,33 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income -- bridging the pension gap while contributing to communities.
-**Current focus:** Phase 1: Foundation and Auth -- COMPLETE
+**Current focus:** Phase 2: Onboarding and Profiles
 
 ## Current Position
 
 Phase: 2 of 6 (Onboarding and Profiles)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-03-11 -- Completed 02-01-PLAN.md (Onboarding Backend)
+Last activity: 2026-03-11 -- Completed 02-02-PLAN.md (Onboarding Frontend)
 
-Progress: [████████████░░░░] 5/7 plans (phase 1 complete + plan 2-01)
+Progress: [██████████████░░] 6/8 plans (phase 1 complete + plans 2-01, 2-02)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 7 min
-- Total execution time: 36 min
+- Total plans completed: 6
+- Average duration: 6 min
+- Total execution time: 40 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation-and-auth | 4/4 | 31 min | 8 min |
-| 02-onboarding-and-profiles | 1/3 | 5 min | 5 min |
+| 02-onboarding-and-profiles | 2/3 | 9 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 (11 min), 01-03 (11 min), 01-04 (7 min), 02-01 (5 min)
+- Last 5 plans: 01-03 (11 min), 01-04 (7 min), 02-01 (5 min), 02-02 (4 min)
 - Trend: accelerating
 
 *Updated after each plan completion*
@@ -64,6 +64,11 @@ Recent decisions affecting current work:
 - [02-01]: CV parsing is fire-and-forget; frontend polls /parse-status/:jobId
 - [02-01]: Stripe Connect skippable; both /stripe/skip and /preferences set status to active
 - [02-01]: DOMAIN_TAXONOMY fixed array in shared constants; free-text Other in UI only
+- [02-02]: react-dropzone used for file drag-and-drop -- minimal API, well-maintained
+- [02-02]: Image files (JPG/PNG) route through server OCR path; documents route through presigned S3 PUT then start-parse
+- [02-02]: Dashboard redirects to /onboarding/upload when contributor.status === 'onboarding'
+- [02-02]: Parsing page animated step labels advance on timer independent of polling -- labels advance on time, not API response
+- [02-02]: Affirmation page falls back to generic message if affirmationMessage not in profile
 
 ### Pending Todos
 
@@ -78,5 +83,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-11
-Stopped at: Completed 02-01 (Onboarding Backend), ready for 02-02 (Onboarding Frontend)
-Resume file: .planning/phases/02-onboarding-and-profiles/02-02-PLAN.md
+Stopped at: Completed 02-02 (Onboarding Frontend), ready for 02-03 (Preferences and Stripe)
+Resume file: .planning/phases/02-onboarding-and-profiles/02-03-PLAN.md
