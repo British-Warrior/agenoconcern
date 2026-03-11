@@ -93,3 +93,51 @@ export function useUpdateProfile() {
     },
   });
 }
+
+// ---------------------------------------------------------------------------
+// Preferences, Stripe Connect, Skip Stripe
+// ---------------------------------------------------------------------------
+
+/**
+ * Save contributor availability and communication preferences.
+ * Invalidates profile and auth ("me") queries on success.
+ */
+export function useSavePreferences() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: Record<string, unknown>) => onboardingApi.savePreferences(data),
+    onSuccess: (updatedProfile) => {
+      queryClient.setQueryData(QUERY_KEYS.profile, updatedProfile);
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+    },
+  });
+}
+
+/**
+ * Start Stripe Connect onboarding.
+ * On success, redirects the browser to the Stripe-hosted Connect URL.
+ */
+export function useStartStripeConnect() {
+  return useMutation({
+    mutationFn: () => onboardingApi.startStripeConnect(),
+    onSuccess: ({ url }) => {
+      window.location.href = url;
+    },
+  });
+}
+
+/**
+ * Skip Stripe Connect setup (sets contributor status to active).
+ * Invalidates the auth ("me") query so the UI reflects the status change.
+ */
+export function useSkipStripe() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => onboardingApi.skipStripe(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+    },
+  });
+}
