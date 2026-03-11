@@ -51,11 +51,12 @@ Plans:
   3. User sees draft profile as editable cards, can adjust, and confirm -- entire flow completes in under 5 minutes
   4. User can set availability and preferences (domains, mentoring, max Circles, communication)
   5. User who opts into paid work is guided through Stripe Connect onboarding
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: CV upload, S3 storage, text extraction + LLM parsing pipeline
-- [ ] 02-02: Profile review UI (editable cards), availability/preferences, Stripe Connect onboarding trigger
+- [ ] 02-01-PLAN.md — Backend: DB schema, S3/OpenAI/Stripe services, CV parsing pipeline, onboarding API routes
+- [ ] 02-02-PLAN.md — Frontend: CV upload, parsing wait state, profile review, affirmation page
+- [ ] 02-03-PLAN.md — Frontend: Preferences, Stripe Connect prompt, onboarding completion and routing
 
 ### Phase 3: Challenges and Matching
 **Goal**: Contributors can discover relevant challenges and express interest; community manager can post challenges and review suggested teams
@@ -130,7 +131,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation and Auth | 0/4 | Not started | - |
-| 2. Onboarding and Profiles | 0/2 | Not started | - |
+| 2. Onboarding and Profiles | 0/3 | Not started | - |
 | 3. Challenges and Matching | 0/2 | Not started | - |
 | 4. Circles and Collaboration | 0/2 | Not started | - |
 | 5. Payments and Impact | 0/2 | Not started | - |
