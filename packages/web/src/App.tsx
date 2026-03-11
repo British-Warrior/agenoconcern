@@ -16,6 +16,9 @@ import { UploadCV } from "./pages/onboarding/UploadCV.js";
 import { Parsing } from "./pages/onboarding/Parsing.js";
 import { ReviewProfile } from "./pages/onboarding/ReviewProfile.js";
 import { Affirmation } from "./pages/onboarding/Affirmation.js";
+import { Preferences } from "./pages/onboarding/Preferences.js";
+import { StripeConnect } from "./pages/onboarding/StripeConnect.js";
+import { Complete } from "./pages/onboarding/Complete.js";
 
 /**
  * Redirect authenticated users to onboarding if their status is "onboarding",
@@ -29,16 +32,6 @@ function DashboardOrOnboarding() {
   return <Dashboard />;
 }
 
-/**
- * Placeholder page for routes not yet implemented (Plans 03+).
- */
-function ComingSoon({ page }: { page: string }) {
-  return (
-    <div className="py-12 text-center">
-      <p className="text-lg text-neutral-600">{page} — coming soon.</p>
-    </div>
-  );
-}
 
 export function App() {
   return (
@@ -67,19 +60,10 @@ export function App() {
               <Route path="/onboarding/review" element={<ReviewProfile />} />
               <Route path="/onboarding/affirmation" element={<Affirmation />} />
 
-              {/* Placeholder routes for Plan 03 */}
-              <Route
-                path="/onboarding/preferences"
-                element={<ComingSoon page="Preferences" />}
-              />
-              <Route
-                path="/onboarding/stripe"
-                element={<ComingSoon page="Stripe Connect" />}
-              />
-              <Route
-                path="/onboarding/complete"
-                element={<ComingSoon page="Onboarding Complete" />}
-              />
+              {/* Plan 03 onboarding pages */}
+              <Route path="/onboarding/preferences" element={<Preferences />} />
+              <Route path="/onboarding/stripe" element={<StripeConnect />} />
+              <Route path="/onboarding/complete" element={<Complete />} />
             </Route>
           </Route>
         </Routes>
