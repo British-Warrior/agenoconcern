@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import { getEnv } from "./config/env.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { authRoutes } from "./routes/auth.js";
+import { onboardingRoutes } from "./routes/onboarding.js";
 
 const app = express();
 
@@ -28,6 +29,9 @@ app.get("/health", (_req, res) => {
 
 // Auth routes
 app.use("/api/auth", authRoutes);
+
+// Onboarding routes
+app.use("/api/onboarding", onboardingRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
