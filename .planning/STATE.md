@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-09)
 
 ## Current Position
 
-Phase: 2 of 6 (Onboarding and Profiles)
-Plan: 3 of 3 in current phase (tasks 1-2 complete, awaiting checkpoint verification)
-Status: Checkpoint — awaiting human verification
-Last activity: 2026-03-11 -- Tasks 1-2 of 02-03-PLAN.md complete (Preferences, Stripe, Complete pages)
+Phase: 2 of 6 (Onboarding and Profiles) — COMPLETE
+Plan: 3 of 3 in phase 2 (all plans complete)
+Status: Phase complete — ready for Phase 3
+Last activity: 2026-03-11 -- Completed 02-03-PLAN.md (Preferences, Stripe Connect, Complete pages; full flow human-verified)
 
-Progress: [██████████████░░] 6/8 plans (phase 1 complete + plans 2-01, 2-02; 2-03 in checkpoint)
+Progress: [████████████████] 7/7 plans through phase 2 (phases 1 and 2 complete)
 
 ## Performance Metrics
 
@@ -28,11 +28,11 @@ Progress: [██████████████░░] 6/8 plans (phase 1 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation-and-auth | 4/4 | 31 min | 8 min |
-| 02-onboarding-and-profiles | 2/3 | 9 min | 5 min |
+| 02-onboarding-and-profiles | 3/3 | 14 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-03 (11 min), 01-04 (7 min), 02-01 (5 min), 02-02 (4 min)
-- Trend: accelerating
+- Last 5 plans: 01-04 (7 min), 02-01 (5 min), 02-02 (4 min), 02-03 (5 min)
+- Trend: stable at ~5 min/plan
 
 *Updated after each plan completion*
 
@@ -69,6 +69,10 @@ Recent decisions affecting current work:
 - [02-02]: Dashboard redirects to /onboarding/upload when contributor.status === 'onboarding'
 - [02-02]: Parsing page animated step labels advance on timer independent of polling -- labels advance on time, not API response
 - [02-02]: Affirmation page falls back to generic message if affirmationMessage not in profile
+- [02-03]: dotenv added to server for .env loading from repo root (loaded in config/env.ts)
+- [02-03]: S3 configured with real AWS credentials for CV storage
+- [02-03]: useSavePreferences invalidates both profile and auth queries -- status change reflected immediately at Dashboard guard
+- [02-03]: Complete page auto-redirects to Dashboard after 5-second countdown -- no manual step
 
 ### Pending Todos
 
@@ -83,5 +87,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-11
-Stopped at: 02-03 Task 3 checkpoint (human-verify) -- tasks 1 (fedd899) and 2 (9732fc1) committed
-Resume file: .planning/phases/02-onboarding-and-profiles/02-03-PLAN.md
+Stopped at: Phase 2 complete -- all 3 plans done, full onboarding flow human-verified
+Resume file: .planning/phases/03-[next-phase]/03-01-PLAN.md (phase 3 not yet planned)
