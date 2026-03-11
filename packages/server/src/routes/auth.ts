@@ -359,7 +359,7 @@ router.post("/phone/send", async (req: Request, res: Response) => {
   ) {
     res
       .status(501)
-      .json({ error: "SMS auth not configured. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_VERIFY_SERVICE_SID." });
+      .json({ error: "Phone login is not available yet. Please use email or social login instead." });
     return;
   }
 
@@ -397,7 +397,7 @@ router.post("/phone/verify", async (req: Request, res: Response) => {
   ) {
     res
       .status(501)
-      .json({ error: "SMS auth not configured." });
+      .json({ error: "Phone login is not available yet. Please use email or social login instead." });
     return;
   }
 
@@ -445,12 +445,6 @@ router.post("/phone/verify", async (req: Request, res: Response) => {
 
 router.post("/forgot-password", async (req: Request, res: Response) => {
   const env = getEnv();
-  if (!env.RESEND_API_KEY) {
-    res
-      .status(501)
-      .json({ error: "Email not configured. Set RESEND_API_KEY." });
-    return;
-  }
 
   try {
     const { email } = req.body as { email: string };
@@ -461,8 +455,8 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
 
     const result = await createPasswordResetToken(email);
 
-    // Send email if contributor found (don't reveal whether email exists)
-    if (result) {
+    // Send email if contributor found and email service is configured
+    if (result && env.RESEND_API_KEY) {
       const { Resend } = await import("resend");
       const resend = new Resend(env.RESEND_API_KEY);
       const resetLink = `${env.CLIENT_URL}/reset-password?token=${result.rawToken}`;
@@ -473,16 +467,22 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
         subject: "Reset your password",
         text: `You requested a password reset for your Age No Concern account.\n\nClick this link to reset your password (valid for 1 hour):\n${resetLink}\n\nIf you didn't request this, you can safely ignore this email.`,
       });
+    } else if (result && !env.RESEND_API_KEY) {
+      console.warn("[auth] Password reset requested but RESEND_API_KEY not configured — email not sent");
     }
 
-    // Always return success
+    // Always return success (never reveal whether account exists)
     res.json({
       message:
         "If an account with that email exists, a password reset link has been sent.",
     });
   } catch (err) {
     console.error("[auth] Forgot password error:", err);
-    res.status(500).json({ error: "Failed to process password reset" });
+    // Still return the safe message to prevent account enumeration via error timing
+    res.json({
+      message:
+        "If an account with that email exists, a password reset link has been sent.",
+    });
   }
 });
 
