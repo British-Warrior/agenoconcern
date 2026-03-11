@@ -27,6 +27,18 @@ const envSchema = z.object({
 
   // Email - Resend
   RESEND_API_KEY: z.string().default(""),
+
+  // AWS S3 - CV storage
+  AWS_REGION: z.string().default("eu-west-2"),
+  AWS_ACCESS_KEY_ID: z.string().default(""),
+  AWS_SECRET_ACCESS_KEY: z.string().default(""),
+  S3_BUCKET: z.string().default(""),
+
+  // OpenAI - CV parsing
+  OPENAI_API_KEY: z.string().default(""),
+
+  // Stripe - Connect
+  STRIPE_SECRET_KEY: z.string().default(""),
 });
 
 export type Env = z.infer<typeof envSchema>;

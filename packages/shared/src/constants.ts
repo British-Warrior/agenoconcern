@@ -13,3 +13,23 @@ export const PASSWORD_MAX_LENGTH = 128;
 
 // Phone number E.164 pattern
 export const E164_REGEX = /^\+[1-9]\d{1,14}$/;
+
+// Domain taxonomy (fixed list; free-text "Other" handled in UI)
+export const DOMAIN_TAXONOMY = [
+  "Education",
+  "Healthcare",
+  "Technology",
+  "Engineering",
+  "Finance",
+  "Legal",
+  "Arts & Culture",
+  "Social Care",
+  "Environment",
+  "Business Strategy",
+  "Public Sector",
+  "Charity & Non-Profit",
+  "Manufacturing",
+  "Construction",
+  "Transport & Logistics",
+  "Media & Communications",
+] as const;

@@ -9,6 +9,17 @@ export type {
 
 export type { Contributor } from "./types/contributor.js";
 
+export type {
+  ContributorProfile,
+  CvParseJob,
+  ParsedCvData,
+  Availability,
+  CommChannel,
+  CommFrequency,
+  StripeStatus,
+  CvParseStatus,
+} from "./types/profile.js";
+
 // Schemas
 export {
   registerInputSchema,
@@ -24,6 +35,12 @@ export {
 } from "./schemas/contributor.schemas.js";
 export type { ContributorSchema, UpdateContributorInput } from "./schemas/contributor.schemas.js";
 
+export {
+  updateProfileSchema,
+  preferencesSchema,
+} from "./schemas/profile.schemas.js";
+export type { UpdateProfileInput, PreferencesInput } from "./schemas/profile.schemas.js";
+
 // Constants
 export {
   AUTH_PROVIDERS,
@@ -32,4 +49,5 @@ export {
   PASSWORD_MIN_LENGTH,
   PASSWORD_MAX_LENGTH,
   E164_REGEX,
+  DOMAIN_TAXONOMY,
 } from "./constants.js";

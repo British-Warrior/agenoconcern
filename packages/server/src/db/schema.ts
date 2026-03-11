@@ -7,6 +7,7 @@ import {
   boolean,
   timestamp,
   jsonb,
+  smallint,
 } from "drizzle-orm/pg-core";
 
 // Enums
@@ -74,6 +75,80 @@ export const oauthAccounts = pgTable("oauth_accounts", {
   profileSnapshot: jsonb("profile_snapshot"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Onboarding enums
+export const availabilityEnum = pgEnum("availability", [
+  "full_time",
+  "part_time",
+  "occasional",
+  "project_only",
+]);
+
+export const commFrequencyEnum = pgEnum("comm_frequency", [
+  "immediate",
+  "daily",
+  "weekly",
+]);
+
+export const commChannelEnum = pgEnum("comm_channel", ["email", "phone"]);
+
+export const stripeStatusEnum = pgEnum("stripe_status", [
+  "not_started",
+  "pending",
+  "complete",
+]);
+
+export const cvParseStatusEnum = pgEnum("cv_parse_status", [
+  "pending",
+  "processing",
+  "complete",
+  "failed",
+]);
+
+// Contributor profiles
+export const contributorProfiles = pgTable("contributor_profiles", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  contributorId: uuid("contributor_id")
+    .notNull()
+    .unique()
+    .references(() => contributors.id, { onDelete: "cascade" }),
+  cvS3Key: text("cv_s3_key"),
+  cvParseStatus: cvParseStatusEnum("cv_parse_status").default("pending"),
+  rolesAndTitles: jsonb("roles_and_titles").$type<string[]>(),
+  skills: jsonb("skills").$type<string[]>(),
+  qualifications: jsonb("qualifications").$type<string[]>(),
+  sectors: jsonb("sectors").$type<string[]>(),
+  yearsOfExperience: smallint("years_of_experience"),
+  professionalSummary: text("professional_summary"),
+  affirmationMessage: text("affirmation_message"),
+  availability: availabilityEnum("availability"),
+  maxCircles: smallint("max_circles").default(3),
+  domainPreferences: jsonb("domain_preferences").$type<string[]>(),
+  domainOther: text("domain_other"),
+  willingToMentor: boolean("willing_to_mentor").default(false),
+  commChannel: commChannelEnum("comm_channel"),
+  commFrequency: commFrequencyEnum("comm_frequency"),
+  stripeAccountId: varchar("stripe_account_id", { length: 255 }),
+  stripeStatus: stripeStatusEnum("stripe_status").default("not_started"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// CV parse jobs
+export const cvParseJobs = pgTable("cv_parse_jobs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  contributorId: uuid("contributor_id")
+    .notNull()
+    .references(() => contributors.id, { onDelete: "cascade" }),
+  s3Key: text("s3_key").notNull(),
+  mimeType: varchar("mime_type", { length: 100 }).notNull(),
+  status: cvParseStatusEnum("status").default("pending"),
+  errorMessage: text("error_message"),
+  rawText: text("raw_text"),
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 // Consent records
