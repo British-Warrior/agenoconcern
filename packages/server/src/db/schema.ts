@@ -8,6 +8,9 @@ import {
   timestamp,
   jsonb,
   smallint,
+  integer,
+  date,
+  unique,
 } from "drizzle-orm/pg-core";
 
 // Enums
@@ -150,6 +153,62 @@ export const cvParseJobs = pgTable("cv_parse_jobs", {
   completedAt: timestamp("completed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// Challenge enums
+export const challengeTypeEnum = pgEnum("challenge_type", ["paid", "free"]);
+
+export const challengeStatusEnum = pgEnum("challenge_status", [
+  "draft",
+  "open",
+  "closed",
+  "archived",
+]);
+
+export const challengeInterestStatusEnum = pgEnum("challenge_interest_status", [
+  "active",
+  "withdrawn",
+]);
+
+// Challenges
+export const challenges = pgTable("challenges", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => contributors.id, { onDelete: "restrict" }),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  brief: text("brief").notNull(),
+  domain: text("domain").notNull(),
+  skillsNeeded: jsonb("skills_needed").$type<string[]>().notNull().default([]),
+  type: challengeTypeEnum("type").notNull(),
+  deadline: date("deadline"),
+  circleSize: smallint("circle_size").notNull().default(4),
+  status: challengeStatusEnum("status").notNull().default("open"),
+  interestCount: integer("interest_count").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Challenge interests
+export const challengeInterests = pgTable(
+  "challenge_interests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    challengeId: uuid("challenge_id")
+      .notNull()
+      .references(() => challenges.id, { onDelete: "cascade" }),
+    contributorId: uuid("contributor_id")
+      .notNull()
+      .references(() => contributors.id, { onDelete: "cascade" }),
+    status: challengeInterestStatusEnum("status").notNull().default("active"),
+    note: text("note"),
+    matchScore: smallint("match_score"),
+    lastWithdrawnAt: timestamp("last_withdrawn_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [unique("challenge_interests_unique").on(table.challengeId, table.contributorId)],
+);
 
 // Consent records
 export const consentRecords = pgTable("consent_records", {

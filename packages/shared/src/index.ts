@@ -51,3 +51,28 @@ export {
   E164_REGEX,
   DOMAIN_TAXONOMY,
 } from "./constants.js";
+
+// Challenge types
+export type {
+  ChallengeType,
+  ChallengeStatus,
+  ChallengeInterestStatus,
+  Challenge,
+  ChallengeInterest,
+  ChallengeFilters,
+  TeamComposition,
+  ChallengeInterestResponse,
+  ChallengeFeedResponse,
+} from "./types/challenge.js";
+
+// Challenge schemas
+export {
+  createChallengeSchema,
+  updateChallengeSchema,
+  interestNoteSchema,
+} from "./schemas/challenge.js";
+export type {
+  CreateChallengeInput,
+  UpdateChallengeInput,
+  InterestNoteInput,
+} from "./schemas/challenge.js";
