@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-09)
 ## Current Position
 
 Phase: 3 of 6 (Challenges and Matching) — In progress
-Plan: 1 of 3 in phase 3 (plan 1 complete)
+Plan: 2 of 3 in phase 3 (plans 1 and 2 complete)
 Status: In progress
-Last activity: 2026-03-12 -- Completed 03-01-PLAN.md (DB schema, shared types, matching algorithm, challenge API routes)
+Last activity: 2026-03-12 -- Completed 03-02-PLAN.md (challenge feed, accordion, filters, infinite scroll, interest expression)
 
-Progress: [█████████████████░░░░░░░░░░░░░] 8/16 plans (phases 1-2 complete, 03-01 complete)
+Progress: [██████████████████░░░░░░░░░░░░] 9/16 plans (phases 1-2 complete, 03-01, 03-02 complete)
 
 ## Performance Metrics
 
@@ -29,7 +29,7 @@ Progress: [█████████████████░░░░░░
 |-------|-------|-------|----------|
 | 01-foundation-and-auth | 4/4 | 31 min | 8 min |
 | 02-onboarding-and-profiles | 3/3 | 14 min | 5 min |
-| 03-challenges-and-matching | 1/3 | 25 min | 25 min |
+| 03-challenges-and-matching | 2/3 | 55 min | 27 min |
 
 **Recent Trend:**
 - Last 5 plans: 02-01 (5 min), 02-02 (4 min), 02-03 (5 min), 03-01 (25 min)
@@ -78,6 +78,8 @@ Recent decisions affecting current work:
 - [03-01]: interestCount incremented with sql`count + 1` — concurrency-safe atomic update
 - [03-01]: /my-interests route declared before /:id to prevent route shadowing
 - [03-01]: skillsNeeded stored as jsonb — MVP scale, TypeScript scoring sidesteps operator bug
+- [03-02]: Timeline filter (any/this-week/this-month) is client-side — API only accepts domain and type
+- [03-02]: slideDown/slideUp keyframes in app.css @theme block for Radix accordion content height animation
 
 ### Pending Todos
 
@@ -92,5 +94,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-12
-Stopped at: Phase 3, plan 1 complete -- backend schema, types, matching, and API routes
-Resume file: .planning/phases/03-challenges-and-matching/03-02-PLAN.md
+Stopped at: Phase 3, plan 2 complete -- challenge feed UI, accordion, filters, infinite scroll, interest expression
+Resume file: .planning/phases/03-challenges-and-matching/03-03-PLAN.md
