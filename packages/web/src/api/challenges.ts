@@ -4,6 +4,9 @@ import type {
   ChallengeFeedResponse,
   ChallengeInterestResponse,
   ChallengeFilters,
+  TeamComposition,
+  CreateChallengeInput,
+  UpdateChallengeInput,
 } from "@agenoconcern/shared";
 
 export interface ChallengeWithInterest extends Challenge {
@@ -15,16 +18,16 @@ export interface ChallengeDetail extends ChallengeWithInterest {
 }
 
 export interface ChallengeInterestDetail {
-  contributorId: string;
+  id: string;
   name: string | null;
-  status: "active" | "withdrawn";
   note: string | null;
-  matchScore: number | null;
+  isYou: boolean;
+  createdAt: string;
 }
 
 export interface ChallengeInterestsResponse {
   interests: ChallengeInterestDetail[];
-  total: number;
+  count: number;
 }
 
 export function getFeed(params: ChallengeFilters): Promise<ChallengeFeedResponse> {
@@ -57,5 +60,32 @@ export function toggleInterest(
 export function getInterests(challengeId: string): Promise<ChallengeInterestsResponse> {
   return apiClient<ChallengeInterestsResponse>(
     `/api/challenges/${challengeId}/interests`,
+  );
+}
+
+export function createChallenge(data: CreateChallengeInput): Promise<Challenge> {
+  return apiClient<Challenge>("/api/challenges", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateChallenge(
+  id: string,
+  data: UpdateChallengeInput,
+): Promise<Challenge> {
+  return apiClient<Challenge>(`/api/challenges/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export interface TeamSuggestionsResponse {
+  compositions: TeamComposition[];
+}
+
+export function getTeamSuggestions(challengeId: string): Promise<TeamSuggestionsResponse> {
+  return apiClient<TeamSuggestionsResponse>(
+    `/api/challenges/${challengeId}/team-suggestions`,
   );
 }

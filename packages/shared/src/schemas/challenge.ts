@@ -14,7 +14,12 @@ export const createChallengeSchema = z.object({
 
 export type CreateChallengeInput = z.infer<typeof createChallengeSchema>;
 
-export const updateChallengeSchema = createChallengeSchema.partial();
+// Update schema: all create fields optional, plus status for closing/archiving.
+export const updateChallengeSchema = createChallengeSchema
+  .partial()
+  .extend({
+    status: z.enum(["open", "closed", "archived"]).optional(),
+  });
 
 export type UpdateChallengeInput = z.infer<typeof updateChallengeSchema>;
 
