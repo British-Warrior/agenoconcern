@@ -437,8 +437,8 @@ export function ChallengeForm({
           <div className="mt-2 rounded-[var(--radius-md)] bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800">
             <p>
               {circleSize < 2
-                ? "A Circle with fewer than 2 people limits collaboration."
-                : `A Circle of ${circleSize} is larger than the recommended maximum of 10.`}
+                ? "A Circle with fewer than 2 people limits collaboration. Continue anyway?"
+                : `A Circle of ${circleSize} is larger than the recommended maximum of 10. Are you sure?`}
             </p>
             {!circleSizeConfirmed ? (
               <button
