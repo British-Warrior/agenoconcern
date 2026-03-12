@@ -5,6 +5,7 @@ import { getEnv } from "./config/env.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { authRoutes } from "./routes/auth.js";
 import { onboardingRoutes } from "./routes/onboarding.js";
+import { challengeRoutes } from "./routes/challenges.js";
 
 const app = express();
 
@@ -32,6 +33,9 @@ app.use("/api/auth", authRoutes);
 
 // Onboarding routes
 app.use("/api/onboarding", onboardingRoutes);
+
+// Challenge routes
+app.use("/api/challenges", challengeRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
