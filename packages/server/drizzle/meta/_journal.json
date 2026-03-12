@@ -8,6 +8,13 @@
       "when": 1773225753499,
       "tag": "0000_early_living_lightning",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773265847090,
+      "tag": "0001_numerous_puppet_master",
+      "breakpoints": true
     }
   ]
 }

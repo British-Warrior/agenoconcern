@@ -91,7 +91,7 @@ export const commFrequencyEnum = pgEnum("comm_frequency", [
   "weekly",
 ]);
 
-export const commChannelEnum = pgEnum("comm_channel", ["email", "phone"]);
+export const commChannelEnum = pgEnum("comm_channel", ["email", "phone", "both"]);
 
 export const stripeStatusEnum = pgEnum("stripe_status", [
   "not_started",

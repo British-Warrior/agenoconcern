@@ -1,6 +1,6 @@
 // Union string literal types
 export type Availability = "full_time" | "part_time" | "occasional" | "project_only";
-export type CommChannel = "email" | "phone";
+export type CommChannel = "email" | "phone" | "both";
 export type CommFrequency = "immediate" | "daily" | "weekly";
 export type StripeStatus = "not_started" | "pending" | "complete";
 export type CvParseStatus = "pending" | "processing" | "complete" | "failed";

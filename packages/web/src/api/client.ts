@@ -10,7 +10,11 @@ class ApiResponseError extends Error {
   data: ApiError;
 
   constructor(status: number, data: ApiError) {
-    super(data.error || `Request failed with status ${status}`);
+    const msg =
+      typeof data.error === "string"
+        ? data.error
+        : `Request failed with status ${status}`;
+    super(msg);
     this.name = "ApiResponseError";
     this.status = status;
     this.data = data;

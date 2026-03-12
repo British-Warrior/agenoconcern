@@ -19,7 +19,7 @@ export const preferencesSchema = z.object({
   domainPreferences: z.array(z.string()),
   domainOther: z.string().optional(),
   willingToMentor: z.boolean(),
-  commChannel: z.enum(["email", "phone"]),
+  commChannel: z.enum(["email", "phone", "both"]),
   commFrequency: z.enum(["immediate", "daily", "weekly"]),
 });
 

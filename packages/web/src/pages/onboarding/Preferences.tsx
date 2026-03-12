@@ -111,6 +111,20 @@ export function Preferences() {
     e.preventDefault();
     setSubmitError(null);
 
+    // Client-side validation for required radio fields
+    if (!form.availability) {
+      setSubmitError("Please select your availability.");
+      return;
+    }
+    if (!form.commChannel) {
+      setSubmitError("Please select a preferred contact method.");
+      return;
+    }
+    if (!form.commFrequency) {
+      setSubmitError("Please select a notification frequency.");
+      return;
+    }
+
     // Merge free-text Other into domainPreferences if provided
     const domainOtherTrimmed = form.domainOther.trim();
     const finalDomains = domainOtherTrimmed
@@ -119,19 +133,23 @@ export function Preferences() {
 
     try {
       await savePreferences.mutateAsync({
-        availability: form.availability || undefined,
+        availability: form.availability,
         domainPreferences: finalDomains,
         domainOther: domainOtherTrimmed || undefined,
         maxCircles: form.maxCircles,
         willingToMentor: form.willingToMentor,
-        commChannel: form.commChannel || undefined,
-        commFrequency: form.commFrequency || undefined,
+        commChannel: form.commChannel,
+        commFrequency: form.commFrequency,
       });
       navigate("/onboarding/stripe");
     } catch (err) {
-      setSubmitError(
-        err instanceof Error ? err.message : "Failed to save preferences. Please try again."
-      );
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" && err !== null
+            ? JSON.stringify(err)
+            : "Failed to save preferences. Please try again.";
+      setSubmitError(message);
     }
   };
 
@@ -266,6 +284,7 @@ export function Preferences() {
               options={[
                 { value: "email", label: "Email" },
                 { value: "phone", label: "Phone" },
+                { value: "both", label: "Both" },
               ]}
             />
           </section>

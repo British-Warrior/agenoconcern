@@ -302,7 +302,11 @@ router.put(
   async (req: Request, res: Response): Promise<void> => {
     const result = preferencesSchema.safeParse(req.body);
     if (!result.success) {
-      res.status(400).json({ error: result.error.flatten() });
+      const flat = result.error.flatten();
+      const fieldErrors = Object.entries(flat.fieldErrors)
+        .map(([field, msgs]) => `${field}: ${(msgs as string[]).join(", ")}`)
+        .join("; ");
+      res.status(400).json({ error: fieldErrors || flat.formErrors.join("; ") || "Validation failed" });
       return;
     }
 

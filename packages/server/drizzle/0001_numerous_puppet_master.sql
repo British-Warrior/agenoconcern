@@ -1,0 +1,1 @@
+ALTER TYPE "public"."comm_channel" ADD VALUE 'both';
