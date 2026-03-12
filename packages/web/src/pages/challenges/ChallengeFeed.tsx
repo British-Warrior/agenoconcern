@@ -1,7 +1,9 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { useChallengeFeed } from "../../hooks/useChallenges.js";
+import { useAuth } from "../../hooks/useAuth.js";
 import { ChallengeAccordion } from "../../components/challenges/ChallengeAccordion.js";
 import { FilterBar } from "../../components/challenges/FilterBar.js";
+import { ChallengeManage } from "./ChallengeManage.js";
 import type { FilterState } from "../../components/challenges/FilterBar.js";
 import type { ChallengeType } from "@agenoconcern/shared";
 
@@ -33,14 +35,16 @@ function Spinner() {
   );
 }
 
-export function ChallengeFeed() {
+type Tab = "browse" | "manage";
+
+function BrowseTab() {
   const [filters, setFilters] = useState<FilterState>({
     domain: "",
     type: "",
     timeline: "any",
   });
 
-  // Map UI filters to API filters (timeline is client-side for now — API only has domain/type)
+  // Map UI filters to API filters (timeline is client-side — API only has domain/type)
   const apiFilters = {
     domain: filters.domain || undefined,
     type: (filters.type || undefined) as ChallengeType | undefined,
@@ -101,10 +105,6 @@ export function ChallengeFeed() {
     return () => observer.disconnect();
   }, [handleObserver]);
 
-  useEffect(() => {
-    document.title = "Challenges — Age No Concern";
-  }, []);
-
   const hasActiveFilters =
     filters.domain !== "" ||
     filters.type !== "" ||
@@ -114,9 +114,7 @@ export function ChallengeFeed() {
     setFilters({ domain: "", type: "", timeline: "any" });
 
   return (
-    <div className="py-8">
-      <h1 className="text-2xl font-bold text-neutral-900 mb-6">Challenges</h1>
-
+    <>
       <FilterBar filters={filters} onChange={setFilters} />
 
       {/* Loading initial */}
@@ -170,6 +168,59 @@ export function ChallengeFeed() {
           You've seen all challenges.
         </p>
       )}
+    </>
+  );
+}
+
+export function ChallengeFeed() {
+  const { contributor } = useAuth();
+  const isCM =
+    contributor?.role === "community_manager" || contributor?.role === "admin";
+
+  const [activeTab, setActiveTab] = useState<Tab>("browse");
+
+  useEffect(() => {
+    document.title = "Challenges — Age No Concern";
+  }, []);
+
+  return (
+    <div className="py-8">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-neutral-900">Challenges</h1>
+        {/* CM floating action in Browse tab */}
+        {isCM && activeTab === "browse" && (
+          <button
+            type="button"
+            onClick={() => setActiveTab("manage")}
+            className="px-4 py-2 rounded-[var(--radius-md)] bg-primary-600 text-white text-sm font-semibold hover:bg-primary-500 transition-colors duration-150"
+          >
+            Post a Challenge
+          </button>
+        )}
+      </div>
+
+      {/* Tab bar — CM only */}
+      {isCM && (
+        <div className="flex border-b border-neutral-200 mb-6">
+          {(["browse", "manage"] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2.5 text-sm font-medium capitalize transition-colors duration-150 border-b-2 -mb-px ${
+                activeTab === tab
+                  ? "border-primary-600 text-primary-700"
+                  : "border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300"
+              }`}
+            >
+              {tab === "browse" ? "Browse" : "Manage"}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Tab content */}
+      {activeTab === "browse" ? <BrowseTab /> : <ChallengeManage />}
     </div>
   );
 }
