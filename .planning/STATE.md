@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income -- bridging the pension gap while contributing to communities.
-**Current focus:** Phase 2: Onboarding and Profiles
+**Current focus:** Phase 3: Challenges and Matching
 
 ## Current Position
 
-Phase: 2 of 6 (Onboarding and Profiles) — COMPLETE
-Plan: 3 of 3 in phase 2 (all plans complete)
-Status: Phase complete — ready for Phase 3
-Last activity: 2026-03-11 -- Completed 02-03-PLAN.md (Preferences, Stripe Connect, Complete pages; full flow human-verified)
+Phase: 3 of 6 (Challenges and Matching) — In progress
+Plan: 1 of 3 in phase 3 (plan 1 complete)
+Status: In progress
+Last activity: 2026-03-12 -- Completed 03-01-PLAN.md (DB schema, shared types, matching algorithm, challenge API routes)
 
-Progress: [████████████████] 7/7 plans through phase 2 (phases 1 and 2 complete)
+Progress: [█████████████████░░░░░░░░░░░░░] 8/16 plans (phases 1-2 complete, 03-01 complete)
 
 ## Performance Metrics
 
@@ -29,10 +29,11 @@ Progress: [████████████████] 7/7 plans through p
 |-------|-------|-------|----------|
 | 01-foundation-and-auth | 4/4 | 31 min | 8 min |
 | 02-onboarding-and-profiles | 3/3 | 14 min | 5 min |
+| 03-challenges-and-matching | 1/3 | 25 min | 25 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-04 (7 min), 02-01 (5 min), 02-02 (4 min), 02-03 (5 min)
-- Trend: stable at ~5 min/plan
+- Last 5 plans: 02-01 (5 min), 02-02 (4 min), 02-03 (5 min), 03-01 (25 min)
+- Trend: 03-01 heavier than prior plans (schema + matching service + 7 routes)
 
 *Updated after each plan completion*
 
@@ -73,6 +74,10 @@ Recent decisions affecting current work:
 - [02-03]: S3 configured with real AWS credentials for CV storage
 - [02-03]: useSavePreferences invalidates both profile and auth queries -- status change reflected immediately at Dashboard guard
 - [02-03]: Complete page auto-redirects to Dashboard after 5-second countdown -- no manual step
+- [03-01]: Match scoring done in TypeScript (not SQL) — avoids Drizzle JSONB arrayOverlaps bug #4935
+- [03-01]: interestCount incremented with sql`count + 1` — concurrency-safe atomic update
+- [03-01]: /my-interests route declared before /:id to prevent route shadowing
+- [03-01]: skillsNeeded stored as jsonb — MVP scale, TypeScript scoring sidesteps operator bug
 
 ### Pending Todos
 
@@ -86,6 +91,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-11
-Stopped at: Phase 2 complete -- all 3 plans done, full onboarding flow human-verified
-Resume file: .planning/phases/03-[next-phase]/03-01-PLAN.md (phase 3 not yet planned)
+Last session: 2026-03-12
+Stopped at: Phase 3, plan 1 complete -- backend schema, types, matching, and API routes
+Resume file: .planning/phases/03-challenges-and-matching/03-02-PLAN.md
