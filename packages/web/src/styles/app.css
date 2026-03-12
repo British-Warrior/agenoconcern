@@ -73,6 +73,30 @@
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
+
+  /* ------------------------------------------------------------------ */
+  /* Accordion animations (Radix accordion content height)              */
+  /* ------------------------------------------------------------------ */
+  --animate-slideDown: slideDown 200ms ease-out;
+  --animate-slideUp: slideUp 200ms ease-in;
+}
+
+@keyframes slideDown {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
 }
 
 /* -------------------------------------------------------------------- */

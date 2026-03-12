@@ -19,6 +19,7 @@ import { Affirmation } from "./pages/onboarding/Affirmation.js";
 import { Preferences } from "./pages/onboarding/Preferences.js";
 import { StripeConnect } from "./pages/onboarding/StripeConnect.js";
 import { Complete } from "./pages/onboarding/Complete.js";
+import { ChallengeFeed } from "./pages/challenges/ChallengeFeed.js";
 
 /**
  * Redirect authenticated users to onboarding if their status is "onboarding",
@@ -64,6 +65,9 @@ export function App() {
               <Route path="/onboarding/preferences" element={<Preferences />} />
               <Route path="/onboarding/stripe" element={<StripeConnect />} />
               <Route path="/onboarding/complete" element={<Complete />} />
+
+              {/* Challenges */}
+              <Route path="/challenges" element={<ChallengeFeed />} />
             </Route>
           </Route>
         </Routes>
