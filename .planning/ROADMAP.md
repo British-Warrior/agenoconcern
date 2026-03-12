@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation and Auth** - Monorepo, database, MCP server shell, auth system, and basic web UI shell
 - [ ] **Phase 2: Onboarding and Profiles** - CV upload, LLM parsing, profile generation, availability/preferences, Stripe Connect onboarding
-- [ ] **Phase 3: Challenges and Matching** - Challenge board, filtering, interest expression, scoring algorithm, community manager admin
+- [x] **Phase 3: Challenges and Matching** - Challenge board, filtering, interest expression, scoring algorithm, community manager admin
 - [ ] **Phase 4: Circles and Collaboration** - Circle formation, workspace, notes, social links, resolutions, feedback
 - [ ] **Phase 5: Payments and Impact** - Payment flows (retainers, stipends, subscriptions), impact dashboard, earnings tracking
 - [ ] **Phase 6: Wellbeing, Notifications, and PWA** - Wellbeing check-ins, notification system, PWA configuration, GDPR compliance, accessibility
@@ -73,7 +73,7 @@ Plans:
 Plans:
 - [x] 03-01-PLAN.md — Backend: DB schema, shared types, matching algorithm, challenge API routes
 - [x] 03-02-PLAN.md — Frontend: Challenge feed with accordion layout, filters, infinite scroll, interest expression
-- [ ] 03-03-PLAN.md — Frontend: CM admin (create form, manage tab, team compositions, role toggle) + human verification
+- [x] 03-03-PLAN.md — Frontend: CM admin (create form, manage tab, team compositions, role toggle) + human verification
 
 ### Phase 4: Circles and Collaboration
 **Goal**: Contributors can collaborate in cross-functional Circles to deliver resolutions for challenges
@@ -133,7 +133,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 |-------|----------------|--------|-----------|
 | 1. Foundation and Auth | 4/4 | ✓ Complete | 2026-03-10 |
 | 2. Onboarding and Profiles | 3/3 | ✓ Complete | 2026-03-11 |
-| 3. Challenges and Matching | 2/3 | In progress | - |
+| 3. Challenges and Matching | 3/3 | ✓ Complete | 2026-03-12 |
 | 4. Circles and Collaboration | 0/2 | Not started | - |
 | 5. Payments and Impact | 0/2 | Not started | - |
 | 6. Wellbeing, Notifications, and PWA | 0/3 | Not started | - |
