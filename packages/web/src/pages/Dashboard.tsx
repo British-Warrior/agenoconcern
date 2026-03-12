@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Link } from "react-router";
 import { Card } from "../components/ui/Card.js";
 import { useAuth } from "../hooks/useAuth.js";
 
@@ -16,9 +17,12 @@ export function Dashboard() {
       </h1>
 
       <Card>
-        <p className="text-base text-neutral-700 leading-relaxed">
-          Your profile and challenges will appear here.
-        </p>
+        <Link
+          to="/challenges"
+          className="text-base font-medium text-primary-800 hover:text-primary-700 underline"
+        >
+          Browse Challenges
+        </Link>
       </Card>
     </div>
   );

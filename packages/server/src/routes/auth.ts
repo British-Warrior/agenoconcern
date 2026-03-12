@@ -134,6 +134,41 @@ router.post("/logout", (_req: Request, res: Response) => {
 });
 
 // ---------------------------------------------------------------------------
+// Dev role switcher (development only)
+// ---------------------------------------------------------------------------
+
+if (getEnv().NODE_ENV === "development") {
+  router.post(
+    "/dev-role",
+    authMiddleware,
+    async (req: Request, res: Response) => {
+      try {
+        const { role } = req.body as { role: string };
+        const validRoles = ["contributor", "community_manager", "admin"];
+        if (!validRoles.includes(role)) {
+          res.status(400).json({ error: `Invalid role. Must be one of: ${validRoles.join(", ")}` });
+          return;
+        }
+
+        const db = getDb();
+        await db
+          .update(contributors)
+          .set({ role: role as "contributor" | "community_manager" | "admin", updatedAt: new Date() })
+          .where(eq(contributors.id, req.contributor!.id));
+
+        // Re-issue tokens with new role
+        const tokens = await createTokens(req.contributor!.id, role);
+        setAuthCookies(res, tokens);
+
+        res.json({ role });
+      } catch {
+        res.status(500).json({ error: "Failed to switch role" });
+      }
+    },
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Get current user
 // ---------------------------------------------------------------------------
 

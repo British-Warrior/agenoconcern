@@ -2,6 +2,7 @@ import { Outlet } from "react-router";
 import { Link } from "react-router";
 import { Navbar } from "./Navbar.js";
 import { ConsentBanner, openCookieSettings } from "../ui/ConsentBanner.js";
+import { DevRoleSwitcher } from "../dev/DevRoleSwitcher.js";
 import { ROUTES } from "../../lib/constants.js";
 
 export function AppShell() {
@@ -54,6 +55,7 @@ export function AppShell() {
       </footer>
 
       <ConsentBanner />
+      {import.meta.env.DEV && <DevRoleSwitcher />}
     </div>
   );
 }
