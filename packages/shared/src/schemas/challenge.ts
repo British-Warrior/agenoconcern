@@ -5,11 +5,11 @@ export const createChallengeSchema = z.object({
   title: z.string().min(5).max(200),
   description: z.string().min(20).max(5000),
   brief: z.string().min(10).max(500),
-  domain: z.enum(DOMAIN_TAXONOMY),
+  domain: z.array(z.string().max(100)).min(1, "At least one domain is required"),
   skillsNeeded: z.array(z.string().max(100)).max(20).default([]),
   type: z.enum(["paid", "free"] as const),
   deadline: z.string().date().optional(),
-  circleSize: z.number().int().min(2).max(10).default(4),
+  circleSize: z.number().int().min(1).default(4),
 });
 
 export type CreateChallengeInput = z.infer<typeof createChallengeSchema>;

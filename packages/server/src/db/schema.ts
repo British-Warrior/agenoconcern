@@ -178,7 +178,7 @@ export const challenges = pgTable("challenges", {
   title: text("title").notNull(),
   description: text("description").notNull(),
   brief: text("brief").notNull(),
-  domain: text("domain").notNull(),
+  domain: jsonb("domain").$type<string[]>().notNull().default([]),
   skillsNeeded: jsonb("skills_needed").$type<string[]>().notNull().default([]),
   type: challengeTypeEnum("type").notNull(),
   deadline: date("deadline"),

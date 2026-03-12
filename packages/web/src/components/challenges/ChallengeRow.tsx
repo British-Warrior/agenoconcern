@@ -100,7 +100,16 @@ export function ChallengeRow({ challenge }: ChallengeRowProps) {
                 <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
                   Domain
                 </span>
-                <p className="text-sm text-neutral-700 mt-1">{challenge.domain}</p>
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {challenge.domain.map((d) => (
+                    <span
+                      key={d}
+                      className="inline-block px-2 py-0.5 bg-accent-50 text-accent-700 text-xs rounded-full border border-accent-200"
+                    >
+                      {d}
+                    </span>
+                  ))}
+                </div>
               </div>
               {challenge.skillsNeeded.length > 0 && (
                 <div>

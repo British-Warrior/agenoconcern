@@ -19,16 +19,15 @@ export function scoreContributorForChallenge(
   contributorSkills: string[],
   contributorDomains: string[],
   challengeSkills: string[],
-  challengeDomain: string,
+  challengeDomains: string[],
 ): number {
   const skillSet = new Set(contributorSkills.map((s) => s.toLowerCase()));
   const skillMatches = challengeSkills.filter((s) => skillSet.has(s.toLowerCase())).length;
   const skillScore =
     challengeSkills.length > 0 ? Math.round((skillMatches / challengeSkills.length) * 70) : 0;
 
-  const domainMatch = contributorDomains
-    .map((d) => d.toLowerCase())
-    .includes(challengeDomain.toLowerCase())
+  const contribDomainSet = new Set(contributorDomains.map((d) => d.toLowerCase()));
+  const domainMatch = challengeDomains.some((d) => contribDomainSet.has(d.toLowerCase()))
     ? 30
     : 0;
 

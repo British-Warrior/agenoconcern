@@ -27,7 +27,7 @@ function validateForm(values: {
   title: string;
   description: string;
   brief: string;
-  domain: string;
+  domain: string[];
   type: string;
   skillsNeeded: string[];
   circleSize: number;
@@ -44,13 +44,13 @@ function validateForm(values: {
   if (values.brief.length < 10) errors.brief = "Brief must be at least 10 characters.";
   else if (values.brief.length > 500) errors.brief = "Brief must be 500 characters or fewer.";
 
-  if (!values.domain) errors.domain = "Please select a domain.";
+  if (values.domain.length === 0) errors.domain = "At least one domain is required.";
 
   if (!values.type) errors.type = "Please select a type.";
 
   if (values.skillsNeeded.length > 20) errors.skillsNeeded = "Maximum 20 skills allowed.";
 
-  if (values.circleSize < 2 || values.circleSize > 10) errors.circleSize = "Circle size must be between 2 and 10.";
+  if (values.circleSize < 1) errors.circleSize = "Circle size must be at least 1.";
 
   if (values.deadline) {
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -74,7 +74,8 @@ export function ChallengeForm({
   const [title, setTitle] = useState(initialValues?.title ?? "");
   const [description, setDescription] = useState(initialValues?.description ?? "");
   const [brief, setBrief] = useState(initialValues?.brief ?? "");
-  const [domain, setDomain] = useState(initialValues?.domain ?? "");
+  const [domain, setDomain] = useState<string[]>(initialValues?.domain ?? []);
+  const [customDomain, setCustomDomain] = useState("");
   const [skillsNeeded, setSkillsNeeded] = useState<string[]>(
     initialValues?.skillsNeeded ?? [],
   );
@@ -82,8 +83,25 @@ export function ChallengeForm({
   const [type, setType] = useState<"paid" | "free">(initialValues?.type ?? "free");
   const [deadline, setDeadline] = useState(initialValues?.deadline ?? "");
   const [circleSize, setCircleSize] = useState(initialValues?.circleSize ?? 4);
+  const [circleSizeConfirmed, setCircleSizeConfirmed] = useState(false);
   const [touched, setTouched] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+
+  const toggleDomain = useCallback((d: string) => {
+    setDomain((prev) =>
+      prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d],
+    );
+  }, []);
+
+  const addCustomDomain = useCallback(() => {
+    const trimmed = customDomain.trim();
+    if (!trimmed || domain.includes(trimmed)) {
+      setCustomDomain("");
+      return;
+    }
+    setDomain((prev) => [...prev, trimmed]);
+    setCustomDomain("");
+  }, [customDomain, domain]);
 
   const addSkill = useCallback(() => {
     const trimmed = skillInput.trim();
@@ -111,9 +129,24 @@ export function ChallengeForm({
     [addSkill],
   );
 
+  const handleCustomDomainKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addCustomDomain();
+      }
+    },
+    [addCustomDomain],
+  );
+
+  const circleSizeOutOfRange = circleSize < 2 || circleSize > 10;
+  const needsCircleSizeConfirm = circleSizeOutOfRange && !circleSizeConfirmed;
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setTouched(true);
+
+    if (needsCircleSizeConfirm) return;
 
     const formErrors = validateForm({
       title,
@@ -133,7 +166,7 @@ export function ChallengeForm({
       title,
       description,
       brief,
-      domain: domain as typeof DOMAIN_TAXONOMY[number],
+      domain,
       skillsNeeded,
       type,
       deadline: deadline || undefined,
@@ -225,25 +258,76 @@ export function ChallengeForm({
         <p className="mt-1 text-xs text-neutral-400">{description.length}/5000</p>
       </div>
 
-      {/* Domain */}
+      {/* Domain — checkbox list + custom input */}
       <div>
-        <label htmlFor="cf-domain" className={labelClass}>
+        <p className={labelClass}>
           Domain <span className="text-error">*</span>
-        </label>
-        <select
-          id="cf-domain"
-          value={domain}
-          onChange={(e) => setDomain(e.target.value)}
-          disabled={isLocked || isPending}
-          className={fieldClass(touched && !!errors.domain)}
-        >
-          <option value="">Select a domain</option>
+        </p>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3">
           {DOMAIN_TAXONOMY.map((d) => (
-            <option key={d} value={d}>
+            <label
+              key={d}
+              className={`flex items-center gap-2 text-sm cursor-pointer ${isLocked || isPending ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              <input
+                type="checkbox"
+                checked={domain.includes(d)}
+                onChange={() => toggleDomain(d)}
+                disabled={isLocked || isPending}
+                className="accent-primary-600 rounded"
+              />
               {d}
-            </option>
+            </label>
           ))}
-        </select>
+        </div>
+        {/* Custom domain input */}
+        {!isLocked && (
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={customDomain}
+              onChange={(e) => setCustomDomain(e.target.value)}
+              onKeyDown={handleCustomDomainKeyDown}
+              disabled={isPending}
+              placeholder="Add a custom domain"
+              className="flex-1 rounded-[var(--radius-md)] border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 disabled:opacity-50"
+            />
+            <button
+              type="button"
+              onClick={addCustomDomain}
+              disabled={!customDomain.trim() || isPending}
+              className="px-3 py-2 rounded-[var(--radius-md)] bg-primary-600 text-white text-sm font-medium hover:bg-primary-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
+            >
+              Add
+            </button>
+          </div>
+        )}
+        {/* Show selected custom domains (ones not in DOMAIN_TAXONOMY) */}
+        {domain.filter((d) => !DOMAIN_TAXONOMY.includes(d as typeof DOMAIN_TAXONOMY[number])).length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {domain
+              .filter((d) => !DOMAIN_TAXONOMY.includes(d as typeof DOMAIN_TAXONOMY[number]))
+              .map((d) => (
+                <span
+                  key={d}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-accent-50 border border-accent-200 text-xs text-accent-700"
+                >
+                  {d}
+                  {!isLocked && (
+                    <button
+                      type="button"
+                      onClick={() => setDomain((prev) => prev.filter((x) => x !== d))}
+                      disabled={isPending}
+                      aria-label={`Remove ${d}`}
+                      className="ml-0.5 text-accent-400 hover:text-accent-700 transition-colors duration-100"
+                    >
+                      &times;
+                    </button>
+                  )}
+                </span>
+              ))}
+          </div>
+        )}
         {touched && errors.domain && <p className={errorClass}>{errors.domain}</p>}
       </div>
 
@@ -331,22 +415,44 @@ export function ChallengeForm({
         {touched && errors.type && <p className={errorClass}>{errors.type}</p>}
       </div>
 
-      {/* Circle size */}
+      {/* Circle size — soft guideline */}
       <div>
         <label htmlFor="cf-circleSize" className={labelClass}>
           Circle size{" "}
-          <span className="text-neutral-400 font-normal">(team size, 2–10)</span>
+          <span className="text-neutral-400 font-normal">(recommended 2–10)</span>
         </label>
         <input
           id="cf-circleSize"
           type="number"
-          min={2}
-          max={10}
+          min={1}
           value={circleSize}
-          onChange={(e) => setCircleSize(Number(e.target.value))}
+          onChange={(e) => {
+            setCircleSize(Number(e.target.value));
+            setCircleSizeConfirmed(false);
+          }}
           disabled={isLocked || isPending}
           className={`w-24 ${fieldClass(touched && !!errors.circleSize)}`}
         />
+        {circleSizeOutOfRange && (
+          <div className="mt-2 rounded-[var(--radius-md)] bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800">
+            <p>
+              {circleSize < 2
+                ? "A Circle with fewer than 2 people limits collaboration."
+                : `A Circle of ${circleSize} is larger than the recommended maximum of 10.`}
+            </p>
+            {!circleSizeConfirmed ? (
+              <button
+                type="button"
+                onClick={() => setCircleSizeConfirmed(true)}
+                className="mt-1 text-sm font-medium text-amber-900 underline hover:text-amber-700"
+              >
+                Yes, I'm sure
+              </button>
+            ) : (
+              <p className="mt-1 text-xs text-amber-600">Confirmed.</p>
+            )}
+          </div>
+        )}
         {touched && errors.circleSize && (
           <p className={errorClass}>{errors.circleSize}</p>
         )}
@@ -371,6 +477,9 @@ export function ChallengeForm({
         )}
       </div>
 
+      {/* Value — what the completed challenge is worth */}
+      {/* TODO: Add value/compensation field in Phase 5 when payments are implemented */}
+
       {/* Actions */}
       <div className="flex justify-end gap-3 pt-2">
         {onCancel && (
@@ -386,7 +495,7 @@ export function ChallengeForm({
         {!isLocked && (
           <button
             type="submit"
-            disabled={isPending}
+            disabled={isPending || needsCircleSizeConfirm}
             className="px-4 py-2 rounded-[var(--radius-md)] bg-primary-600 text-white text-sm font-semibold hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
           >
             {isPending

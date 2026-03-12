@@ -8,7 +8,7 @@ export interface Challenge {
   title: string;
   description: string;
   brief: string;
-  domain: string;
+  domain: string[];
   skillsNeeded: string[];
   type: ChallengeType;
   deadline: string | null;

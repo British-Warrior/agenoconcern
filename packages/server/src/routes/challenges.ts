@@ -44,7 +44,7 @@ router.get("/", authMiddleware, async (req, res) => {
 
   // Build WHERE conditions
   const conditions = [eq(challenges.status, "open")];
-  if (domain) conditions.push(eq(challenges.domain, domain));
+  if (domain) conditions.push(sql`${challenges.domain} @> ${JSON.stringify([domain])}::jsonb`);
   if (type === "paid" || type === "free") conditions.push(eq(challenges.type, type));
 
   // Fetch all matching challenges (TypeScript scoring — avoids JSONB array operator bug)
