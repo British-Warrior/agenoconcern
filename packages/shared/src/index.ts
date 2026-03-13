@@ -76,3 +76,44 @@ export type {
   UpdateChallengeInput,
   InterestNoteInput,
 } from "./schemas/challenge.js";
+
+// Circle types
+export type {
+  CircleStatus,
+  SocialChannel,
+  Circle,
+  CircleMember,
+  CircleNote,
+  NoteAttachment,
+  CircleResolution,
+  ResolutionRating,
+  CircleMemberWithName,
+  CircleNoteWithAuthorAndAttachments,
+  CircleWorkspaceResponse,
+  CircleListItem,
+  CreateCircleInput,
+  PostNoteInput,
+  SubmitResolutionInput,
+  RateResolutionInput,
+  SetSocialChannelInput,
+} from "./types/circle.js";
+
+// Circle schemas
+export {
+  attachmentSchema,
+  attachmentUrlSchema,
+  createCircleSchema,
+  postNoteSchema,
+  submitResolutionSchema,
+  rateResolutionSchema,
+  setSocialChannelSchema,
+} from "./schemas/circle.js";
+export type {
+  AttachmentInput,
+  AttachmentUrlInput,
+  CreateCircleInput as CreateCircleSchemaInput,
+  PostNoteInput as PostNoteSchemaInput,
+  SubmitResolutionInput as SubmitResolutionSchemaInput,
+  RateResolutionInput as RateResolutionSchemaInput,
+  SetSocialChannelInput as SetSocialChannelSchemaInput,
+} from "./schemas/circle.js";

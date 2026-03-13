@@ -210,6 +210,122 @@ export const challengeInterests = pgTable(
   (table) => [unique("challenge_interests_unique").on(table.challengeId, table.contributorId)],
 );
 
+// Circle enums
+export const circleStatusEnum = pgEnum("circle_status", [
+  "forming",
+  "active",
+  "submitted",
+  "completed",
+  "dissolved",
+]);
+
+export const socialChannelEnum = pgEnum("social_channel", [
+  "whatsapp",
+  "slack",
+  "discord",
+  "teams",
+  "signal",
+]);
+
+// Circles
+export const circles = pgTable("circles", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  challengeId: uuid("challenge_id")
+    .notNull()
+    .references(() => challenges.id, { onDelete: "restrict" }),
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => contributors.id, { onDelete: "restrict" }),
+  status: circleStatusEnum("status").notNull().default("forming"),
+  socialChannel: socialChannelEnum("social_channel"),
+  socialChannelUrl: text("social_channel_url"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Circle members
+export const circleMembers = pgTable(
+  "circle_members",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    circleId: uuid("circle_id")
+      .notNull()
+      .references(() => circles.id, { onDelete: "cascade" }),
+    contributorId: uuid("contributor_id")
+      .notNull()
+      .references(() => contributors.id, { onDelete: "restrict" }),
+    joinedAt: timestamp("joined_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [unique("circle_members_unique").on(table.circleId, table.contributorId)],
+);
+
+// Circle notes
+export const circleNotes = pgTable("circle_notes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  circleId: uuid("circle_id")
+    .notNull()
+    .references(() => circles.id, { onDelete: "cascade" }),
+  authorId: uuid("author_id")
+    .notNull()
+    .references(() => contributors.id, { onDelete: "restrict" }),
+  body: text("body").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Note attachments
+export const noteAttachments = pgTable("note_attachments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  noteId: uuid("note_id")
+    .notNull()
+    .references(() => circleNotes.id, { onDelete: "cascade" }),
+  s3Key: text("s3_key").notNull(),
+  fileName: text("file_name").notNull(),
+  mimeType: varchar("mime_type", { length: 100 }).notNull(),
+  fileSizeBytes: integer("file_size_bytes").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Circle resolutions
+export const circleResolutions = pgTable(
+  "circle_resolutions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    circleId: uuid("circle_id")
+      .notNull()
+      .references(() => circles.id, { onDelete: "cascade" }),
+    submittedBy: uuid("submitted_by")
+      .notNull()
+      .references(() => contributors.id, { onDelete: "restrict" }),
+    problemSummary: text("problem_summary").notNull(),
+    recommendations: text("recommendations").notNull(),
+    evidence: text("evidence").notNull(),
+    dissentingViews: text("dissenting_views"),
+    implementationNotes: text("implementation_notes"),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [unique("circle_resolutions_unique_circle").on(table.circleId)],
+);
+
+// Resolution ratings
+export const resolutionRatings = pgTable(
+  "resolution_ratings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    resolutionId: uuid("resolution_id")
+      .notNull()
+      .references(() => circleResolutions.id, { onDelete: "cascade" }),
+    raterId: uuid("rater_id")
+      .notNull()
+      .references(() => contributors.id, { onDelete: "restrict" }),
+    rating: smallint("rating").notNull(),
+    feedback: text("feedback"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [unique("resolution_ratings_unique_resolution").on(table.resolutionId)],
+);
+
 // Consent records
 export const consentRecords = pgTable("consent_records", {
   id: uuid("id").primaryKey().defaultRandom(),
