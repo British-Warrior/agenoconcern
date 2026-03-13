@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income -- bridging the pension gap while contributing to communities.
-**Current focus:** Phase 5 In Progress — Plan 1 complete
+**Current focus:** Phase 5 In Progress — Plan 2 complete
 
 ## Current Position
 
 Phase: 5 of 6 (Payments and Impact) — In progress
-Plan: 1 of 3 in phase 5 complete
-Status: In progress — 05-01 (schema, types, Stripe service) complete; 05-02 (payment routes) next
-Last activity: 2026-03-13 -- Completed 05-01: paymentTransactions/contributorHours tables, Stripe service (subscriptions + stipend transfer), shared types/schemas.
+Plan: 2 of 3 in phase 5 complete
+Status: In progress — 05-02 (payment routes, impact routes, webhook wiring) complete; 05-03 (frontend) next
+Last activity: 2026-03-13 -- Completed 05-02: payment API routes, webhook handler with signature verification, impact summary and challenger endpoints, express-app.ts webhook ordering.
 
-Progress: [████████████████████████████░░] 14/16 plans (phases 1-4 complete, 05-01 done)
+Progress: [█████████████████████████████░░] 15/16 plans (phases 1-4 complete, 05-01 and 05-02 done)
 
 ## Performance Metrics
 
@@ -108,6 +108,8 @@ Recent decisions affecting current work:
 - [05-01]: source_transaction in Transfer uses ch_... Charge ID (latest_charge), NOT pi_... PaymentIntent ID
 - [05-01]: stripeEventId unique constraint enforces webhook idempotency at DB level
 - [05-01]: wellbeingTrajectory typed as never[] in ImpactSummary — placeholder for Phase 6
+- [05-02]: stipend route extracts contributorId from body (not in chargeStipendSchema) — paymentTransactions NOT NULL requires it
+- [05-02]: webhookHandler exported separately from router — must be registered at app level with express.raw() before express.json()
 
 ### Pending Todos
 
@@ -122,5 +124,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-13
-Stopped at: 05-01 complete — DB schema, Stripe service, shared types done
-Resume file: .planning/phases/05-payments-and-impact/05-02-PLAN.md
+Stopped at: 05-02 complete — payment routes, impact routes, webhook wiring done
+Resume file: .planning/phases/05-payments-and-impact/05-03-PLAN.md
