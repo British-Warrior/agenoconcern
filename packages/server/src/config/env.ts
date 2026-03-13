@@ -46,6 +46,7 @@ const envSchema = z.object({
 
   // Stripe - Connect
   STRIPE_SECRET_KEY: z.string().default(""),
+  STRIPE_WEBHOOK_SECRET: z.string().default(""),
 });
 
 export type Env = z.infer<typeof envSchema>;

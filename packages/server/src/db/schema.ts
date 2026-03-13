@@ -185,6 +185,7 @@ export const challenges = pgTable("challenges", {
   circleSize: smallint("circle_size").notNull().default(4),
   status: challengeStatusEnum("status").notNull().default("open"),
   interestCount: integer("interest_count").notNull().default(0),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
@@ -340,3 +341,64 @@ export const consentRecords = pgTable("consent_records", {
   grantedAt: timestamp("granted_at", { withTimezone: true }).defaultNow().notNull(),
   withdrawnAt: timestamp("withdrawn_at", { withTimezone: true }),
 });
+
+// Payment enums
+export const paymentTypeEnum = pgEnum("payment_type", [
+  "retainer",
+  "stipend",
+  "sme_subscription",
+]);
+
+export const paymentStatusEnum = pgEnum("payment_status", [
+  "held",
+  "transferred",
+  "failed",
+  "refunded",
+]);
+
+// Payment transactions
+export const paymentTransactions = pgTable("payment_transactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  contributorId: uuid("contributor_id")
+    .notNull()
+    .references(() => contributors.id, { onDelete: "restrict" }),
+  challengeId: uuid("challenge_id")
+    .references(() => challenges.id, { onDelete: "restrict" }),
+  circleId: uuid("circle_id")
+    .references(() => circles.id, { onDelete: "restrict" }),
+  paymentType: paymentTypeEnum("payment_type").notNull(),
+  status: paymentStatusEnum("status").notNull().default("held"),
+  amountPence: integer("amount_pence").notNull(),
+  totalAmountPence: integer("total_amount_pence").notNull(),
+  currency: varchar("currency", { length: 3 }).notNull().default("gbp"),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }),
+  stripeChargeId: varchar("stripe_charge_id", { length: 255 }),
+  stripeTransferId: varchar("stripe_transfer_id", { length: 255 }),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
+  stripeEventId: varchar("stripe_event_id", { length: 255 }).unique(),
+  transferredAt: timestamp("transferred_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Contributor hours
+export const contributorHours = pgTable(
+  "contributor_hours",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    contributorId: uuid("contributor_id")
+      .notNull()
+      .references(() => contributors.id, { onDelete: "restrict" }),
+    circleId: uuid("circle_id")
+      .notNull()
+      .references(() => circles.id, { onDelete: "restrict" }),
+    hoursLogged: smallint("hours_logged").notNull(),
+    description: text("description"),
+    isPaid: boolean("is_paid").notNull().default(false),
+    loggedAt: timestamp("logged_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    unique("contributor_hours_unique").on(table.contributorId, table.circleId, table.loggedAt),
+  ],
+);

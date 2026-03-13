@@ -117,3 +117,36 @@ export type {
   RateResolutionInput as RateResolutionSchemaInput,
   SetSocialChannelInput as SetSocialChannelSchemaInput,
 } from "./schemas/circle.js";
+
+// Payment types
+export type {
+  PaymentType,
+  PaymentStatus,
+  PaymentTransaction,
+  ContributorHours,
+} from "./types/payments.js";
+
+// Payment schemas
+export {
+  createRetainerSchema,
+  chargeStipendSchema,
+  createSmeSubscriptionSchema,
+  logHoursSchema,
+  releaseStipendSchema,
+} from "./schemas/payments.js";
+export type {
+  CreateRetainerInput,
+  ChargeStipendInput,
+  CreateSmeSubscriptionInput,
+  LogHoursInput,
+  ReleaseStipendInput,
+} from "./schemas/payments.js";
+
+// Impact types
+export type {
+  ImpactChallenge,
+  ImpactEarning,
+  ImpactSummary,
+  ChallengerChallenge,
+  ChallengerImpact,
+} from "./types/impact.js";
