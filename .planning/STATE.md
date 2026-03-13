@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income -- bridging the pension gap while contributing to communities.
-**Current focus:** Phase 4 COMPLETE — ready for Phase 5
+**Current focus:** Phase 5 In Progress — Plan 1 complete
 
 ## Current Position
 
-Phase: 4 of 6 (Circles and Collaboration) — COMPLETE
-Plan: 3 of 3 in phase 4 (all complete, human verified)
-Status: Phase 4 complete — ready for Phase 5
-Last activity: 2026-03-13 -- Phase 4 complete. Human verification passed. Gap fix applied (notes pagination cursor).
+Phase: 5 of 6 (Payments and Impact) — In progress
+Plan: 1 of 3 in phase 5 complete
+Status: In progress — 05-01 (schema, types, Stripe service) complete; 05-02 (payment routes) next
+Last activity: 2026-03-13 -- Completed 05-01: paymentTransactions/contributorHours tables, Stripe service (subscriptions + stipend transfer), shared types/schemas.
 
-Progress: [███████████████████████████░░░] 13/16 plans (phases 1-4 complete)
+Progress: [████████████████████████████░░] 14/16 plans (phases 1-4 complete, 05-01 done)
 
 ## Performance Metrics
 
@@ -104,6 +104,10 @@ Recent decisions affecting current work:
 - [04-verify]: Notes pagination returns nextCursor (ISO timestamp) instead of hasMore — matches frontend cursor-based infinite query
 - [04-verify]: ScorePill removed erroneous *100 — matching service already returns 0-100 integers
 - [04-verify]: getMyCircles unwraps { circles: [...] } response envelope
+- [05-01]: No capture_method=manual for stipends — immediate capture, Transfer deferred to resolution approval
+- [05-01]: source_transaction in Transfer uses ch_... Charge ID (latest_charge), NOT pi_... PaymentIntent ID
+- [05-01]: stripeEventId unique constraint enforces webhook idempotency at DB level
+- [05-01]: wellbeingTrajectory typed as never[] in ImpactSummary — placeholder for Phase 6
 
 ### Pending Todos
 
@@ -118,5 +122,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-13
-Stopped at: Phase 4 COMPLETE (3/3 plans done, human verified) — Circle formation, workspace, notes, social channels, resolution, rating, add member
-Resume file: .planning/phases/05-payments-and-impact/05-01-PLAN.md
+Stopped at: 05-01 complete — DB schema, Stripe service, shared types done
+Resume file: .planning/phases/05-payments-and-impact/05-02-PLAN.md
