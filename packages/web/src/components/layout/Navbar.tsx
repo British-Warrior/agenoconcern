@@ -37,6 +37,12 @@ export function Navbar() {
             >
               My Circles
             </Link>
+            <Link
+              to="/impact"
+              className="text-sm font-medium text-neutral-700 hover:text-primary-800 transition-colors no-underline"
+            >
+              My Impact
+            </Link>
             <span className="text-base text-neutral-700">
               {contributor?.name}
             </span>
