@@ -6,6 +6,7 @@ import { errorHandler } from "./middleware/error-handler.js";
 import { authRoutes } from "./routes/auth.js";
 import { onboardingRoutes } from "./routes/onboarding.js";
 import { challengeRoutes } from "./routes/challenges.js";
+import { circleRoutes } from "./routes/circles.js";
 
 const app = express();
 
@@ -36,6 +37,9 @@ app.use("/api/onboarding", onboardingRoutes);
 
 // Challenge routes
 app.use("/api/challenges", challengeRoutes);
+
+// Circle routes
+app.use("/api/circles", circleRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);

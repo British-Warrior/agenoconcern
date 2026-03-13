@@ -47,6 +47,28 @@ export async function generateUploadUrl(
 }
 
 /**
+ * Generate a presigned GET URL for downloading an S3 object.
+ * Returns the download URL valid for expiresIn seconds (default 300).
+ */
+export async function generateDownloadUrl(
+  s3Key: string,
+  expiresIn = 300,
+): Promise<string> {
+  const env = getEnv();
+  if (!env.S3_BUCKET) {
+    throw new Error("S3 not configured: S3_BUCKET is required");
+  }
+
+  const client = getS3Client();
+  const command = new GetObjectCommand({
+    Bucket: env.S3_BUCKET,
+    Key: s3Key,
+  });
+
+  return getSignedUrl(client, command, { expiresIn });
+}
+
+/**
  * Download an S3 object and return its contents as a Buffer.
  */
 export async function getObjectBuffer(s3Key: string): Promise<Buffer> {
