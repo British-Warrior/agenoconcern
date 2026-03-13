@@ -1,9 +1,11 @@
 import { useState } from "react";
 import type { TeamComposition } from "@agenoconcern/shared";
+import { CircleFormationModal } from "../circles/CircleFormationModal.js";
 
 interface TeamCompositionCardProps {
   composition: TeamComposition;
   index: number;
+  challengeId: string;
 }
 
 const LABELS: Record<number, { title: string; subtitle: string }> = {
@@ -30,8 +32,9 @@ function ScorePill({
   );
 }
 
-export function TeamCompositionCard({ composition, index }: TeamCompositionCardProps) {
+export function TeamCompositionCard({ composition, index, challengeId }: TeamCompositionCardProps) {
   const [selected, setSelected] = useState(false);
+  const [showFormationModal, setShowFormationModal] = useState(false);
 
   const label = LABELS[index] ?? {
     title: `Composition ${index + 1}`,
@@ -127,6 +130,26 @@ export function TeamCompositionCard({ composition, index }: TeamCompositionCardP
       >
         {selected ? "Selected" : "Select this team"}
       </button>
+
+      {/* Form Circle button — visible only after team is selected */}
+      {selected && (
+        <button
+          type="button"
+          onClick={() => setShowFormationModal(true)}
+          className="w-full mt-2 py-2 rounded-[var(--radius-md)] text-sm font-medium bg-violet-600 text-white hover:bg-violet-500 transition-colors duration-150"
+        >
+          Form Circle
+        </button>
+      )}
+
+      {/* Circle Formation Modal */}
+      <CircleFormationModal
+        isOpen={showFormationModal}
+        onClose={() => setShowFormationModal(false)}
+        challengeId={challengeId}
+        memberIds={composition.contributors.map((c) => c.id)}
+        memberNames={composition.contributors.map((c) => c.name)}
+      />
     </div>
   );
 }

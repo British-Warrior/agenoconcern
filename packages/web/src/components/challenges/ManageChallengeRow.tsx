@@ -180,7 +180,7 @@ export function ManageChallengeRow({ challenge, onEdit }: ManageChallengeRowProp
           {suggestionsData && suggestionsData.compositions.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {suggestionsData.compositions.map((composition, i) => (
-                <TeamCompositionCard key={i} composition={composition} index={i} />
+                <TeamCompositionCard key={i} composition={composition} index={i} challengeId={challenge.id} />
               ))}
             </div>
           )}
