@@ -60,6 +60,17 @@ async function isChallenger(
   return row?.createdBy === contributorId;
 }
 
+async function canAccessCircle(
+  circleId: string,
+  contributorId: string,
+  db: ReturnType<typeof getDb>,
+): Promise<boolean> {
+  return (
+    (await isCircleMember(circleId, contributorId, db)) ||
+    (await isChallenger(circleId, contributorId, db))
+  );
+}
+
 function getS3ClientForCircles(): S3Client {
   const env = getEnv();
   if (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY || !env.S3_BUCKET) {
@@ -186,8 +197,8 @@ router.get("/:id", authMiddleware, async (req, res) => {
   const contributorId = req.contributor!.id;
   const db = getDb();
 
-  const member = await isCircleMember(circleId, contributorId, db);
-  if (!member) {
+  const hasAccess = await canAccessCircle(circleId, contributorId, db);
+  if (!hasAccess) {
     res.status(403).json({ error: "Not a member of this circle" });
     return;
   }
@@ -352,8 +363,8 @@ router.get("/:id/notes", authMiddleware, async (req, res) => {
   const contributorId = req.contributor!.id;
   const db = getDb();
 
-  const member = await isCircleMember(circleId, contributorId, db);
-  if (!member) {
+  const hasAccess = await canAccessCircle(circleId, contributorId, db);
+  if (!hasAccess) {
     res.status(403).json({ error: "Not a member of this circle" });
     return;
   }
@@ -454,8 +465,8 @@ router.get("/:id/notes/:noteId/download/:attachmentId", authMiddleware, async (r
   const contributorId = req.contributor!.id;
   const db = getDb();
 
-  const member = await isCircleMember(circleId, contributorId, db);
-  if (!member) {
+  const hasAccess = await canAccessCircle(circleId, contributorId, db);
+  if (!hasAccess) {
     res.status(403).json({ error: "Not a member of this circle" });
     return;
   }
@@ -609,10 +620,8 @@ router.get("/:id/resolution", authMiddleware, async (req, res) => {
   const contributorId = req.contributor!.id;
   const db = getDb();
 
-  const member = await isCircleMember(circleId, contributorId, db);
-  const challenger = await isChallenger(circleId, contributorId, db);
-
-  if (!member && !challenger) {
+  const hasAccess = await canAccessCircle(circleId, contributorId, db);
+  if (!hasAccess) {
     res.status(403).json({ error: "Access denied" });
     return;
   }

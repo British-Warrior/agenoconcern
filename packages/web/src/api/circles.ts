@@ -38,8 +38,9 @@ export function createCircle(data: CreateCircleInput): Promise<Circle> {
   });
 }
 
-export function getMyCircles(): Promise<CircleListItem[]> {
-  return apiClient<CircleListItem[]>("/api/circles");
+export async function getMyCircles(): Promise<CircleListItem[]> {
+  const res = await apiClient<{ circles: CircleListItem[] }>("/api/circles");
+  return res.circles;
 }
 
 export function getCircleWorkspace(circleId: string): Promise<CircleWorkspaceResponse> {

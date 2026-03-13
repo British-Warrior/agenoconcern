@@ -23,7 +23,7 @@ function ScorePill({
   value: number;
   color: string;
 }) {
-  const pct = Math.round(value * 100);
+  const pct = Math.round(value);
   return (
     <div className="flex flex-col items-center gap-0.5">
       <span className={`text-xs font-semibold ${color}`}>{pct}%</span>
