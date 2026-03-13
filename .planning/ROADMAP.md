@@ -85,11 +85,12 @@ Plans:
   3. Circle members can set/change external social channel link (WhatsApp, Slack, Discord, Teams, Signal) and links launch correctly
   4. Circle can submit a structured resolution; challenger can rate it and provide feedback
   5. Contributors can participate in multiple Circles simultaneously and new members can join mid-challenge
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: Circle formation, workspace UI, notes feed with attachments
-- [ ] 04-02: Social channel links, resolution submission, challenger feedback, multi-Circle participation
+- [ ] 04-01-PLAN.md — Backend: DB schema (6 tables), shared types/schemas, Circle API routes, S3 download URL
+- [ ] 04-02-PLAN.md — Frontend: Circle formation modal, workspace UI, notes feed with attachments, My Circles list
+- [ ] 04-03-PLAN.md — Frontend: Social channel editor, resolution form, challenger rating, add member modal + human verification
 
 ### Phase 5: Payments and Impact
 **Goal**: Contributors earn income through the platform and can see the full picture of their paid and unpaid contributions
@@ -134,6 +135,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 1. Foundation and Auth | 4/4 | ✓ Complete | 2026-03-10 |
 | 2. Onboarding and Profiles | 3/3 | ✓ Complete | 2026-03-11 |
 | 3. Challenges and Matching | 3/3 | ✓ Complete | 2026-03-12 |
-| 4. Circles and Collaboration | 0/2 | Not started | - |
+| 4. Circles and Collaboration | 0/3 | Not started | - |
 | 5. Payments and Impact | 0/2 | Not started | - |
 | 6. Wellbeing, Notifications, and PWA | 0/3 | Not started | - |
