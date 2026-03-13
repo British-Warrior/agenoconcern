@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income -- bridging the pension gap while contributing to communities.
-**Current focus:** Phase 4: Circles and Collaboration
+**Current focus:** Phase 4 COMPLETE — ready for Phase 5
 
 ## Current Position
 
-Phase: 4 of 6 (Circles and Collaboration) — In progress
-Plan: 3 of 3 in phase 4 (04-03 auto task complete, awaiting human verification checkpoint)
-Status: Checkpoint — awaiting human verification
-Last activity: 2026-03-13 -- Completed 04-03 Task 1 (social channel editor, resolution form, rating card, add member modal); awaiting checkpoint verification
+Phase: 4 of 6 (Circles and Collaboration) — COMPLETE
+Plan: 3 of 3 in phase 4 (all complete, human verified)
+Status: Phase 4 complete — ready for Phase 5
+Last activity: 2026-03-13 -- Phase 4 complete. Human verification passed. Gap fix applied (notes pagination cursor).
 
-Progress: [██████████████████████████████] 13/16 plans auto tasks complete (04-03 checkpoint pending)
+Progress: [███████████████████████████░░░] 13/16 plans (phases 1-4 complete)
 
 ## Performance Metrics
 
@@ -30,7 +30,7 @@ Progress: [███████████████████████
 | 01-foundation-and-auth | 4/4 | 31 min | 8 min |
 | 02-onboarding-and-profiles | 3/3 | 14 min | 5 min |
 | 03-challenges-and-matching | 3/3 | ~115 min | ~38 min |
-| 04-circles-and-collaboration | 1/3 | 14 min | 14 min |
+| 04-circles-and-collaboration | 3/3 | ~38 min | ~13 min |
 
 **Recent Trend:**
 - Last 5 plans: 02-02 (4 min), 02-03 (5 min), 03-01 (25 min), 03-03 (~60 min), 04-01 (14 min)
@@ -100,6 +100,10 @@ Recent decisions affecting current work:
 - [04-03]: getResolution API response type corrected to { resolution, rating } — server always returns both fields together
 - [04-03]: useResolution configured with retry: false on 404 — missing resolution is normal state, not an error
 - [04-03]: ResolutionCard edit button shown to circle members only (not challenger) when status is active or submitted
+- [04-verify]: canAccessCircle helper — challenger (challenge creator) can view workspace, notes, attachments, resolution (read-only) but cannot post notes or submit resolutions
+- [04-verify]: Notes pagination returns nextCursor (ISO timestamp) instead of hasMore — matches frontend cursor-based infinite query
+- [04-verify]: ScorePill removed erroneous *100 — matching service already returns 0-100 integers
+- [04-verify]: getMyCircles unwraps { circles: [...] } response envelope
 
 ### Pending Todos
 
@@ -114,5 +118,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-13
-Stopped at: Phase 4, Plan 3 CHECKPOINT — Task 1 complete, awaiting human verification of full Circle collaboration workflow
-Resume file: .planning/phases/04-circles-and-collaboration/04-03-PLAN.md (Task 2 checkpoint — resume after user approves)
+Stopped at: Phase 4 COMPLETE (3/3 plans done, human verified) — Circle formation, workspace, notes, social channels, resolution, rating, add member
+Resume file: .planning/phases/05-payments-and-impact/05-01-PLAN.md
