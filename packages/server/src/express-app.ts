@@ -7,6 +7,8 @@ import { authRoutes } from "./routes/auth.js";
 import { onboardingRoutes } from "./routes/onboarding.js";
 import { challengeRoutes } from "./routes/challenges.js";
 import { circleRoutes } from "./routes/circles.js";
+import { webhookHandler, paymentRoutes } from "./routes/payments.js";
+import { impactRoutes } from "./routes/impact.js";
 
 const app = express();
 
@@ -20,6 +22,9 @@ app.use(
 
 // Cookie parsing
 app.use(cookieParser());
+
+// Stripe webhook — must use raw body for signature verification (BEFORE express.json())
+app.post("/api/payments/webhook", express.raw({ type: "application/json" }), webhookHandler);
 
 // JSON body parsing
 app.use(express.json());
@@ -40,6 +45,12 @@ app.use("/api/challenges", challengeRoutes);
 
 // Circle routes
 app.use("/api/circles", circleRoutes);
+
+// Payment routes
+app.use("/api/payments", paymentRoutes);
+
+// Impact routes
+app.use("/api/impact", impactRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
