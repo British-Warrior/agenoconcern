@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income -- bridging the pension gap while contributing to communities.
-**Current focus:** Phase 3: Challenges and Matching
+**Current focus:** Phase 4: Circles and Collaboration
 
 ## Current Position
 
-Phase: 3 of 6 (Challenges and Matching) — COMPLETE
-Plan: 3 of 3 in phase 3 (all complete)
-Status: Phase 3 complete — ready for Phase 4
-Last activity: 2026-03-12 -- Completed 03-03-PLAN.md (CM admin form, manage tab, team compositions, role toggle, dev role switcher, multi-domain)
+Phase: 4 of 6 (Circles and Collaboration) — In progress
+Plan: 1 of 3 in phase 4 (04-01 complete)
+Status: In progress
+Last activity: 2026-03-13 -- Completed 04-01-PLAN.md (Circle backend: 6 DB tables, shared types/schemas, 13 API endpoints, S3 download URL)
 
-Progress: [████████████████████░░░░░░░░░░] 10/16 plans (phases 1-3 complete)
+Progress: [███████████████████████░░░░░░░] 11/16 plans (phases 1-3 complete, 04-01 complete)
 
 ## Performance Metrics
 
@@ -30,10 +30,11 @@ Progress: [████████████████████░░░
 | 01-foundation-and-auth | 4/4 | 31 min | 8 min |
 | 02-onboarding-and-profiles | 3/3 | 14 min | 5 min |
 | 03-challenges-and-matching | 3/3 | ~115 min | ~38 min |
+| 04-circles-and-collaboration | 1/3 | 14 min | 14 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (5 min), 02-02 (4 min), 02-03 (5 min), 03-01 (25 min)
-- Trend: 03-01 heavier than prior plans (schema + matching service + 7 routes)
+- Last 5 plans: 02-02 (4 min), 02-03 (5 min), 03-01 (25 min), 03-03 (~60 min), 04-01 (14 min)
+- Trend: backend-only plans (04-01) faster than full-stack plans
 
 *Updated after each plan completion*
 
@@ -86,6 +87,11 @@ Recent decisions affecting current work:
 - [03-03]: updateChallengeSchema extended with status field for close/archive flow
 - [03-03]: CM challenges fetched by filtering feed results by createdBy — no separate endpoint at pilot scale
 - [03-03]: "Select this team" on TeamCompositionCard is local state only — Circle formation is Phase 4
+- [04-01]: Attachment upload URLs generated inline in circles.ts with custom s3Key prefix (circle-notes/${circleId}/...) — generateUploadUrl hard-codes cvs/ prefix and cannot accept custom keys
+- [04-01]: Multi-circle limit enforced at circle creation and member addition — compares active circle count against contributorProfiles.maxCircles (default 3)
+- [04-01]: Presigned download URLs not generated eagerly in GET /notes response — frontend requests them lazily via /notes/:noteId/download/:attachmentId
+- [04-01]: GET /resolution accessible by circle members AND challenger — challenger needs to view before rating
+- [04-01]: Shared type names in index.ts disambiguated with 'SchemaInput' suffix for Zod-inferred types that conflict with interface type names
 
 ### Pending Todos
 
@@ -99,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-12
-Stopped at: Phase 3 COMPLETE (3/3 plans done) -- CM admin form, manage tab, team compositions, role toggle, multi-domain, dev role switcher
-Resume file: .planning/phases/04-circles-and-collaboration/04-01-PLAN.md
+Last session: 2026-03-13
+Stopped at: Phase 4, Plan 1 COMPLETE -- Circle backend: 6 DB tables, shared types/schemas, 13 API endpoints
+Resume file: .planning/phases/04-circles-and-collaboration/04-02-PLAN.md
