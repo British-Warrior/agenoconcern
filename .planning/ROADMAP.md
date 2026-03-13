@@ -102,11 +102,12 @@ Plans:
   3. Premium challenge stipend is held via payment intent and released on resolution with 75/25 split
   4. SME subscription payments process monthly/annually
   5. Contributor dashboard shows challenges participated in, hours contributed, total earnings, unpaid contribution recognised, and wellbeing trajectory
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Backend: DB schema (2 tables), Stripe service extensions, payment routes, webhook handler
-- [ ] 05-02-PLAN.md — Frontend: Impact dashboard (contributor + challenger views), hours logging, navigation
+- [ ] 05-01-PLAN.md — DB schema (2 tables), shared types/schemas, Stripe service extensions
+- [ ] 05-02-PLAN.md — Payment routes, webhook handler, impact API routes, express-app wiring
+- [ ] 05-03-PLAN.md — Impact dashboard frontend (contributor + challenger views), navigation + human verification
 
 ### Phase 6: Wellbeing, Notifications, and PWA
 **Goal**: Platform supports contributor wellbeing, keeps users informed, and works as an installable PWA
@@ -136,5 +137,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 2. Onboarding and Profiles | 3/3 | ✓ Complete | 2026-03-11 |
 | 3. Challenges and Matching | 3/3 | ✓ Complete | 2026-03-12 |
 | 4. Circles and Collaboration | 3/3 | ✓ Complete | 2026-03-13 |
-| 5. Payments and Impact | 0/2 | Not started | - |
+| 5. Payments and Impact | 0/3 | Not started | - |
 | 6. Wellbeing, Notifications, and PWA | 0/3 | Not started | - |
