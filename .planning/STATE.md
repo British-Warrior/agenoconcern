@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-09)
 ## Current Position
 
 Phase: 4 of 6 (Circles and Collaboration) — In progress
-Plan: 2 of 3 in phase 4 (04-02 complete)
-Status: In progress
-Last activity: 2026-03-13 -- Completed 04-02-PLAN.md (Circle formation flow and workspace UI: API client, hooks, CircleFormationModal, CircleWorkspace, NoteComposer, NoteCard, MyCircles, routing)
+Plan: 3 of 3 in phase 4 (04-03 auto task complete, awaiting human verification checkpoint)
+Status: Checkpoint — awaiting human verification
+Last activity: 2026-03-13 -- Completed 04-03 Task 1 (social channel editor, resolution form, rating card, add member modal); awaiting checkpoint verification
 
-Progress: [█████████████████████████░░░░░] 12/16 plans (phases 1-3 complete, 04-01 and 04-02 complete)
+Progress: [██████████████████████████████] 13/16 plans auto tasks complete (04-03 checkpoint pending)
 
 ## Performance Metrics
 
@@ -96,6 +96,10 @@ Recent decisions affecting current work:
 - [04-02]: NoteCard fetches download URL lazily on button click via getDownloadUrl then window.open — matches 04-01 decision against eager presigned URLs
 - [04-02]: CircleWorkspaceShell Add Member button is a stub — full implementation in Plan 03
 - [04-02]: TeamCompositionCard shows Form Circle button only after team is selected (local state toggle) — avoids accidental circle creation
+- [04-03]: SocialChannelEditor shows amber warning (not blocking error) when URL doesn't match expected platform hostname — guides without blocking
+- [04-03]: getResolution API response type corrected to { resolution, rating } — server always returns both fields together
+- [04-03]: useResolution configured with retry: false on 404 — missing resolution is normal state, not an error
+- [04-03]: ResolutionCard edit button shown to circle members only (not challenger) when status is active or submitted
 
 ### Pending Todos
 
@@ -110,5 +114,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-13
-Stopped at: Phase 4, Plan 2 COMPLETE -- Circle formation flow and workspace UI: API client, hooks, CircleFormationModal, CircleWorkspace, NoteComposer, NoteCard, MyCircles, routing
-Resume file: .planning/phases/04-circles-and-collaboration/04-03-PLAN.md
+Stopped at: Phase 4, Plan 3 CHECKPOINT — Task 1 complete, awaiting human verification of full Circle collaboration workflow
+Resume file: .planning/phases/04-circles-and-collaboration/04-03-PLAN.md (Task 2 checkpoint — resume after user approves)
