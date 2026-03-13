@@ -31,6 +31,12 @@ export function Navbar() {
       <div className="flex items-center gap-4">
         {isAuthenticated ? (
           <>
+            <Link
+              to="/circles"
+              className="text-sm font-medium text-neutral-700 hover:text-primary-800 transition-colors no-underline"
+            >
+              My Circles
+            </Link>
             <span className="text-base text-neutral-700">
               {contributor?.name}
             </span>

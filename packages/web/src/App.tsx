@@ -20,6 +20,8 @@ import { Preferences } from "./pages/onboarding/Preferences.js";
 import { StripeConnect } from "./pages/onboarding/StripeConnect.js";
 import { Complete } from "./pages/onboarding/Complete.js";
 import { ChallengeFeed } from "./pages/challenges/ChallengeFeed.js";
+import { MyCircles } from "./pages/circles/MyCircles.js";
+import { CircleWorkspace } from "./pages/circles/CircleWorkspace.js";
 
 /**
  * Redirect authenticated users to onboarding if their status is "onboarding",
@@ -68,6 +70,10 @@ export function App() {
 
               {/* Challenges */}
               <Route path="/challenges" element={<ChallengeFeed />} />
+
+              {/* Circles */}
+              <Route path="/circles" element={<MyCircles />} />
+              <Route path="/circles/:id" element={<CircleWorkspace />} />
             </Route>
           </Route>
         </Routes>
