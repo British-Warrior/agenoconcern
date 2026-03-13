@@ -414,7 +414,12 @@ router.get("/:id/notes", authMiddleware, async (req, res) => {
     attachments: attachmentsByNote[n.id] ?? [],
   }));
 
-  res.json({ notes: response, hasMore: notes.length === limitNum });
+  const nextCursor =
+    notes.length === limitNum && notes.length > 0
+      ? notes[notes.length - 1]!.createdAt.toISOString()
+      : null;
+
+  res.json({ notes: response, nextCursor });
 });
 
 // ─── POST /:id/notes — Post a note ────────────────────────────────────────────
