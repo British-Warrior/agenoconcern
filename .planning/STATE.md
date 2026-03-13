@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-09)
 ## Current Position
 
 Phase: 4 of 6 (Circles and Collaboration) — In progress
-Plan: 1 of 3 in phase 4 (04-01 complete)
+Plan: 2 of 3 in phase 4 (04-02 complete)
 Status: In progress
-Last activity: 2026-03-13 -- Completed 04-01-PLAN.md (Circle backend: 6 DB tables, shared types/schemas, 13 API endpoints, S3 download URL)
+Last activity: 2026-03-13 -- Completed 04-02-PLAN.md (Circle formation flow and workspace UI: API client, hooks, CircleFormationModal, CircleWorkspace, NoteComposer, NoteCard, MyCircles, routing)
 
-Progress: [███████████████████████░░░░░░░] 11/16 plans (phases 1-3 complete, 04-01 complete)
+Progress: [█████████████████████████░░░░░] 12/16 plans (phases 1-3 complete, 04-01 and 04-02 complete)
 
 ## Performance Metrics
 
@@ -92,6 +92,10 @@ Recent decisions affecting current work:
 - [04-01]: Presigned download URLs not generated eagerly in GET /notes response — frontend requests them lazily via /notes/:noteId/download/:attachmentId
 - [04-01]: GET /resolution accessible by circle members AND challenger — challenger needs to view before rating
 - [04-01]: Shared type names in index.ts disambiguated with 'SchemaInput' suffix for Zod-inferred types that conflict with interface type names
+- [04-02]: NoteComposer uploads files sequentially with per-file progress counter before posting note — simpler than parallel upload, sufficient at pilot scale
+- [04-02]: NoteCard fetches download URL lazily on button click via getDownloadUrl then window.open — matches 04-01 decision against eager presigned URLs
+- [04-02]: CircleWorkspaceShell Add Member button is a stub — full implementation in Plan 03
+- [04-02]: TeamCompositionCard shows Form Circle button only after team is selected (local state toggle) — avoids accidental circle creation
 
 ### Pending Todos
 
@@ -106,5 +110,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-13
-Stopped at: Phase 4, Plan 1 COMPLETE -- Circle backend: 6 DB tables, shared types/schemas, 13 API endpoints
-Resume file: .planning/phases/04-circles-and-collaboration/04-02-PLAN.md
+Stopped at: Phase 4, Plan 2 COMPLETE -- Circle formation flow and workspace UI: API client, hooks, CircleFormationModal, CircleWorkspace, NoteComposer, NoteCard, MyCircles, routing
+Resume file: .planning/phases/04-circles-and-collaboration/04-03-PLAN.md
