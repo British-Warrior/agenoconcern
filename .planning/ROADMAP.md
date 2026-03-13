@@ -102,11 +102,11 @@ Plans:
   3. Premium challenge stipend is held via payment intent and released on resolution with 75/25 split
   4. SME subscription payments process monthly/annually
   5. Contributor dashboard shows challenges participated in, hours contributed, total earnings, unpaid contribution recognised, and wellbeing trajectory
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 05-01: Stripe Connect payment flows (retainers, stipends, subscriptions, payouts, webhooks)
-- [ ] 05-02: Impact dashboard (challenges, hours, earnings, unpaid contribution, challenger view)
+- [ ] 05-01-PLAN.md — Backend: DB schema (2 tables), Stripe service extensions, payment routes, webhook handler
+- [ ] 05-02-PLAN.md — Frontend: Impact dashboard (contributor + challenger views), hours logging, navigation
 
 ### Phase 6: Wellbeing, Notifications, and PWA
 **Goal**: Platform supports contributor wellbeing, keeps users informed, and works as an installable PWA
