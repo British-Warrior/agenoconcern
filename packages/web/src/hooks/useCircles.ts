@@ -44,6 +44,11 @@ export function useResolution(circleId: string) {
   return useQuery({
     queryKey: ["circles", circleId, "resolution"],
     queryFn: () => circlesApi.getResolution(circleId),
+    // 404 means no resolution yet — treat as null data rather than error
+    retry: (failureCount, error) => {
+      if (error instanceof Error && error.message.includes("404")) return false;
+      return failureCount < 3;
+    },
   });
 }
 

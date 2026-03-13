@@ -1,10 +1,12 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useState } from "react";
 import type { CircleWorkspaceResponse, CircleStatus } from "@agenoconcern/shared";
-import { useCircleNotes } from "../../hooks/useCircles.js";
+import { useCircleNotes, useResolution } from "../../hooks/useCircles.js";
 import { NoteCard } from "./NoteCard.js";
 import { NoteComposer } from "./NoteComposer.js";
+import { SocialChannelEditor } from "./SocialChannelEditor.js";
+import { ResolutionCard } from "./ResolutionCard.js";
+import { AddMemberModal } from "./AddMemberModal.js";
 
 interface CircleWorkspaceShellProps {
   workspace: CircleWorkspaceResponse;
@@ -19,12 +21,12 @@ const STATUS_STYLES: Record<CircleStatus, string> = {
   dissolved: "bg-amber-50 text-amber-700 border border-amber-200",
 };
 
-const SOCIAL_LABELS: Record<string, string> = {
-  whatsapp: "WhatsApp",
-  slack: "Slack",
-  discord: "Discord",
-  teams: "Microsoft Teams",
-  signal: "Signal",
+const STATUS_LABELS: Record<CircleStatus, string> = {
+  forming: "Forming",
+  active: "Active",
+  submitted: "Submitted",
+  completed: "Completed",
+  dissolved: "Dissolved",
 };
 
 function Spinner() {
@@ -61,6 +63,7 @@ export function CircleWorkspaceShell({
 }: CircleWorkspaceShellProps) {
   const { circle, challenge, members } = workspace;
   const [briefOpen, setBriefOpen] = useState(true);
+  const [addMemberOpen, setAddMemberOpen] = useState(false);
 
   // Notes infinite query
   const {
@@ -70,6 +73,9 @@ export function CircleWorkspaceShell({
     fetchNextPage,
     hasNextPage,
   } = useCircleNotes(circle.id);
+
+  // Resolution + rating query
+  const { data: resolutionData } = useResolution(circle.id);
 
   // All notes flattened (newest-first from API, so reverse to show newest at top)
   const allNotes = notesData?.pages.flatMap((p) => p.notes) ?? [];
@@ -98,6 +104,8 @@ export function CircleWorkspaceShell({
   }, [handleObserver]);
 
   const isCM = circle.createdBy === currentContributorId;
+  const isChallenger = challenge.createdBy === currentContributorId;
+  const isMember = members.some((m) => m.contributorId === currentContributorId);
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-4">
@@ -107,9 +115,9 @@ export function CircleWorkspaceShell({
           {challenge.title}
         </h1>
         <span
-          className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium capitalize flex-shrink-0 ${STATUS_STYLES[circle.status]}`}
+          className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${STATUS_STYLES[circle.status]}`}
         >
-          {circle.status}
+          {STATUS_LABELS[circle.status]}
         </span>
       </div>
 
@@ -217,9 +225,7 @@ export function CircleWorkspaceShell({
             <button
               type="button"
               className="ml-auto text-xs font-medium text-primary-700 border border-primary-300 hover:bg-primary-50 rounded-[var(--radius-md)] px-2.5 py-1 transition-colors duration-150"
-              onClick={() => {
-                // Add Member flow is Phase 4 Plan 03 — stub for now
-              }}
+              onClick={() => setAddMemberOpen(true)}
             >
               Add Member
             </button>
@@ -227,38 +233,19 @@ export function CircleWorkspaceShell({
         </div>
       </div>
 
-      {/* ── Section C: Social channel ── */}
+      {/* ── Section C: Social channel editor ── */}
       <div className="rounded-[var(--radius-lg)] border border-neutral-200 bg-white px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+        <div className="flex items-start gap-2 flex-wrap">
+          <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wide flex-shrink-0 pt-0.5">
             Social channel
           </span>
-          {circle.socialChannel && circle.socialChannelUrl ? (
-            <button
-              type="button"
-              onClick={() =>
-                window.open(circle.socialChannelUrl!, "_blank", "noopener,noreferrer")
-              }
-              className="inline-flex items-center gap-1 text-xs text-primary-700 hover:text-primary-900 font-medium transition-colors duration-150"
-            >
-              Open in {SOCIAL_LABELS[circle.socialChannel] ?? circle.socialChannel}
-              <svg
-                className="w-3 h-3"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-              </svg>
-            </button>
-          ) : (
-            <span className="text-xs text-neutral-400 italic">
-              No social channel set yet.
-            </span>
-          )}
+          <div className="flex-1 min-w-0">
+            <SocialChannelEditor
+              circleId={circle.id}
+              currentChannel={circle.socialChannel}
+              currentUrl={circle.socialChannelUrl}
+            />
+          </div>
         </div>
       </div>
 
@@ -310,6 +297,28 @@ export function CircleWorkspaceShell({
           <NoteComposer circleId={circle.id} />
         </div>
       </div>
+
+      {/* ── Section F: Resolution ── */}
+      <div>
+        <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-3">
+          Resolution
+        </p>
+        <ResolutionCard
+          circleId={circle.id}
+          resolution={resolutionData?.resolution ?? null}
+          rating={resolutionData?.rating ?? null}
+          isChallenger={isChallenger}
+          isMember={isMember}
+          circleStatus={circle.status}
+        />
+      </div>
+
+      {/* Add Member modal */}
+      <AddMemberModal
+        isOpen={addMemberOpen}
+        onClose={() => setAddMemberOpen(false)}
+        circleId={circle.id}
+      />
     </div>
   );
 }

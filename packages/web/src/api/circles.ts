@@ -133,8 +133,13 @@ export function updateResolution(
   });
 }
 
-export function getResolution(circleId: string): Promise<CircleResolution> {
-  return apiClient<CircleResolution>(`/api/circles/${circleId}/resolution`);
+export interface ResolutionResponse {
+  resolution: CircleResolution;
+  rating: ResolutionRating | null;
+}
+
+export function getResolution(circleId: string): Promise<ResolutionResponse> {
+  return apiClient<ResolutionResponse>(`/api/circles/${circleId}/resolution`);
 }
 
 export function rateResolution(
