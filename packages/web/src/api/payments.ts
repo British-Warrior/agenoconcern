@@ -21,7 +21,7 @@ export interface LogHoursData {
 }
 
 export function logHours(data: LogHoursData): Promise<void> {
-  return apiClient<void>("/api/impact/hours", {
+  return apiClient<void>("/api/payments/hours", {
     method: "POST",
     body: JSON.stringify(data),
   });
