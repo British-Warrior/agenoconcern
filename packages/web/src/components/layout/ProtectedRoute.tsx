@@ -2,7 +2,7 @@ import { Navigate, Outlet, useLocation } from "react-router";
 import { useAuth } from "../../hooks/useAuth.js";
 
 export function ProtectedRoute() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, contributor } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -39,6 +39,11 @@ export function ProtectedRoute() {
       location.pathname + location.search,
     );
     return <Navigate to={`/login?returnUrl=${returnUrl}`} replace />;
+  }
+
+  // Redirect onboarding users to CV upload unless already on an onboarding page
+  if (contributor?.status === "onboarding" && !location.pathname.startsWith("/onboarding")) {
+    return <Navigate to="/onboarding/upload" replace />;
   }
 
   return <Outlet />;

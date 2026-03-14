@@ -1,6 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router";
+import { BrowserRouter, Routes, Route } from "react-router";
 import { AuthProvider } from "./hooks/useAuth.js";
-import { useAuth } from "./hooks/useAuth.js";
 import { AppShell } from "./components/layout/AppShell.js";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute.js";
 import { Landing } from "./pages/Landing.js";
@@ -25,19 +24,6 @@ import { CircleWorkspace } from "./pages/circles/CircleWorkspace.js";
 import { ImpactDashboard } from "./pages/impact/ImpactDashboard.js";
 import { ChallengerView } from "./pages/impact/ChallengerView.js";
 
-/**
- * Redirect authenticated users to onboarding if their status is "onboarding",
- * otherwise to the dashboard.
- */
-function DashboardOrOnboarding() {
-  const { contributor } = useAuth();
-  if (contributor?.status === "onboarding") {
-    return <Navigate to="/onboarding/upload" replace />;
-  }
-  return <Dashboard />;
-}
-
-
 export function App() {
   return (
     <BrowserRouter>
@@ -56,8 +42,7 @@ export function App() {
 
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
-              {/* Dashboard — redirects to onboarding if status is "onboarding" */}
-              <Route path="/dashboard" element={<DashboardOrOnboarding />} />
+              <Route path="/dashboard" element={<Dashboard />} />
 
               {/* Onboarding flow */}
               <Route path="/onboarding/upload" element={<UploadCV />} />
