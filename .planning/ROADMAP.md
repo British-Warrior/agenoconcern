@@ -119,12 +119,12 @@ Plans:
   3. User receives notifications for challenge matches, Circle formation, Circle activity, wellbeing reminders, resolution feedback, and payments
   4. Notifications delivered via PWA push with email fallback; Circle activity notifications are configurable
   5. Application is installable as PWA from home screen with manifest and service worker
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 06-01: Wellbeing check-in flows (UCLA + WEMWBS), GDPR special category handling, DPIA
-- [ ] 06-02: Notification system (PWA push + email fallback, all event types, preferences)
-- [ ] 06-03: PWA configuration (manifest, service worker, home screen install)
+- [ ] 06-01-PLAN.md — Wellbeing check-in flows (UCLA + SWEMWBS), GDPR special category consent, onboarding step, 8-week due check, impact trajectory
+- [ ] 06-02-PLAN.md — Notification system (push via web-push + email fallback via Resend, all 6 event types, in-app bell, preferences)
+- [ ] 06-03-PLAN.md — PWA configuration (vite-plugin-pwa injectManifest, service worker with push handler, manifest, icons, install prompt)
 
 ## Progress
 
