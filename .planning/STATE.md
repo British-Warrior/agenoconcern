@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income -- bridging the pension gap while contributing to communities.
-**Current focus:** Phase 5 In Progress — 05-03 at checkpoint (awaiting human verification)
+**Current focus:** Phase 5 COMPLETE — ready for verification
 
 ## Current Position
 
-Phase: 5 of 6 (Payments and Impact) — In progress
-Plan: 3 of 3 in phase 5 — 05-03 at checkpoint:human-verify (Tasks 1 and 2 complete, awaiting user approval)
-Status: At checkpoint — impact dashboard frontend built, awaiting human verification before SUMMARY.md creation
-Last activity: 2026-03-13 -- 05-03 Tasks 1+2 complete: impact API client, hooks, ImpactDashboard, ChallengerView, routing, navbar
+Phase: 5 of 6 (Payments and Impact) — COMPLETE
+Plan: 3 of 3 in phase 5 (all complete, human verified)
+Status: Phase 5 complete — awaiting phase verification
+Last activity: 2026-03-14 -- Phase 5 complete. Human verification passed. Onboarding guard fix applied (ProtectedRoute redirects all protected routes).
 
-Progress: [█████████████████████████████░░] 15/16 plans (phases 1-4 complete, 05-01 and 05-02 done; 05-03 at checkpoint)
+Progress: [██████████████████████████████░] 16/16 plans (phases 1-5 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
-- Average duration: 6 min
-- Total execution time: 40 min
+- Total plans completed: 16
+- Average duration: ~15 min
+- Total execution time: ~240 min
 
 **By Phase:**
 
@@ -31,10 +31,7 @@ Progress: [███████████████████████
 | 02-onboarding-and-profiles | 3/3 | 14 min | 5 min |
 | 03-challenges-and-matching | 3/3 | ~115 min | ~38 min |
 | 04-circles-and-collaboration | 3/3 | ~38 min | ~13 min |
-
-**Recent Trend:**
-- Last 5 plans: 02-02 (4 min), 02-03 (5 min), 03-01 (25 min), 03-03 (~60 min), 04-01 (14 min)
-- Trend: backend-only plans (04-01) faster than full-stack plans
+| 05-payments-and-impact | 3/3 | ~30 min | ~10 min |
 
 *Updated after each plan completion*
 
@@ -110,6 +107,7 @@ Recent decisions affecting current work:
 - [05-01]: wellbeingTrajectory typed as never[] in ImpactSummary — placeholder for Phase 6
 - [05-02]: stipend route extracts contributorId from body (not in chargeStipendSchema) — paymentTransactions NOT NULL requires it
 - [05-02]: webhookHandler exported separately from router — must be registered at app level with express.raw() before express.json()
+- [05-03]: Onboarding guard moved into ProtectedRoute — all protected routes redirect onboarding users, not just dashboard
 
 ### Pending Todos
 
@@ -123,6 +121,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13
-Stopped at: 05-03 checkpoint — impact dashboard frontend complete, awaiting human verification
-Resume file: .planning/phases/05-payments-and-impact/05-03-PLAN.md (resume after user types "approved")
+Last session: 2026-03-14
+Stopped at: Phase 5 COMPLETE (3/3 plans done, human verified) — Payment schema, Stripe service, payment routes, webhook, impact dashboard, onboarding guard
+Resume file: .planning/phases/05-payments-and-impact/05-VERIFICATION.md
