@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 2: Onboarding and Profiles** - CV upload, LLM parsing, profile generation, availability/preferences, Stripe Connect onboarding
 - [x] **Phase 3: Challenges and Matching** - Challenge board, filtering, interest expression, scoring algorithm, community manager admin
 - [x] **Phase 4: Circles and Collaboration** - Circle formation, workspace, notes, social links, resolutions, feedback
-- [ ] **Phase 5: Payments and Impact** - Payment flows (retainers, stipends, subscriptions), impact dashboard, earnings tracking
+- [x] **Phase 5: Payments and Impact** - Payment flows (retainers, stipends, subscriptions), impact dashboard, earnings tracking
 - [ ] **Phase 6: Wellbeing, Notifications, and PWA** - Wellbeing check-ins, notification system, PWA configuration, GDPR compliance, accessibility
 
 ## Phase Details
@@ -105,9 +105,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — DB schema (2 tables), shared types/schemas, Stripe service extensions
-- [ ] 05-02-PLAN.md — Payment routes, webhook handler, impact API routes, express-app wiring
-- [ ] 05-03-PLAN.md — Impact dashboard frontend (contributor + challenger views), navigation + human verification
+- [x] 05-01-PLAN.md — DB schema (2 tables), shared types/schemas, Stripe service extensions
+- [x] 05-02-PLAN.md — Payment routes, webhook handler, impact API routes, express-app wiring
+- [x] 05-03-PLAN.md — Impact dashboard frontend (contributor + challenger views), navigation + human verification
 
 ### Phase 6: Wellbeing, Notifications, and PWA
 **Goal**: Platform supports contributor wellbeing, keeps users informed, and works as an installable PWA
@@ -137,5 +137,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 2. Onboarding and Profiles | 3/3 | ✓ Complete | 2026-03-11 |
 | 3. Challenges and Matching | 3/3 | ✓ Complete | 2026-03-12 |
 | 4. Circles and Collaboration | 3/3 | ✓ Complete | 2026-03-13 |
-| 5. Payments and Impact | 0/3 | Not started | - |
+| 5. Payments and Impact | 3/3 | ✓ Complete | 2026-03-14 |
 | 6. Wellbeing, Notifications, and PWA | 0/3 | Not started | - |
