@@ -47,6 +47,11 @@ const envSchema = z.object({
   // Stripe - Connect
   STRIPE_SECRET_KEY: z.string().default(""),
   STRIPE_WEBHOOK_SECRET: z.string().default(""),
+
+  // Web Push - VAPID
+  VAPID_PUBLIC_KEY: z.string().default(""),
+  VAPID_PRIVATE_KEY: z.string().default(""),
+  VAPID_SUBJECT: z.string().default("mailto:support@agenoconcern.org"),
 });
 
 export type Env = z.infer<typeof envSchema>;

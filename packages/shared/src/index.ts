@@ -150,3 +150,34 @@ export type {
   ChallengerChallenge,
   ChallengerImpact,
 } from "./types/impact.js";
+
+// Wellbeing types
+export type {
+  WellbeingCheckinInput,
+  WellbeingCheckin,
+  WellbeingDueResponse,
+  WellbeingTrajectoryPoint,
+} from "./types/wellbeing.js";
+
+// Wellbeing schemas
+export { wellbeingCheckinSchema } from "./schemas/wellbeing.js";
+export type { WellbeingCheckinSchemaInput } from "./schemas/wellbeing.js";
+
+// Notification types
+export type {
+  NotificationType,
+  NotifyCircleActivity,
+  Notification,
+  NotificationPreferences,
+  PushSubscriptionInput,
+} from "./types/notifications.js";
+
+// Notification schemas
+export {
+  pushSubscriptionSchema,
+  notificationPreferencesSchema,
+} from "./schemas/notifications.js";
+export type {
+  PushSubscriptionSchemaInput,
+  NotificationPreferencesInput,
+} from "./schemas/notifications.js";

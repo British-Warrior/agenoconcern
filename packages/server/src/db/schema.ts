@@ -80,6 +80,13 @@ export const oauthAccounts = pgTable("oauth_accounts", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Notification preference enum (declared early — used in contributorProfiles)
+export const notifyCircleActivityEnum = pgEnum("notify_circle_activity", [
+  "immediate",
+  "daily_digest",
+  "off",
+]);
+
 // Onboarding enums
 export const availabilityEnum = pgEnum("availability", [
   "full_time",
@@ -134,6 +141,7 @@ export const contributorProfiles = pgTable("contributor_profiles", {
   commFrequency: commFrequencyEnum("comm_frequency"),
   stripeAccountId: varchar("stripe_account_id", { length: 255 }),
   stripeStatus: stripeStatusEnum("stripe_status").default("not_started"),
+  notifyCircleActivity: notifyCircleActivityEnum("notify_circle_activity").default("immediate"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
@@ -379,6 +387,70 @@ export const paymentTransactions = pgTable("payment_transactions", {
   transferredAt: timestamp("transferred_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Notification type enum
+export const notificationTypeEnum = pgEnum("notification_type", [
+  "challenge_match",
+  "circle_formed",
+  "circle_activity",
+  "wellbeing_reminder",
+  "resolution_feedback",
+  "payment_received",
+]);
+
+// Push subscriptions
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  contributorId: uuid("contributor_id")
+    .notNull()
+    .references(() => contributors.id, { onDelete: "cascade" }),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Notifications
+export const notifications = pgTable("notifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  contributorId: uuid("contributor_id")
+    .notNull()
+    .references(() => contributors.id, { onDelete: "cascade" }),
+  type: notificationTypeEnum("type").notNull(),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  url: text("url"),
+  readAt: timestamp("read_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Wellbeing check-ins
+export const wellbeingCheckins = pgTable("wellbeing_checkins", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  contributorId: uuid("contributor_id")
+    .notNull()
+    .references(() => contributors.id, { onDelete: "cascade" }),
+  consentRecordId: uuid("consent_record_id")
+    .notNull()
+    .references(() => consentRecords.id),
+  // UCLA Loneliness Scale 3-item (each 1-4: never/rarely/sometimes/often)
+  uclaItem1: smallint("ucla_item1").notNull(),
+  uclaItem2: smallint("ucla_item2").notNull(),
+  uclaItem3: smallint("ucla_item3").notNull(),
+  uclaScore: smallint("ucla_score").notNull(),
+  // SWEMWBS 7-item (each 1-5: none/rarely/some/often/all)
+  wemwbsItem1: smallint("wemwbs_item1").notNull(),
+  wemwbsItem2: smallint("wemwbs_item2").notNull(),
+  wemwbsItem3: smallint("wemwbs_item3").notNull(),
+  wemwbsItem4: smallint("wemwbs_item4").notNull(),
+  wemwbsItem5: smallint("wemwbs_item5").notNull(),
+  wemwbsItem6: smallint("wemwbs_item6").notNull(),
+  wemwbsItem7: smallint("wemwbs_item7").notNull(),
+  wemwbsScore: smallint("wemwbs_score").notNull(),
+  completedAt: timestamp("completed_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 // Contributor hours
