@@ -16,6 +16,7 @@ import {
   releaseStipendTransfer,
   constructWebhookEvent,
 } from "../services/stripe.service.js";
+import { notify } from "../services/notification.service.js";
 import {
   createRetainerSchema,
   chargeStipendSchema,
@@ -177,6 +178,14 @@ router.post(
         updatedAt: new Date(),
       })
       .where(eq(paymentTransactions.id, txn.id));
+
+    // Notify contributor about the payment transfer
+    notify(txn.contributorId, {
+      type: "payment_received",
+      title: "Payment transferred",
+      body: `Your stipend payment has been transferred to your account.`,
+      url: "/payments",
+    }).catch((err: unknown) => console.error("[notifications] payment_received notify error:", err));
 
     res.json({ transferId: transfer.id });
   },
@@ -346,6 +355,14 @@ export async function webhookHandler(req: Request, res: Response): Promise<void>
             stripeEventId: event.id,
             transferredAt: new Date(),
           });
+
+          // Notify contributor about the payment
+          notify(contributorId, {
+            type: "payment_received",
+            title: "Payment received",
+            body: `A payment of £${(Math.floor(invoice.amount_paid * 0.75) / 100).toFixed(2)} has been received.`,
+            url: "/payments",
+          }).catch((err: unknown) => console.error("[notifications] payment_received notify error:", err));
         }
         break;
       }

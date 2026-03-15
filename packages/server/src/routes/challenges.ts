@@ -9,6 +9,7 @@ import {
 } from "../db/schema.js";
 import { authMiddleware, requireRole } from "../middleware/auth.js";
 import { scoreContributorForChallenge, suggestTeamCompositions } from "../services/matching.service.js";
+import { notify } from "../services/notification.service.js";
 import {
   createChallengeSchema,
   updateChallengeSchema,
@@ -386,6 +387,14 @@ router.post("/:id/interest", authMiddleware, async (req, res) => {
         eq(challengeInterests.status, "active"),
       ),
     );
+
+  // Notify the contributor that they've expressed interest in a challenge match
+  notify(contributorId, {
+    type: "challenge_match",
+    title: "Interest registered",
+    body: `You've expressed interest in "${challenge.title}". We'll notify you when a Circle forms.`,
+    url: `/challenges/${challengeId}`,
+  }).catch((err: unknown) => console.error("[notifications] challenge_match notify error:", err));
 
   res.status(201).json({
     status: "active",

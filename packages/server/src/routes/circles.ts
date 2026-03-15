@@ -18,6 +18,7 @@ import {
 import { authMiddleware, requireRole } from "../middleware/auth.js";
 import { getEnv } from "../config/env.js";
 import { generateDownloadUrl } from "../services/s3.service.js";
+import { notify, notifyBatch } from "../services/notification.service.js";
 import {
   createCircleSchema,
   postNoteSchema,
@@ -140,6 +141,14 @@ router.post("/", authMiddleware, requireRole("community_manager"), async (req, r
 
     return circle;
   });
+
+  // Notify all members that their Circle is ready
+  notifyBatch(memberIds, {
+    type: "circle_formed",
+    title: "Your Circle is ready!",
+    body: `You've been added to a Circle for the challenge. Head to your workspace to get started.`,
+    url: `/circles/${created.id}`,
+  }).catch((err: unknown) => console.error("[notifications] circle_formed notify error:", err));
 
   res.status(201).json(created);
 });
@@ -458,6 +467,36 @@ router.post("/:id/notes", authMiddleware, async (req, res) => {
 
     return { ...note, attachments: insertedAttachments };
   });
+
+  // Notify members with immediate preference about the new note (exclude author)
+  const circleMemberRows = await db
+    .select({
+      contributorId: circleMembers.contributorId,
+      notifyCircleActivity: contributorProfiles.notifyCircleActivity,
+    })
+    .from(circleMembers)
+    .leftJoin(
+      contributorProfiles,
+      eq(contributorProfiles.contributorId, circleMembers.contributorId),
+    )
+    .where(eq(circleMembers.circleId, circleId));
+
+  const immediateIds = circleMemberRows
+    .filter(
+      (m) =>
+        m.contributorId !== contributorId &&
+        (m.notifyCircleActivity === "immediate" || m.notifyCircleActivity === null),
+    )
+    .map((m) => m.contributorId);
+
+  if (immediateIds.length > 0) {
+    notifyBatch(immediateIds, {
+      type: "circle_activity",
+      title: "New note in your Circle",
+      body: "A new note has been posted in your Circle.",
+      url: `/circles/${circleId}`,
+    }).catch((err: unknown) => console.error("[notifications] circle_activity notify error:", err));
+  }
 
   res.status(201).json(created);
 });
