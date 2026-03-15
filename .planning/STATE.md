@@ -5,16 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income -- bridging the pension gap while contributing to communities.
-**Current focus:** Planning next milestone
+**Current focus:** v1.1 Pilot-Ready — UX fixes, VANTAGE integration, kiosk mode, challenger portal
 
 ## Current Position
 
-Phase: 6 of 6 — v1.0 MVP COMPLETE
-Plan: All plans complete
-Status: v1.0 shipped, ready for next milestone
-Last activity: 2026-03-15 — v1.0 milestone complete
-
-Progress: [███████████████████████████████████] 19/19 plans (v1.0 shipped)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-15 — Milestone v1.1 started
 
 ## Performance Metrics
 
@@ -53,5 +51,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-15
-Stopped at: v1.0 milestone archived. Next: `/gsd:new-milestone`
-Resume file: .planning/MILESTONES.md
+Stopped at: v1.1 milestone started — research phase next
+Resume file: .planning/PROJECT.md

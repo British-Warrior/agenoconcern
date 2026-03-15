@@ -32,13 +32,21 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 
 ### Active
 
-(None — define with `/gsd:new-milestone`)
+## Current Milestone: v1.1 Pilot-Ready
+
+**Goal:** Make the platform usable for real pilot deployment — fix critical UX issues, enable VANTAGE AI overlay, add kiosk mode for institutional embedding, and give challengers their own portal.
+
+**Target features:**
+- UX overhaul (10 issues from walkthrough: navigation, dashboard, wellbeing visualisation, CM views, affordances)
+- VANTAGE integration (stable API URLs, API key auth, locked endpoint contracts)
+- Kiosk mode for libraries and community centres (large buttons, auto-logout, guided flows)
+- Challenger portal (organisation accounts, challenge submission, progress tracking, resolution rating)
 
 ### Out of Scope
 
 - Admin dashboard — community manager uses spreadsheet exports + monthly reports
 - Public marketing site — single landing page with sign-up only
-- Challenger self-service portal — email intake, manual posting for first 100 challenges
+- Challenger self-service portal — ~~email intake, manual posting for first 100 challenges~~ (moved to Active for v1.1)
 - AI/ML matching — simple scoring + manual oversight; ML is v2
 - Native mobile app — PWA via web UI handles mobile
 - Internal messaging — external apps (WhatsApp/Slack/Discord) handle this
@@ -130,5 +138,9 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 | Tailwind v4 CSS-first with OKLCH | WCAG AAA compliance (7:1+ contrast ratios), modern color space | ✓ Good — accessible from day one |
 | Wellbeing in Phase 6 (not Phase 2) | DPIA/APD legal work must precede code; all personal data stores needed first | ✓ Good — complete data model available |
 
+| Kiosk mode for institutional embedding | Libraries/community centres need simplified interface for shared computers | — Pending |
+| Challenger portal (v1.1) | Organisations need self-service to scale beyond CM manual intake | — Pending |
+| VANTAGE REST integration over MCP | VANTAGE calls REST APIs directly with typed client modules, not MCP | ✓ Good — aligns with existing architecture |
+
 ---
-*Last updated: 2026-03-15 after v1.0 milestone*
+*Last updated: 2026-03-15 after v1.1 milestone start*
