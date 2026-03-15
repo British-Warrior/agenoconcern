@@ -121,8 +121,8 @@ export function useSavePreferences() {
 export function useStartStripeConnect() {
   return useMutation({
     mutationFn: () => onboardingApi.startStripeConnect(),
-    onSuccess: ({ url }) => {
-      window.location.href = url;
+    onSuccess: ({ onboardingUrl }) => {
+      window.location.href = onboardingUrl;
     },
   });
 }

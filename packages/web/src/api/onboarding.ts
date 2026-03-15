@@ -23,7 +23,8 @@ export interface ParseStatusResponse {
 }
 
 export interface StripeConnectResponse {
-  url: string;
+  onboardingUrl: string;
+  stripeAccountId: string;
 }
 
 export interface UpdateProfileData {

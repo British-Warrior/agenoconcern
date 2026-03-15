@@ -4,7 +4,7 @@ import { Alert } from "../../components/ui/Alert.js";
 import { Button } from "../../components/ui/Button.js";
 import { Input } from "../../components/ui/Input.js";
 import { useImpactSummary, useLogHours } from "../../hooks/useImpact.js";
-import type { ImpactChallenge, ImpactEarning } from "@indomitable-unity/shared";
+import type { ImpactChallenge, ImpactEarning, WellbeingTrajectoryPoint } from "@indomitable-unity/shared";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -304,19 +304,47 @@ function UnpaidRecognitionSection({ unpaidHours }: { unpaidHours: number }) {
   );
 }
 
-// ─── Section: Wellbeing placeholder ───────────────────────────────────────────
+// ─── Section: Wellbeing Trajectory ────────────────────────────────────────────
 
-function WellbeingSection() {
+function WellbeingSection({ trajectory }: { trajectory: WellbeingTrajectoryPoint[] }) {
+  if (trajectory.length === 0) {
+    return (
+      <Card className="opacity-60 bg-neutral-50">
+        <h2 className="text-lg font-semibold text-neutral-700 mb-4">Wellbeing Trajectory</h2>
+        <p className="text-sm text-neutral-500">
+          Your wellbeing journey will appear here after your first check-in.
+        </p>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="opacity-60 bg-neutral-50">
-      <div className="flex items-center gap-2 mb-4">
-        <h2 className="text-lg font-semibold text-neutral-700">Wellbeing Trajectory</h2>
-        <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-neutral-200 text-neutral-600 border border-neutral-300">
-          Coming Soon
-        </span>
+    <Card>
+      <h2 className="text-lg font-semibold text-neutral-700 mb-4">Wellbeing Trajectory</h2>
+      <div className="space-y-3">
+        {trajectory.map((point) => {
+          const date = new Date(point.completedAt).toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          });
+          return (
+            <div key={point.completedAt} className="flex items-center justify-between border-b border-neutral-100 pb-2 last:border-0">
+              <span className="text-sm text-neutral-600">{date}</span>
+              <div className="flex gap-4 text-sm">
+                <span className="text-neutral-700">
+                  UCLA: <span className="font-medium">{point.uclaScore}</span>
+                </span>
+                <span className="text-neutral-700">
+                  SWEMWBS: <span className="font-medium">{point.wemwbsScore}</span>
+                </span>
+              </div>
+            </div>
+          );
+        })}
       </div>
-      <p className="text-sm text-neutral-500">
-        Your wellbeing journey will appear here once check-ins are available.
+      <p className="text-xs text-neutral-400 mt-3">
+        Lower UCLA scores indicate less loneliness. Higher SWEMWBS scores indicate better wellbeing.
       </p>
     </Card>
   );
@@ -365,7 +393,7 @@ export function ImpactDashboard() {
           />
           <UnpaidRecognitionSection unpaidHours={summary.unpaidHours} />
           <div className="lg:col-span-2">
-            <WellbeingSection />
+            <WellbeingSection trajectory={summary.wellbeingTrajectory} />
           </div>
         </div>
       )}

@@ -17,6 +17,7 @@ import { ReviewProfile } from "./pages/onboarding/ReviewProfile.js";
 import { Affirmation } from "./pages/onboarding/Affirmation.js";
 import { Preferences } from "./pages/onboarding/Preferences.js";
 import { StripeConnect } from "./pages/onboarding/StripeConnect.js";
+import { StripeReturn, StripeRefresh } from "./pages/onboarding/StripeReturn.js";
 import { Wellbeing as OnboardingWellbeing } from "./pages/onboarding/Wellbeing.js";
 import { Complete } from "./pages/onboarding/Complete.js";
 import { WellbeingCheckin } from "./pages/wellbeing/WellbeingCheckin.js";
@@ -55,6 +56,8 @@ export function App() {
               {/* Plan 03 onboarding pages */}
               <Route path="/onboarding/preferences" element={<Preferences />} />
               <Route path="/onboarding/stripe" element={<StripeConnect />} />
+              <Route path="/onboarding/stripe/return" element={<StripeReturn />} />
+              <Route path="/onboarding/stripe/refresh" element={<StripeRefresh />} />
               <Route path="/onboarding/wellbeing" element={<OnboardingWellbeing />} />
               <Route path="/onboarding/complete" element={<Complete />} />
 
