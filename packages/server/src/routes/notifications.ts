@@ -3,7 +3,7 @@ import { and, desc, eq, isNull } from "drizzle-orm";
 import { getDb } from "../db/index.js";
 import { notifications, pushSubscriptions, contributorProfiles } from "../db/schema.js";
 import { authMiddleware } from "../middleware/auth.js";
-import { pushSubscriptionSchema, notificationPreferencesSchema } from "@agenoconcern/shared";
+import { pushSubscriptionSchema, notificationPreferencesSchema } from "@indomitable-unity/shared";
 
 const router = Router();
 

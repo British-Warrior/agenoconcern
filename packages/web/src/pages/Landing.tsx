@@ -5,7 +5,7 @@ import { ROUTES } from "../lib/constants.js";
 
 export function Landing() {
   useEffect(() => {
-    document.title = "Age No Concern — Deploying Expertise That Hasn't Passed Its Sell-By Date";
+    document.title = "Indomitable Unity — Deploying Expertise That Hasn't Passed Its Sell-By Date";
   }, []);
 
   return (
@@ -16,7 +16,7 @@ export function Landing() {
 
       <p className="text-lg text-neutral-700 max-w-2xl mb-4 leading-relaxed">
         You&rsquo;ve spent decades building expertise. The world still needs it.
-        Age No Concern connects experienced professionals with communities and
+        Indomitable Unity connects experienced professionals with communities and
         organisations that value what you actually know &mdash; not what year you
         were born.
       </p>

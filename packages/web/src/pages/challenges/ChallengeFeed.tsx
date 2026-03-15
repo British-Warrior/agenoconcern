@@ -5,7 +5,7 @@ import { ChallengeAccordion } from "../../components/challenges/ChallengeAccordi
 import { FilterBar } from "../../components/challenges/FilterBar.js";
 import { ChallengeManage } from "./ChallengeManage.js";
 import type { FilterState } from "../../components/challenges/FilterBar.js";
-import type { ChallengeType } from "@agenoconcern/shared";
+import type { ChallengeType } from "@indomitable-unity/shared";
 
 function Spinner() {
   return (
@@ -180,7 +180,7 @@ export function ChallengeFeed() {
   const [activeTab, setActiveTab] = useState<Tab>("browse");
 
   useEffect(() => {
-    document.title = "Challenges — Age No Concern";
+    document.title = "Challenges — Indomitable Unity";
   }, []);
 
   return (

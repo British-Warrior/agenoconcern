@@ -1,5 +1,5 @@
-import { DOMAIN_TAXONOMY } from "@agenoconcern/shared";
-import type { ChallengeType } from "@agenoconcern/shared";
+import { DOMAIN_TAXONOMY } from "@indomitable-unity/shared";
+import type { ChallengeType } from "@indomitable-unity/shared";
 
 type TimelineFilter = "any" | "this-week" | "this-month";
 

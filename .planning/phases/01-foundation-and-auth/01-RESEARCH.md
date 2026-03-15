@@ -126,7 +126,7 @@ pnpm add zod
 ### Recommended Project Structure
 
 ```
-agenoconcern/
+indomitable-unity/
   package.json                      # Root workspace config
   pnpm-workspace.yaml              # packages: ["packages/*"]
   tsconfig.base.json               # Shared TS config (target ES2022, module Node16)
@@ -134,8 +134,8 @@ agenoconcern/
   .gitignore
 
   packages/
-    shared/                         # @agenoconcern/shared
-      package.json                  # { "name": "@agenoconcern/shared", "main": "src/index.ts" }
+    shared/                         # @indomitable-unity/shared
+      package.json                  # { "name": "@indomitable-unity/shared", "main": "src/index.ts" }
       src/
         index.ts                    # Re-exports all shared types
         types/
@@ -146,7 +146,7 @@ agenoconcern/
           contributor.schemas.ts    # Zod schemas for contributor validation
         constants.ts                # Status enums, role constants
 
-    server/                         # @agenoconcern/server
+    server/                         # @indomitable-unity/server
       package.json
       tsconfig.json                 # extends ../../tsconfig.base.json
       drizzle.config.ts             # Drizzle Kit configuration
@@ -190,7 +190,7 @@ agenoconcern/
           migrations/               # SQL migration files
           index.ts                  # Connection pool setup
 
-    web/                            # @agenoconcern/web
+    web/                            # @indomitable-unity/web
       package.json
       tsconfig.json
       vite.config.ts
@@ -232,7 +232,7 @@ agenoconcern/
 
 ### Pattern 1: Three-Package Monorepo with Workspace Protocol
 
-**What:** pnpm workspaces with `@agenoconcern/shared` referenced by both server and web packages.
+**What:** pnpm workspaces with `@indomitable-unity/shared` referenced by both server and web packages.
 
 **Configuration:**
 
@@ -245,9 +245,9 @@ packages:
 ```json
 // packages/server/package.json
 {
-  "name": "@agenoconcern/server",
+  "name": "@indomitable-unity/server",
   "dependencies": {
-    "@agenoconcern/shared": "workspace:*"
+    "@indomitable-unity/shared": "workspace:*"
   }
 }
 ```
@@ -255,9 +255,9 @@ packages:
 ```json
 // packages/web/package.json
 {
-  "name": "@agenoconcern/web",
+  "name": "@indomitable-unity/web",
   "dependencies": {
-    "@agenoconcern/shared": "workspace:*"
+    "@indomitable-unity/shared": "workspace:*"
   }
 }
 ```
@@ -265,7 +265,7 @@ packages:
 ```json
 // packages/shared/package.json
 {
-  "name": "@agenoconcern/shared",
+  "name": "@indomitable-unity/shared",
   "main": "src/index.ts",
   "types": "src/index.ts"
 }
@@ -541,7 +541,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAllTools } from "./tools/index.js";
 
 export const mcpServer = new McpServer({
-  name: "agenoconcern",
+  name: "indomitable-unity",
   version: "0.1.0",
 });
 
@@ -698,7 +698,7 @@ export const contributorRole = pgEnum("contributor_role", ["contributor", "commu
 - **Single consent checkbox:** Invalid under UK GDPR. Must be granular per purpose.
 - **LinkedIn as primary auth:** 60-day token expiry, no guaranteed refresh tokens. Always offer email/password as fallback.
 - **Building the design system incrementally:** Set the AAA contrast palette, 18px base font, and 48px touch targets in the Tailwind theme FIRST. Retrofitting is 5x more expensive.
-- **Skipping the shared types package:** Without `@agenoconcern/shared`, types drift between server and web within weeks.
+- **Skipping the shared types package:** Without `@indomitable-unity/shared`, types drift between server and web within weeks.
 
 ## Don't Hand-Roll
 
@@ -753,9 +753,9 @@ export const contributorRole = pgEnum("contributor_role", ["contributor", "commu
 **Warning signs:** tailwind.config.js file exists, `@tailwind` directives in CSS.
 
 ### Pitfall 7: Shared Package Import Resolution
-**What goes wrong:** TypeScript can't resolve imports from `@agenoconcern/shared` in the web package.
+**What goes wrong:** TypeScript can't resolve imports from `@indomitable-unity/shared` in the web package.
 **Why it happens:** Missing workspace protocol in package.json, or tsconfig paths not configured.
-**How to avoid:** Add `"@agenoconcern/shared": "workspace:*"` to dependencies. In the shared package, set `"main": "src/index.ts"`. Vite resolves workspace deps automatically. For the server (tsx), it also resolves workspace deps natively.
+**How to avoid:** Add `"@indomitable-unity/shared": "workspace:*"` to dependencies. In the shared package, set `"main": "src/index.ts"`. Vite resolves workspace deps automatically. For the server (tsx), it also resolves workspace deps natively.
 **Warning signs:** Module not found errors, red squiggles on imports from shared.
 
 ## Code Examples
@@ -922,7 +922,7 @@ export const consentRecords = pgTable("consent_records", {
 # .env.example
 
 # Database
-DATABASE_URL=postgres://user:pass@localhost:5432/agenoconcern
+DATABASE_URL=postgres://user:pass@localhost:5432/indomitable_unity
 
 # Auth - JWT
 JWT_SECRET=generate-a-256-bit-secret-here

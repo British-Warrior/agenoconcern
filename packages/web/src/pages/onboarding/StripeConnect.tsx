@@ -12,7 +12,7 @@ export function StripeConnect() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = "Payment Setup — Age No Concern";
+    document.title = "Payment Setup — Indomitable Unity";
   }, []);
 
   const handleSetUpPayments = async () => {

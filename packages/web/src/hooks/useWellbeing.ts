@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { submitCheckin, getWellbeingDue, getWellbeingHistory } from "../api/wellbeing.js";
-import type { WellbeingCheckinInput } from "@agenoconcern/shared";
+import type { WellbeingCheckinInput } from "@indomitable-unity/shared";
 import { useAuth } from "./useAuth.js";
 
 // ─── Queries ───────────────────────────────────────────────────────────────────

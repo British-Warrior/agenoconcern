@@ -1,17 +1,17 @@
 {
-  "name": "agenoconcern",
+  "name": "indomitable-unity",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "pnpm run dev:server & pnpm run dev:web",
-    "dev:server": "pnpm --filter @agenoconcern/server dev",
-    "dev:web": "pnpm --filter @agenoconcern/web dev",
+    "dev:server": "pnpm --filter @indomitable-unity/server dev",
+    "dev:web": "pnpm --filter @indomitable-unity/web dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
-    "db:generate": "pnpm --filter @agenoconcern/server db:generate",
-    "db:migrate": "pnpm --filter @agenoconcern/server db:migrate",
-    "db:push": "pnpm --filter @agenoconcern/server drizzle-kit push",
-    "db:studio": "pnpm --filter @agenoconcern/server db:studio",
+    "db:generate": "pnpm --filter @indomitable-unity/server db:generate",
+    "db:migrate": "pnpm --filter @indomitable-unity/server db:migrate",
+    "db:push": "pnpm --filter @indomitable-unity/server drizzle-kit push",
+    "db:studio": "pnpm --filter @indomitable-unity/server db:studio",
     "test": "pnpm -r test"
   },
   "engines": {

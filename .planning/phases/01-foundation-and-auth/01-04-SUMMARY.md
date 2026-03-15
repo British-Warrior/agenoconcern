@@ -88,7 +88,7 @@ completed: 2026-03-10
 - WCAG AAA design system with Tailwind v4 CSS-first OKLCH palette, 18px+ typography, 48px touch targets, and full ARIA support across all components
 - Complete auth UI with three identity paths: OAuth primary (Google/LinkedIn), email/password secondary, phone/SMS tertiary -- per locked architectural decisions
 - GDPR-compliant cookie consent banner with equal Accept/Reject buttons (ICO requirement), localStorage persistence, and reopenable from footer
-- Privacy Policy and Cookie Policy pages with interim notice directing data export/deletion requests to kirk@agenoconcern.org
+- Privacy Policy and Cookie Policy pages with interim notice directing data export/deletion requests to kirk@indomitableunity.org
 
 ## Task Commits
 

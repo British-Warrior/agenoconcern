@@ -179,7 +179,7 @@ import webpush from 'web-push';
 import { Resend } from 'resend';
 
 webpush.setVapidDetails(
-  'mailto:support@agenoconcern.org',
+  'mailto:support@indomitableunity.org',
   process.env.VAPID_PUBLIC_KEY!,
   process.env.VAPID_PRIVATE_KEY!,
 );
@@ -215,7 +215,7 @@ precacheAndRoute(self.__WB_MANIFEST);
 self.addEventListener('push', (event) => {
   const data = event.data?.json() ?? {};
   event.waitUntil(
-    self.registration.showNotification(data.title ?? 'Age No Concern', {
+    self.registration.showNotification(data.title ?? 'Indomitable Unity', {
       body: data.body,
       icon: '/icons/icon-192x192.png',
       badge: '/icons/icon-192x192.png',
@@ -248,7 +248,7 @@ VitePWA({
   filename: 'sw.ts',
   registerType: 'prompt',
   manifest: {
-    name: 'Age No Concern',
+    name: 'Indomitable Unity',
     short_name: 'ANC',
     description: 'Connect older professionals with organisations that need their expertise',
     theme_color: '#your-primary',
@@ -361,7 +361,7 @@ export const notifications = pgTable('notifications', {
 ## Common Pitfalls
 
 ### Pitfall 1: WEMWBS Commercial Licence Required
-**What goes wrong:** Deploying WEMWBS check-in without a commercial licence from University of Warwick. Age No Concern charges platform fees (25% of stipends, SME subscriptions), making it a commercial entity.
+**What goes wrong:** Deploying WEMWBS check-in without a commercial licence from University of Warwick. Indomitable Unity charges platform fees (25% of stipends, SME subscriptions), making it a commercial entity.
 **Why it happens:** WEMWBS is free for non-commercial/academic use; this is easy to miss.
 **How to avoid:** Obtain commercial licence before building 06-01. SWEMWBS (7 questions) is a licenced instrument — the licence covers both full (14-item) and short (7-item) forms. Contact Warwick Innovations: https://warwick.ac.uk/services/innovations/wemwbs/licenses/
 **Warning signs:** Any "wellbeing check-in" code written before licence is confirmed.
@@ -422,7 +422,7 @@ Add to env config:
 // packages/server/src/config/env.ts — add to schema
 VAPID_PUBLIC_KEY: z.string().default(''),
 VAPID_PRIVATE_KEY: z.string().default(''),
-VAPID_SUBJECT: z.string().default('mailto:support@agenoconcern.org'),
+VAPID_SUBJECT: z.string().default('mailto:support@indomitableunity.org'),
 ```
 
 Add to Vite env (public key only, safe to expose):

@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { useMyCircles } from "../../hooks/useCircles.js";
-import type { CircleStatus } from "@agenoconcern/shared";
+import type { CircleStatus } from "@indomitable-unity/shared";
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString(undefined, {

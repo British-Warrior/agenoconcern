@@ -1,6 +1,6 @@
 import { apiClient } from "./client.js";
 import { API_BASE_URL } from "../lib/constants.js";
-import type { ContributorProfile, CvParseStatus } from "@agenoconcern/shared";
+import type { ContributorProfile, CvParseStatus } from "@indomitable-unity/shared";
 
 // ---------------------------------------------------------------------------
 // Response types

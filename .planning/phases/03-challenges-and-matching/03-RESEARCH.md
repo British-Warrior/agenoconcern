@@ -771,7 +771,7 @@ router.post(
 ```typescript
 // packages/server/src/routes/challenges.ts
 import { z } from "zod";
-import { DOMAIN_TAXONOMY } from "@agenoconcern/shared";
+import { DOMAIN_TAXONOMY } from "@indomitable-unity/shared";
 
 const createChallengeSchema = z.object({
   title: z.string().min(5).max(200),

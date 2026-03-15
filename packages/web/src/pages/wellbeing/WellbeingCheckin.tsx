@@ -6,7 +6,7 @@ export function WellbeingCheckin() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = "Wellbeing Check-in — Age No Concern";
+    document.title = "Wellbeing Check-in — Indomitable Unity";
   }, []);
 
   const handleSuccess = () => {

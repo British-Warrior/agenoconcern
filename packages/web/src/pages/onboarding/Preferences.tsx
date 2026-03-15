@@ -3,8 +3,8 @@ import { useNavigate } from "react-router";
 import { useSavePreferences } from "../../hooks/useOnboarding.js";
 import { Button } from "../../components/ui/Button.js";
 import { Alert } from "../../components/ui/Alert.js";
-import { DOMAIN_TAXONOMY } from "@agenoconcern/shared";
-import type { Availability, CommChannel, CommFrequency } from "@agenoconcern/shared";
+import { DOMAIN_TAXONOMY } from "@indomitable-unity/shared";
+import type { Availability, CommChannel, CommFrequency } from "@indomitable-unity/shared";
 
 // ---------------------------------------------------------------------------
 // Form state
@@ -94,7 +94,7 @@ export function Preferences() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = "Your Preferences — Age No Concern";
+    document.title = "Your Preferences — Indomitable Unity";
   }, []);
 
   // Toggle a domain checkbox

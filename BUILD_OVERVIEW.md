@@ -9,7 +9,7 @@
 
 ## 1. WHAT THIS IS
 
-Age No Concern is a social enterprise platform that rebuilds community, purpose, and income for experienced professionals aged 50–75+ who have been involuntarily excluded from the workforce. It addresses the "pension gap" — the approximately 12-year financial void between involuntary workforce exit (typically around age 55) and state pension eligibility (age 67+ in the UK, 67 in Australia).
+Indomitable Unity is a social enterprise platform that rebuilds community, purpose, and income for experienced professionals aged 50–75+ who have been involuntarily excluded from the workforce. It addresses the "pension gap" — the approximately 12-year financial void between involuntary workforce exit (typically around age 55) and state pension eligibility (age 67+ in the UK, 67 in Australia).
 
 **It is NOT:** A job board. A charity. A gig economy platform. A social network for old people.
 
@@ -35,11 +35,11 @@ Age No Concern is a social enterprise platform that rebuilds community, purpose,
 ### 3.1 The Paradigm Shift
 
 ```
-[User] <---> [VANTAGE AI Agent] <---> [Age No Concern MCP Server (Domain Layer)]
+[User] <---> [VANTAGE AI Agent] <---> [Indomitable Unity MCP Server (Domain Layer)]
 ```
 
 - VANTAGE handles ALL user interaction through conversation (voice, text, simplified visual, motor-adapted)
-- Age No Concern is an MCP server that exposes domain logic as tools
+- Indomitable Unity is an MCP server that exposes domain logic as tools
 - VANTAGE calls these tools to execute platform operations on behalf of the user
 
 ### 3.2 MCP Server Architecture — 14 Tools Across 4 Domains

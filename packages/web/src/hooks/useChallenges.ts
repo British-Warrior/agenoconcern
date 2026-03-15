@@ -4,7 +4,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import type { ChallengeFilters, CreateChallengeInput, UpdateChallengeInput } from "@agenoconcern/shared";
+import type { ChallengeFilters, CreateChallengeInput, UpdateChallengeInput } from "@indomitable-unity/shared";
 import * as challengesApi from "../api/challenges.js";
 
 export function useChallengeFeed(filters: Omit<ChallengeFilters, "page">) {

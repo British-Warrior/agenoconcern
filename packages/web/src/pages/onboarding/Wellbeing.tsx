@@ -6,7 +6,7 @@ export function Wellbeing() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = "Wellbeing Check-in — Age No Concern";
+    document.title = "Wellbeing Check-in — Indomitable Unity";
   }, []);
 
   const handleSuccess = () => {
@@ -22,7 +22,7 @@ export function Wellbeing() {
           </h1>
           <p className="text-base text-neutral-600 mb-8">
             Before you get started, we'd like to understand how you're feeling. This helps us
-            track the difference Age No Concern makes to your wellbeing over time.
+            track the difference Indomitable Unity makes to your wellbeing over time.
           </p>
 
           <WellbeingForm

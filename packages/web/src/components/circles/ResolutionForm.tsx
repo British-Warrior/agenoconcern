@@ -1,6 +1,6 @@
 import { useState } from "react";
-import type { CircleResolution, CircleStatus, SubmitResolutionInput } from "@agenoconcern/shared";
-import { submitResolutionSchema } from "@agenoconcern/shared";
+import type { CircleResolution, CircleStatus, SubmitResolutionInput } from "@indomitable-unity/shared";
+import { submitResolutionSchema } from "@indomitable-unity/shared";
 import { useSubmitResolution, useUpdateResolution } from "../../hooks/useCircles.js";
 
 interface ResolutionFormProps {

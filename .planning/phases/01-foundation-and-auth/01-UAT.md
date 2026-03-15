@@ -57,7 +57,7 @@ expected: After dismissing the consent banner, scroll to the page footer. Click 
 result: pass
 
 ### 11. Privacy Policy page
-expected: Navigate to the Privacy Policy page (from footer link or /privacy). Page shows a full privacy policy including an interim notice that data export/deletion features are being developed, with an email contact (kirk@agenoconcern.org) for requests.
+expected: Navigate to the Privacy Policy page (from footer link or /privacy). Page shows a full privacy policy including an interim notice that data export/deletion features are being developed, with an email contact (kirk@indomitableunity.org) for requests.
 result: pass
 
 ### 12. Cookie Policy page

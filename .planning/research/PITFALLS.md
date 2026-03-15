@@ -1,7 +1,7 @@
 # Domain Pitfalls
 
 **Domain:** Social enterprise expertise marketplace (UK, 50-75+ demographic)
-**Project:** Age No Concern
+**Project:** Indomitable Unity
 **Researched:** 2026-03-10
 
 ---
@@ -48,7 +48,7 @@ Mistakes that cause rewrites, legal exposure, or project failure.
 
 **What goes wrong:** Choosing the wrong Stripe Connect account type (Standard, Express, or Custom) or the wrong charge flow (direct, destination, or separate charges and transfers) early on creates architecture that's extremely painful to change later. Each combination has different implications for who owns the customer relationship, how refunds work, and what compliance burden falls on you.
 
-**Why it happens:** Developers pick based on "what's easiest to implement now" rather than mapping the commercial relationship. For Age No Concern, the platform facilitates paid advisory work where the platform takes a fee -- this is a classic marketplace model requiring careful charge flow design.
+**Why it happens:** Developers pick based on "what's easiest to implement now" rather than mapping the commercial relationship. For Indomitable Unity, the platform facilitates paid advisory work where the platform takes a fee -- this is a classic marketplace model requiring careful charge flow design.
 
 **Consequences:** Wrong account type means rebuilding your entire payment integration. Wrong charge flow means refunds don't work as expected, disputes hit the wrong party, or you can't implement your fee structure.
 
@@ -147,11 +147,11 @@ Mistakes that cause rewrites, legal exposure, or project failure.
 
 ### Pitfall 5: Marketplace Cold-Start With a Niche Demographic
 
-**What goes wrong:** Two-sided marketplaces die when neither side shows up. Age No Concern has an additional constraint: the supply side (contributors aged 50-75) requires higher-touch recruitment than a typical marketplace. You can't just run Facebook ads and get signups. The demand side (challengers/organisations needing expertise) won't pay if the contributor pool is thin.
+**What goes wrong:** Two-sided marketplaces die when neither side shows up. Indomitable Unity has an additional constraint: the supply side (contributors aged 50-75) requires higher-touch recruitment than a typical marketplace. You can't just run Facebook ads and get signups. The demand side (challengers/organisations needing expertise) won't pay if the contributor pool is thin.
 
 **Prevention:**
 - **Supply-first, always.** Recruit 30-50 contributors before approaching a single challenger. The East Midlands pilot should be 100% focused on supply-side recruitment first.
-- **Seed the atomic network.** Andrew Chen's "atomic network" concept: find the smallest viable network. For Age No Concern, this might be one specific sector (e.g., manufacturing expertise in Nottingham) where you can get 10 contributors and 3 challengers who already know each other.
+- **Seed the atomic network.** Andrew Chen's "atomic network" concept: find the smallest viable network. For Indomitable Unity, this might be one specific sector (e.g., manufacturing expertise in Nottingham) where you can get 10 contributors and 3 challengers who already know each other.
 - **Concierge the first matches.** Don't rely on the platform to match people in the pilot. Manually introduce contributors to challengers. The platform records and facilitates, but the matching is human-driven initially.
 - **Don't build payment features for the pilot if it delays launch.** Better to launch with manual invoicing and add Stripe later than to delay launch perfecting payments while your warm leads go cold.
 - **Track supply-side activation rate**, not just signups. A contributor who signed up but has an empty profile is not supply.
@@ -330,7 +330,7 @@ Mistakes that cause rewrites, legal exposure, or project failure.
 
 ### Pitfall 11: UK Regulatory Considerations for Stripe Connect Marketplace
 
-**What goes wrong:** Operating a marketplace that handles payments in the UK has regulatory implications beyond just "use Stripe." If Age No Concern holds funds (even briefly), or if the fee structure looks like a commission on regulated activity, FCA questions may arise. Social enterprises have specific governance requirements that interact with payment processing.
+**What goes wrong:** Operating a marketplace that handles payments in the UK has regulatory implications beyond just "use Stripe." If Indomitable Unity holds funds (even briefly), or if the fee structure looks like a commission on regulated activity, FCA questions may arise. Social enterprises have specific governance requirements that interact with payment processing.
 
 **Prevention:**
 - Use Stripe Connect in a way where Stripe holds all funds -- your platform never holds customer money. This avoids triggering Electronic Money Institution (EMI) or Payment Institution (PI) registration requirements with the FCA.
@@ -384,7 +384,7 @@ Mistakes that cause rewrites, legal exposure, or project failure.
 
 ### Pitfall 13: MCP Server OAuth 2.1 Requirement for HTTP Transport
 
-**What goes wrong:** The MCP specification (as of March 2025) requires OAuth 2.1 for HTTP-based transports. If Age No Concern's MCP server uses HTTP (SSE) transport and doesn't implement OAuth 2.1, it's non-compliant with the spec. Clients that enforce the spec will refuse to connect.
+**What goes wrong:** The MCP specification (as of March 2025) requires OAuth 2.1 for HTTP-based transports. If Indomitable Unity's MCP server uses HTTP (SSE) transport and doesn't implement OAuth 2.1, it's non-compliant with the spec. Clients that enforce the spec will refuse to connect.
 
 **Prevention:**
 - If the MCP server is used locally (stdio transport), OAuth isn't required.

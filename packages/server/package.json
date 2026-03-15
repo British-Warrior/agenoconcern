@@ -1,5 +1,5 @@
 {
-  "name": "@agenoconcern/server",
+  "name": "@indomitable-unity/server",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@agenoconcern/shared": "workspace:*",
+    "@indomitable-unity/shared": "workspace:*",
     "@aws-sdk/client-s3": "^3.1006.0",
     "@aws-sdk/s3-request-presigner": "^3.1006.0",
     "@modelcontextprotocol/sdk": "^1.0.0",

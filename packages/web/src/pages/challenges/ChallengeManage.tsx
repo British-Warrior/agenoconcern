@@ -7,7 +7,7 @@ import {
 } from "../../hooks/useChallenges.js";
 import { ChallengeForm } from "../../components/challenges/ChallengeForm.js";
 import { ManageChallengeRow } from "../../components/challenges/ManageChallengeRow.js";
-import type { Challenge, CreateChallengeInput } from "@agenoconcern/shared";
+import type { Challenge, CreateChallengeInput } from "@indomitable-unity/shared";
 
 type FormMode = "create" | "edit";
 

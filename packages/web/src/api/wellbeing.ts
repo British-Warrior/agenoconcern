@@ -4,7 +4,7 @@ import type {
   WellbeingCheckinInput,
   WellbeingDueResponse,
   WellbeingTrajectoryPoint,
-} from "@agenoconcern/shared";
+} from "@indomitable-unity/shared";
 
 export function submitCheckin(data: WellbeingCheckinInput): Promise<WellbeingCheckin> {
   return apiClient<WellbeingCheckin>("/api/wellbeing/checkin", {

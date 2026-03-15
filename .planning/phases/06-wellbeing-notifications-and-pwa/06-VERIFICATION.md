@@ -157,7 +157,7 @@ No TODO, FIXME, placeholder, or stub patterns found in any phase 6 source files.
 #### 3. PWA Installability in Browser
 
 **Test:** Serve app over HTTPS. Check for install prompt or address bar install icon. Complete install to home screen.
-**Expected:** App installs and launches in standalone mode with name Age No Concern and teal theme color.
+**Expected:** App installs and launches in standalone mode with name Indomitable Unity and teal theme color.
 **Why human:** Requires HTTPS environment; browser install UX is visual.
 
 #### 4. Push Notification End-to-End

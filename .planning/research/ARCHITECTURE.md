@@ -616,7 +616,7 @@ Use Cloudflare R2 over AWS S3 because: no egress fees, S3-compatible API, simple
 **Confidence: HIGH** -- Based on established pnpm workspace patterns and Kirk's existing experience with Node/React projects.
 
 ```
-agenoconcern/
+indomitable-unity/
   package.json                    # Root -- workspace config, shared scripts
   pnpm-workspace.yaml             # Declares workspace packages
   tsconfig.base.json              # Shared TypeScript config
@@ -728,7 +728,7 @@ packages:
 | Decision | Rationale |
 |----------|-----------|
 | Single `server` package (Express + MCP) | One deployable process, shared domain services, simpler deployment |
-| `shared` package for types | Web and server both import from `@agenoconcern/shared` -- type safety across the stack |
+| `shared` package for types | Web and server both import from `@indomitable-unity/shared` -- type safety across the stack |
 | No Turborepo | Only 2 packages. Add it later if build times become a problem |
 | Services separate from routes/tools | This is the core principle -- domain logic is interface-agnostic |
 

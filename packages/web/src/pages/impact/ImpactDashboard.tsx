@@ -4,7 +4,7 @@ import { Alert } from "../../components/ui/Alert.js";
 import { Button } from "../../components/ui/Button.js";
 import { Input } from "../../components/ui/Input.js";
 import { useImpactSummary, useLogHours } from "../../hooks/useImpact.js";
-import type { ImpactChallenge, ImpactEarning } from "@agenoconcern/shared";
+import type { ImpactChallenge, ImpactEarning } from "@indomitable-unity/shared";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -328,7 +328,7 @@ export function ImpactDashboard() {
   const { data: summary, isLoading, isError } = useImpactSummary();
 
   useEffect(() => {
-    document.title = "My Impact — Age No Concern";
+    document.title = "My Impact — Indomitable Unity";
   }, []);
 
   return (

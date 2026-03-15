@@ -15,8 +15,8 @@
     "sourceMap": true,
     "outDir": "dist",
     "paths": {
-      "@agenoconcern/shared": ["./packages/shared/src"],
-      "@agenoconcern/shared/*": ["./packages/shared/src/*"]
+      "@indomitable-unity/shared": ["./packages/shared/src"],
+      "@indomitable-unity/shared/*": ["./packages/shared/src/*"]
     }
   },
   "exclude": ["node_modules", "dist"]

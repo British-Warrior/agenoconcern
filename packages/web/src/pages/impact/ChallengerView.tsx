@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Card } from "../../components/ui/Card.js";
 import { Alert } from "../../components/ui/Alert.js";
 import { useChallengerImpact } from "../../hooks/useImpact.js";
-import type { ChallengerChallenge } from "@agenoconcern/shared";
+import type { ChallengerChallenge } from "@indomitable-unity/shared";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -117,7 +117,7 @@ export function ChallengerView() {
   const { data: impact, isLoading, isError } = useChallengerImpact();
 
   useEffect(() => {
-    document.title = "Challenge Outcomes — Age No Concern";
+    document.title = "Challenge Outcomes — Indomitable Unity";
   }, []);
 
   return (

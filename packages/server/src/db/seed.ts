@@ -17,7 +17,7 @@ async function seed() {
   const db = getDb();
 
   const adminEmail =
-    process.env.SEED_ADMIN_EMAIL || "kirk@agenoconcern.org";
+    process.env.SEED_ADMIN_EMAIL || "kirk@indomitableunity.org";
   const adminPassword = process.env.SEED_ADMIN_PASSWORD || "changeme123";
 
   // Check if admin already exists

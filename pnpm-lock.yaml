@@ -10,15 +10,15 @@ importers:
 
   packages/server:
     dependencies:
-      '@agenoconcern/shared':
-        specifier: workspace:*
-        version: link:../shared
       '@aws-sdk/client-s3':
         specifier: ^3.1006.0
         version: 3.1006.0
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.1006.0
         version: 3.1006.0
+      '@indomitable-unity/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@modelcontextprotocol/sdk':
         specifier: ^1.0.0
         version: 1.27.1(zod@3.25.76)
@@ -132,7 +132,7 @@ importers:
 
   packages/web:
     dependencies:
-      '@agenoconcern/shared':
+      '@indomitable-unity/shared':
         specifier: workspace:*
         version: link:../shared
       '@radix-ui/react-accordion':

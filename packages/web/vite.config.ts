@@ -17,8 +17,8 @@ export default defineConfig({
         navigateFallback: "/index.html",
       },
       manifest: {
-        name: "Age No Concern",
-        short_name: "ANC",
+        name: "Indomitable Unity",
+        short_name: "IU",
         description: "Deploying expertise that hasn't passed its sell-by date",
         theme_color: "#1a5c4c",
         background_color: "#ffffff",

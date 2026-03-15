@@ -21,7 +21,7 @@ export function ResetPassword() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    document.title = "Reset Password — Age No Concern";
+    document.title = "Reset Password — Indomitable Unity";
   }, []);
 
   useEffect(() => {

@@ -9,7 +9,7 @@ export function Dashboard() {
   const wellbeingDue = useWellbeingDue();
 
   useEffect(() => {
-    document.title = "Dashboard — Age No Concern";
+    document.title = "Dashboard — Indomitable Unity";
   }, []);
 
   return (

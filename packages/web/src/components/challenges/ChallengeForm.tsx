@@ -1,6 +1,6 @@
 import { useState, useCallback, type FormEvent, type KeyboardEvent } from "react";
-import { DOMAIN_TAXONOMY } from "@agenoconcern/shared";
-import type { CreateChallengeInput } from "@agenoconcern/shared";
+import { DOMAIN_TAXONOMY } from "@indomitable-unity/shared";
+import type { CreateChallengeInput } from "@indomitable-unity/shared";
 
 interface ChallengeFormProps {
   onSubmit: (data: CreateChallengeInput) => void;

@@ -6,7 +6,7 @@ import { Button } from "../components/ui/Button.js";
 
 export function CookiePolicy() {
   useEffect(() => {
-    document.title = "Cookie Policy — Age No Concern";
+    document.title = "Cookie Policy — Indomitable Unity";
   }, []);
 
   return (
@@ -122,10 +122,10 @@ export function CookiePolicy() {
           </Link>
           . If you have questions about cookies, contact us at{" "}
           <a
-            href="mailto:kirk@agenoconcern.org"
+            href="mailto:kirk@indomitableunity.org"
             className="text-primary-800 underline"
           >
-            kirk@agenoconcern.org
+            kirk@indomitableunity.org
           </a>
           .
         </p>

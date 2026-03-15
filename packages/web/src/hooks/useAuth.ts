@@ -5,7 +5,7 @@ import {
   type ReactNode,
 } from "react";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
-import type { Contributor } from "@agenoconcern/shared";
+import type { Contributor } from "@indomitable-unity/shared";
 import * as authApi from "../api/auth.js";
 import { ApiResponseError } from "../api/client.js";
 import React from "react";

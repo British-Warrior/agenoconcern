@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import * as jose from "jose";
 import { getEnv } from "../config/env.js";
-import type { ContributorRole } from "@agenoconcern/shared";
+import type { ContributorRole } from "@indomitable-unity/shared";
 
 declare global {
   namespace Express {

@@ -21,7 +21,7 @@ export function Login() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    document.title = "Log In — Age No Concern";
+    document.title = "Log In — Indomitable Unity";
   }, []);
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export function Login() {
     <div className="flex justify-center py-8">
       <Card className="w-full max-w-md">
         <h1 className="text-2xl font-bold text-neutral-900 text-center mb-6">
-          Log in to Age No Concern
+          Log in to Indomitable Unity
         </h1>
 
         {error && (

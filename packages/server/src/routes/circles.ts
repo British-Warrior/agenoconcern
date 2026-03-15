@@ -26,7 +26,7 @@ import {
   rateResolutionSchema,
   setSocialChannelSchema,
   attachmentUrlSchema,
-} from "@agenoconcern/shared";
+} from "@indomitable-unity/shared";
 
 const router = Router();
 

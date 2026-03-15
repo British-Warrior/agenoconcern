@@ -3,7 +3,7 @@ import type {
   CircleResolution,
   CircleStatus,
   ResolutionRating,
-} from "@agenoconcern/shared";
+} from "@indomitable-unity/shared";
 import { useRateResolution } from "../../hooks/useCircles.js";
 import { ResolutionForm } from "./ResolutionForm.js";
 

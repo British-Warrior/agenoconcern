@@ -13,7 +13,7 @@ import {
   wellbeingCheckins,
 } from "../db/schema.js";
 import { authMiddleware } from "../middleware/auth.js";
-import type { ImpactSummary, ImpactChallenge, ImpactEarning, ChallengerImpact, WellbeingTrajectoryPoint } from "@agenoconcern/shared";
+import type { ImpactSummary, ImpactChallenge, ImpactEarning, ChallengerImpact, WellbeingTrajectoryPoint } from "@indomitable-unity/shared";
 
 const router = Router();
 

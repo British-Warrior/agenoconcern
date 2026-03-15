@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "../ui/Button.js";
 import { Alert } from "../ui/Alert.js";
-import type { WellbeingCheckinInput } from "@agenoconcern/shared";
+import type { WellbeingCheckinInput } from "@indomitable-unity/shared";
 import { useSubmitCheckin } from "../../hooks/useWellbeing.js";
 
 // ─── UCLA 3-item scale ─────────────────────────────────────────────────────────
@@ -215,7 +215,7 @@ export function WellbeingForm({
           />
           <span className="text-sm text-neutral-700 leading-relaxed">
             I understand this data is classified as special category health data under UK GDPR. I
-            give explicit consent for Age No Concern to collect, store, and process my wellbeing
+            give explicit consent for Indomitable Unity to collect, store, and process my wellbeing
             responses to track my wellbeing over time. I can withdraw consent and request deletion
             at any time.
           </span>

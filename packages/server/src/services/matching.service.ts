@@ -1,4 +1,4 @@
-import type { TeamComposition } from "@agenoconcern/shared";
+import type { TeamComposition } from "@indomitable-unity/shared";
 
 type Candidate = {
   id: string;

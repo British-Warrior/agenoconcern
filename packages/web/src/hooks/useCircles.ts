@@ -10,7 +10,7 @@ import type {
   SubmitResolutionInput,
   RateResolutionInput,
   SetSocialChannelInput,
-} from "@agenoconcern/shared";
+} from "@indomitable-unity/shared";
 import * as circlesApi from "../api/circles.js";
 
 // ─── Queries ──────────────────────────────────────────────────────────────────

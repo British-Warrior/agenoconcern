@@ -21,7 +21,7 @@ export function PhoneLogin() {
   const cooldownRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   useEffect(() => {
-    document.title = "Phone Login — Age No Concern";
+    document.title = "Phone Login — Indomitable Unity";
   }, []);
 
   useEffect(() => {

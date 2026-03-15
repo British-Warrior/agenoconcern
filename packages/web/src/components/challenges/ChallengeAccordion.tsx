@@ -1,5 +1,5 @@
 import * as Accordion from "@radix-ui/react-accordion";
-import type { Challenge } from "@agenoconcern/shared";
+import type { Challenge } from "@indomitable-unity/shared";
 import { ChallengeRow } from "./ChallengeRow.js";
 
 interface ChallengeWithInterest extends Challenge {

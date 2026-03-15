@@ -4,7 +4,7 @@ import { ROUTES } from "../lib/constants.js";
 
 export function PrivacyPolicy() {
   useEffect(() => {
-    document.title = "Privacy Policy — Age No Concern";
+    document.title = "Privacy Policy — Indomitable Unity";
   }, []);
 
   return (
@@ -21,17 +21,17 @@ export function PrivacyPolicy() {
           Who we are
         </h2>
         <p className="text-base text-neutral-700 leading-relaxed mb-3">
-          Age No Concern is a platform that connects experienced professionals
+          Indomitable Unity is a platform that connects experienced professionals
           with communities and organisations that value their expertise. We are
           the data controller for the personal data described in this policy.
         </p>
         <p className="text-base text-neutral-700 leading-relaxed">
           <strong>Contact:</strong> Kirk Harper &mdash;{" "}
           <a
-            href="mailto:kirk@agenoconcern.org"
+            href="mailto:kirk@indomitableunity.org"
             className="text-primary-800 underline"
           >
-            kirk@agenoconcern.org
+            kirk@indomitableunity.org
           </a>
         </p>
       </section>
@@ -143,10 +143,10 @@ export function PrivacyPolicy() {
         <p className="text-base text-neutral-700 leading-relaxed">
           In the meantime, you can exercise any of these rights by emailing{" "}
           <a
-            href="mailto:kirk@agenoconcern.org"
+            href="mailto:kirk@indomitableunity.org"
             className="text-primary-800 underline font-medium"
           >
-            kirk@agenoconcern.org
+            kirk@indomitableunity.org
           </a>
           . We will respond within 30 days as required by law.
         </p>

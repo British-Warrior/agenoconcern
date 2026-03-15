@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import { getEnv } from "../config/env.js";
-import type { ParsedCvData } from "@agenoconcern/shared";
+import type { ParsedCvData } from "@indomitable-unity/shared";
 
 // Zod schema for structured CV output
 const parsedCvSchema = z.object({

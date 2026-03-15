@@ -27,7 +27,7 @@ Features users expect. Missing = platform feels incomplete or untrustworthy.
 
 ## Differentiators
 
-Features that set Age No Concern apart. Not expected by users coming from other platforms, but create unique value.
+Features that set Indomitable Unity apart. Not expected by users coming from other platforms, but create unique value.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|

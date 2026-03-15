@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { TeamComposition } from "@agenoconcern/shared";
+import type { TeamComposition } from "@indomitable-unity/shared";
 import { CircleFormationModal } from "../circles/CircleFormationModal.js";
 
 interface TeamCompositionCardProps {

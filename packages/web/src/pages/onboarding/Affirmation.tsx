@@ -33,7 +33,7 @@ export function Affirmation() {
   const affirmationMessage = profile?.affirmationMessage ?? FALLBACK_AFFIRMATION;
 
   useEffect(() => {
-    document.title = "Welcome to Age No Concern";
+    document.title = "Welcome to Indomitable Unity";
   }, []);
 
   return (
@@ -46,7 +46,7 @@ export function Affirmation() {
 
         {/* Heading */}
         <h1 className="text-4xl font-bold text-neutral-900 mb-4 leading-tight">
-          Welcome to Age No Concern
+          Welcome to Indomitable Unity
         </h1>
 
         <p className="text-lg text-neutral-600 mb-8">

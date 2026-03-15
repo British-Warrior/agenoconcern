@@ -9,7 +9,7 @@ dotenv.config({ path: path.resolve(__dirname, "../../../../.env") });
 
 const envSchema = z.object({
   // Database
-  DATABASE_URL: z.string().url().default("postgresql://postgres:postgres@localhost:5432/agenoconcern"),
+  DATABASE_URL: z.string().url().default("postgresql://postgres:postgres@localhost:5432/indomitable_unity"),
 
   // Server
   PORT: z.coerce.number().default(3000),
@@ -51,7 +51,7 @@ const envSchema = z.object({
   // Web Push - VAPID
   VAPID_PUBLIC_KEY: z.string().default(""),
   VAPID_PRIVATE_KEY: z.string().default(""),
-  VAPID_SUBJECT: z.string().default("mailto:support@agenoconcern.org"),
+  VAPID_SUBJECT: z.string().default("mailto:support@indomitableunity.org"),
 });
 
 export type Env = z.infer<typeof envSchema>;

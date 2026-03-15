@@ -22,7 +22,7 @@ export function Register() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    document.title = "Create Account — Age No Concern";
+    document.title = "Create Account — Indomitable Unity";
   }, []);
 
   useEffect(() => {

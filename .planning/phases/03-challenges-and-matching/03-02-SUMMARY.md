@@ -77,7 +77,7 @@ One-liner: Radix accordion challenge feed with domain/type/timeline filters, nat
 - `flex flex-col gap-2` layout
 
 **FilterBar** (`components/challenges/FilterBar.tsx`):
-- Domain: `<select>` with all `DOMAIN_TAXONOMY` options (imported from `@agenoconcern/shared`)
+- Domain: `<select>` with all `DOMAIN_TAXONOMY` options (imported from `@indomitable-unity/shared`)
 - Type: pill chips — All / Paid / Free; active gets `bg-accent-600 text-white`
 - Timeline: pill chips — Any / This Week / This Month; same active style
 - "Clear all" text link shown only when any filter is active
@@ -128,8 +128,8 @@ One-liner: Radix accordion challenge feed with domain/type/timeline filters, nat
 
 ## Verification
 
-- TypeScript: `pnpm --filter @agenoconcern/web exec tsc --noEmit` — PASS (zero errors)
-- Build: `pnpm --filter @agenoconcern/web run build` — PASS (496 kB bundle, 968ms)
+- TypeScript: `pnpm --filter @indomitable-unity/web exec tsc --noEmit` — PASS (zero errors)
+- Build: `pnpm --filter @indomitable-unity/web run build` — PASS (496 kB bundle, 968ms)
 - `/challenges` route registered in `App.tsx` inside `ProtectedRoute`
 - FilterBar, ChallengeAccordion, ChallengeRow, ChallengeSubSection, InterestButton all compile cleanly
 

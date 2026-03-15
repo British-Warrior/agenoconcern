@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import type { Notification } from "@agenoconcern/shared";
+import type { Notification } from "@indomitable-unity/shared";
 import { useNotifications, useMarkRead, useMarkAllRead } from "../../hooks/useNotifications.js";
 
 function relativeTime(dateStr: string): string {

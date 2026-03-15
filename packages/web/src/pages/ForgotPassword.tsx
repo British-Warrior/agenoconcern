@@ -15,7 +15,7 @@ export function ForgotPassword() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    document.title = "Forgot Password — Age No Concern";
+    document.title = "Forgot Password — Indomitable Unity";
   }, []);
 
   async function handleSubmit(e: FormEvent) {

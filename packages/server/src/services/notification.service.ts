@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { getDb } from "../db/index.js";
 import { notifications, pushSubscriptions, contributors } from "../db/schema.js";
 import { getEnv } from "../config/env.js";
-import type { NotificationType } from "@agenoconcern/shared";
+import type { NotificationType } from "@indomitable-unity/shared";
 
 // Initialise VAPID on module load — graceful degradation if keys not set
 const env = getEnv();
@@ -114,7 +114,7 @@ async function sendEmailFallback(
       : `<p>${body}</p>`;
 
     await resend.emails.send({
-      from: "Age No Concern <noreply@agenoconcern.org>",
+      from: "Indomitable Unity <noreply@indomitableunity.org>",
       to: contributor.email,
       subject: title,
       html: htmlBody,

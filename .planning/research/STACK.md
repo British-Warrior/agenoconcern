@@ -1,6 +1,6 @@
 # Technology Stack
 
-**Project:** Age No Concern
+**Project:** Indomitable Unity
 **Researched:** 2026-03-10
 **Stack Philosophy:** Match iLearn LSS patterns (React/Vite + Tailwind + Node/Express + PostgreSQL) for consistency across Kirk's projects. Prefer lightweight, well-typed libraries over heavy frameworks.
 
@@ -73,8 +73,8 @@ const account = await stripe.accounts.create({ type: 'express', country: 'GB' })
 // Generate onboarding link
 const accountLink = await stripe.accountLinks.create({
   account: account.id,
-  refresh_url: 'https://app.agenoconcern.org/onboarding/refresh',
-  return_url: 'https://app.agenoconcern.org/onboarding/complete',
+  refresh_url: 'https://app.indomitableunity.org/onboarding/refresh',
+  return_url: 'https://app.indomitableunity.org/onboarding/complete',
   type: 'account_onboarding',
 });
 
@@ -248,7 +248,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Age No Concern',
+        name: 'Indomitable Unity',
         short_name: 'ANC',
         description: 'Deploying experienced professionals into advisory work',
         theme_color: '#1e3a5f',
@@ -284,7 +284,7 @@ export default defineConfig({
 - **Over Postmark:** Postmark has better deliverability at scale, but costs $15/month from day one. Resend's free tier (3,000 emails/month) is perfect for a 50-100 user pilot. Postmark is the upgrade path if deliverability becomes critical.
 - **React Email integration:** Resend is built by the React Email team. Write email templates as React components -- consistent with the React frontend. No wrestling with table-based HTML.
 
-**Email types for Age No Concern:**
+**Email types for Indomitable Unity:**
 - Welcome / account verification
 - Engagement match notifications (contributor matched with opportunity)
 - Payment confirmations (Stripe webhook triggered)
@@ -329,7 +329,7 @@ export default defineConfig({
 
 ```bash
 # Create project
-mkdir agenoconcern && cd agenoconcern
+mkdir indomitable-unity && cd indomitable-unity
 npm init -y
 
 # Core backend

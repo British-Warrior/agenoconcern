@@ -5,7 +5,7 @@ export function Complete() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = "You're all set! — Age No Concern";
+    document.title = "You're all set! — Indomitable Unity";
 
     const timer = setTimeout(() => {
       navigate("/dashboard", { replace: true });

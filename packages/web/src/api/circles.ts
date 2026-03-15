@@ -11,7 +11,7 @@ import type {
   SubmitResolutionInput,
   RateResolutionInput,
   SetSocialChannelInput,
-} from "@agenoconcern/shared";
+} from "@indomitable-unity/shared";
 
 // ─── Response shapes ──────────────────────────────────────────────────────────
 

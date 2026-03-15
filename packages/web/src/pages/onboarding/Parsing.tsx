@@ -41,7 +41,7 @@ export function Parsing() {
   const isFailed = data?.status === "failed" || isError;
 
   useEffect(() => {
-    document.title = "Analysing your CV — Age No Concern";
+    document.title = "Analysing your CV — Indomitable Unity";
   }, []);
 
   if (!jobId) {

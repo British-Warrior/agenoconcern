@@ -11,7 +11,7 @@ import {
   type RegisterInput,
   type LoginInput,
   type ContributorRole,
-} from "@agenoconcern/shared";
+} from "@indomitable-unity/shared";
 
 // ---------------------------------------------------------------------------
 // JWT helpers

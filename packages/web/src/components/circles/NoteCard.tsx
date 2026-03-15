@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import type { CircleNoteWithAuthorAndAttachments } from "@agenoconcern/shared";
+import type { CircleNoteWithAuthorAndAttachments } from "@indomitable-unity/shared";
 import { getDownloadUrl } from "../../api/circles.js";
 
 interface NoteCardProps {

@@ -1,5 +1,5 @@
 import { apiClient } from "./client.js";
-import type { Notification, NotificationPreferences, PushSubscriptionInput } from "@agenoconcern/shared";
+import type { Notification, NotificationPreferences, PushSubscriptionInput } from "@indomitable-unity/shared";
 
 export async function getNotifications(): Promise<Notification[]> {
   return apiClient<Notification[]>("/api/notifications");

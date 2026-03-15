@@ -30,7 +30,7 @@ export function Navbar() {
         to={ROUTES.LANDING}
         className="text-xl font-bold text-primary-900 hover:text-primary-700 transition-colors no-underline"
       >
-        Age No Concern
+        Indomitable Unity
       </Link>
 
       <div className="flex items-center gap-4">

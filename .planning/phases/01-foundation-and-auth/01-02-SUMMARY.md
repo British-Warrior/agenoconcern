@@ -68,7 +68,7 @@ completed: 2026-03-10
 - Express server starts on configurable PORT with CORS, cookie-parser, JSON parsing, and /health endpoint
 - Auth middleware skeleton verifies JWT from access_token cookie via jose, attaches req.contributor, and provides requireRole guard
 - 14 MCP tool stubs registered across 4 domains (contributors: 4, challenges: 4, circles: 5, wellbeing: 1) with complete Zod input schemas
-- Vite web placeholder imports CONTRIBUTOR_ROLES from @agenoconcern/shared to verify workspace link
+- Vite web placeholder imports CONTRIBUTOR_ROLES from @indomitable-unity/shared to verify workspace link
 
 ## Task Commits
 

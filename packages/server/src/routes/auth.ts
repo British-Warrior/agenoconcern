@@ -26,7 +26,7 @@ import {
   loginInputSchema,
   phoneInputSchema,
   resetPasswordInputSchema,
-} from "@agenoconcern/shared";
+} from "@indomitable-unity/shared";
 
 const router = Router();
 
@@ -497,10 +497,10 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
       const resetLink = `${env.CLIENT_URL}/reset-password?token=${result.rawToken}`;
 
       await resend.emails.send({
-        from: "Age No Concern <noreply@agenoconcern.org>",
+        from: "Indomitable Unity <noreply@indomitableunity.org>",
         to: email,
         subject: "Reset your password",
-        text: `You requested a password reset for your Age No Concern account.\n\nClick this link to reset your password (valid for 1 hour):\n${resetLink}\n\nIf you didn't request this, you can safely ignore this email.`,
+        text: `You requested a password reset for your Indomitable Unity account.\n\nClick this link to reset your password (valid for 1 hour):\n${resetLink}\n\nIf you didn't request this, you can safely ignore this email.`,
       });
     } else if (result && !env.RESEND_API_KEY) {
       console.warn("[auth] Password reset requested but RESEND_API_KEY not configured — email not sent");

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { useProfile, useUpdateProfile } from "../../hooks/useOnboarding.js";
 import { Button } from "../../components/ui/Button.js";
 import { Alert } from "../../components/ui/Alert.js";
-import type { ContributorProfile } from "@agenoconcern/shared";
+import type { ContributorProfile } from "@indomitable-unity/shared";
 
 // ---------------------------------------------------------------------------
 // Tag pill component
@@ -172,7 +172,7 @@ export function ReviewProfile() {
   }, [profile, editable]);
 
   useEffect(() => {
-    document.title = "Review Your Profile — Age No Concern";
+    document.title = "Review Your Profile — Indomitable Unity";
   }, []);
 
   const handleConfirm = async () => {

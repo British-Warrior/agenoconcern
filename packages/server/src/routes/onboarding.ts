@@ -13,7 +13,7 @@ import {
   getAccountStatus,
 } from "../services/stripe.service.js";
 import { getEnv } from "../config/env.js";
-import { updateProfileSchema, preferencesSchema } from "@agenoconcern/shared";
+import { updateProfileSchema, preferencesSchema } from "@indomitable-unity/shared";
 
 const router = Router();
 

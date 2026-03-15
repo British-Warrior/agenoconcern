@@ -12,7 +12,7 @@ precacheAndRoute(self.__WB_MANIFEST);
 self.addEventListener("push", (event) => {
   const data = event.data?.json() ?? {};
   event.waitUntil(
-    self.registration.showNotification(data.title ?? "Age No Concern", {
+    self.registration.showNotification(data.title ?? "Indomitable Unity", {
       body: data.body ?? "",
       icon: "/icons/icon-192x192.png",
       badge: "/icons/icon-192x192.png",

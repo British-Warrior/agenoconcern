@@ -1,8 +1,8 @@
-# Age No Concern
+# Indomitable Unity
 
 ## What This Is
 
-Age No Concern is a social enterprise platform that deploys experienced professionals (50–75+) who have been involuntarily excluded from the workforce into paid advisory work and unpaid community contribution. It addresses the "pension gap" — the ~12-year financial void between involuntary career exit (~55) and state pension eligibility (67+ UK). The platform is an MCP server exposing 14 domain tools, with a basic web UI for MVP that VANTAGE (Kirk's adaptive AI agent) will overlay as the sole interface.
+Indomitable Unity is a social enterprise platform that deploys experienced professionals (50–75+) who have been involuntarily excluded from the workforce into paid advisory work and unpaid community contribution. It addresses the "pension gap" — the ~12-year financial void between involuntary career exit (~55) and state pension eligibility (67+ UK). The platform is an MCP server exposing 14 domain tools, with a basic web UI for MVP that VANTAGE (Kirk's adaptive AI agent) will overlay as the sole interface.
 
 ## Core Value
 
@@ -55,7 +55,7 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 - **Target demographic:** Digitally literate professionals aged 50-75+ who were using enterprise software last week. Not elderly people struggling with technology. Framing must reflect this.
 - **Brand tone:** Defiant, not sympathetic. Warm, not corporate. Blunt, not patronising.
 - **Tagline:** "Deploying Expertise That Hasn't Passed Its Sell-By Date."
-- **Brand name:** "Age No Concern" — deliberate play on Age Concern/Age UK. Age UK formally approached March 2026. Used as working title pending that conversation.
+- **Brand name:** "Indomitable Unity" — name reflects defiance and collective strength. Professionals united, refusing to be sidelined.
 - **VANTAGE:** Kirk's pre-built adaptive AI agent — will become the sole interface post-MVP. For MVP, we build a basic web UI that VANTAGE can be overlaid onto. Architecturally aligned with Google's Natively Adaptive Interfaces (NAI) framework (Feb 2026).
 - **Institutional embedding:** Platform embeds in libraries, community centres, Women's Institute, voluntary organisations — not a standalone app.
 - **Pilot plan:** East Midlands, UK. 50-100 contributors, 20-30 challenges, 3-5 institutional partnerships, 1 community manager, 6-month duration.

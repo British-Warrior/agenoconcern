@@ -1,5 +1,5 @@
 import { apiClient } from "./client.js";
-import type { ImpactSummary, ChallengerImpact } from "@agenoconcern/shared";
+import type { ImpactSummary, ChallengerImpact } from "@indomitable-unity/shared";
 
 // ─── Impact API ────────────────────────────────────────────────────────────────
 

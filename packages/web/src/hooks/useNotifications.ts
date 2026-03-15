@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { NotificationPreferences } from "@agenoconcern/shared";
+import type { NotificationPreferences } from "@indomitable-unity/shared";
 import * as notificationsApi from "../api/notifications.js";
 
 const NOTIFICATIONS_QUERY_KEY = ["notifications"] as const;

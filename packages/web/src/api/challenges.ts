@@ -7,7 +7,7 @@ import type {
   TeamComposition,
   CreateChallengeInput,
   UpdateChallengeInput,
-} from "@agenoconcern/shared";
+} from "@indomitable-unity/shared";
 
 export interface ChallengeWithInterest extends Challenge {
   myInterest: "active" | "withdrawn" | null;

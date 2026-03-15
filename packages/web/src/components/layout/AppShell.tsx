@@ -49,7 +49,7 @@ export function AppShell() {
             Manage Cookies
           </button>
           <span className="ml-auto text-neutral-400">
-            &copy; {new Date().getFullYear()} Age No Concern
+            &copy; {new Date().getFullYear()} Indomitable Unity
           </span>
         </div>
       </footer>

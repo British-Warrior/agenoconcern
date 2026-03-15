@@ -1,13 +1,13 @@
 # Project Research Summary
 
-**Project:** Age No Concern
+**Project:** Indomitable Unity
 **Domain:** Social enterprise expertise marketplace (UK, 50-75+ demographic)
 **Researched:** 2026-03-10
 **Confidence:** MEDIUM-HIGH
 
 ## Executive Summary
 
-Age No Concern is a two-sided marketplace connecting experienced professionals (50-75+) with organisations needing advisory expertise, while simultaneously tracking unpaid community contribution. The platform combines an MCP server backend (14 tools across 4 domains) with a React/Vite web UI for MVP, with the MCP server designed to serve a future VANTAGE AI agent as the primary interface. Experts build this type of platform with a shared domain service layer that both REST routes and MCP tool handlers call into -- this is the single most important architectural decision, as it makes the VANTAGE transition seamless rather than a rewrite.
+Indomitable Unity is a two-sided marketplace connecting experienced professionals (50-75+) with organisations needing advisory expertise, while simultaneously tracking unpaid community contribution. The platform combines an MCP server backend (14 tools across 4 domains) with a React/Vite web UI for MVP, with the MCP server designed to serve a future VANTAGE AI agent as the primary interface. Experts build this type of platform with a shared domain service layer that both REST routes and MCP tool handlers call into -- this is the single most important architectural decision, as it makes the VANTAGE transition seamless rather than a rewrite.
 
 The recommended approach is: Express accounts with destination charges on Stripe Connect, LLM-based CV parsing (not regex-based npm packages), email/password as primary auth with LinkedIn/Google OAuth as optional enrichment, and Drizzle ORM over PostgreSQL with a hybrid normalized/JSONB schema. The stack aligns with Kirk's existing iLearn LSS patterns (React/Vite, Tailwind, Express, PostgreSQL) to minimize learning curve. The platform should launch supply-first in the East Midlands with 30-50 contributors recruited before approaching any challengers.
 

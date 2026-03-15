@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import type { CircleWorkspaceResponse, CircleStatus } from "@agenoconcern/shared";
+import type { CircleWorkspaceResponse, CircleStatus } from "@indomitable-unity/shared";
 import { useCircleNotes, useResolution } from "../../hooks/useCircles.js";
 import { NoteCard } from "./NoteCard.js";
 import { NoteComposer } from "./NoteComposer.js";

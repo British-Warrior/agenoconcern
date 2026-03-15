@@ -3,8 +3,8 @@ import { desc, eq } from "drizzle-orm";
 import { getDb } from "../db/index.js";
 import { wellbeingCheckins, consentRecords } from "../db/schema.js";
 import { authMiddleware } from "../middleware/auth.js";
-import { wellbeingCheckinSchema } from "@agenoconcern/shared";
-import type { WellbeingCheckin, WellbeingDueResponse, WellbeingTrajectoryPoint } from "@agenoconcern/shared";
+import { wellbeingCheckinSchema } from "@indomitable-unity/shared";
+import type { WellbeingCheckin, WellbeingDueResponse, WellbeingTrajectoryPoint } from "@indomitable-unity/shared";
 
 const router = Router();
 

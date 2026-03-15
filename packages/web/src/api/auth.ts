@@ -1,4 +1,4 @@
-import type { Contributor } from "@agenoconcern/shared";
+import type { Contributor } from "@indomitable-unity/shared";
 import { apiClient } from "./client.js";
 
 interface AuthResponse {

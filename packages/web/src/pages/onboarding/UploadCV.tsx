@@ -61,7 +61,7 @@ export function UploadCV() {
   const [dropError, setDropError] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = "Upload Your CV — Age No Concern";
+    document.title = "Upload Your CV — Indomitable Unity";
   }, []);
 
   const onDrop = useCallback(

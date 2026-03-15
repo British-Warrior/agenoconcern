@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Challenge } from "@agenoconcern/shared";
+import type { Challenge } from "@indomitable-unity/shared";
 import { useChallengeInterests, useTeamSuggestions, useUpdateChallenge } from "../../hooks/useChallenges.js";
 import { TeamCompositionCard } from "./TeamCompositionCard.js";
 

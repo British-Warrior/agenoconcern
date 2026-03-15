@@ -1,4 +1,4 @@
-# Requirements: Age No Concern
+# Requirements: Indomitable Unity
 
 **Defined:** 2026-03-10
 **Core Value:** Experienced professionals can upload their CV, get matched to real challenges, collaborate in cross-functional Circles, and earn income — bridging the pension gap while contributing to their communities.

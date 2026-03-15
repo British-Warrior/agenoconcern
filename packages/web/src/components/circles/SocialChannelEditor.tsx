@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { SocialChannel } from "@agenoconcern/shared";
+import type { SocialChannel } from "@indomitable-unity/shared";
 import { useSetSocialChannel } from "../../hooks/useCircles.js";
 
 const PLATFORM_LABELS: Record<SocialChannel, string> = {
