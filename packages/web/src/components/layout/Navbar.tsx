@@ -3,6 +3,7 @@ import { useAuth } from "../../hooks/useAuth.js";
 import { ROUTES } from "../../lib/constants.js";
 import { Button } from "../ui/Button.js";
 import { useCallback, useState } from "react";
+import { NotificationBell } from "./NotificationBell.js";
 
 export function Navbar() {
   const { contributor, isAuthenticated, logout } = useAuth();
@@ -43,6 +44,7 @@ export function Navbar() {
             >
               My Impact
             </Link>
+            <NotificationBell />
             <span className="text-base text-neutral-700">
               {contributor?.name}
             </span>
