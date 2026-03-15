@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Indomitable Unity is a social enterprise platform that deploys experienced professionals (50–75+) who have been involuntarily excluded from the workforce into paid advisory work and unpaid community contribution. It addresses the "pension gap" — the ~12-year financial void between involuntary career exit (~55) and state pension eligibility (67+ UK). The platform is an MCP server exposing 14 domain tools, with a basic web UI for MVP that VANTAGE (Kirk's adaptive AI agent) will overlay as the sole interface.
+Indomitable Unity is a social enterprise platform that deploys experienced professionals (50-75+) who have been involuntarily excluded from the workforce into paid advisory work and unpaid community contribution. It addresses the "pension gap" — the ~12-year financial void between involuntary career exit (~55) and state pension eligibility (67+ UK). The platform is an MCP server exposing 14 domain tools, with a React/Vite web UI that VANTAGE (Kirk's adaptive AI agent) will overlay as the sole interface. v1.0 MVP shipped 2026-03-15 with all 50 requirements satisfied — pilot-ready for East Midlands deployment.
 
 ## Core Value
 
@@ -12,27 +12,27 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ CV upload → automated profile generation (< 5 minutes, zero form-filling) — v1.0
+- ✓ OAuth authentication (Google, LinkedIn) + email/password — v1.0
+- ✓ Challenge board with filtering and "express interest" — v1.0
+- ✓ Simple scoring-based matching algorithm — v1.0
+- ✓ Circle formation (3-7 members, community manager confirms) — v1.0
+- ✓ Circle workspace (notes feed, member list, external social channel link) — v1.0
+- ✓ Resolution template and structured submission — v1.0
+- ✓ Stripe Connect integration (contributor onboarding, 75/25 payment splits) — v1.0
+- ✓ Knowledge Transition retainer payment flow — v1.0
+- ✓ Premium challenge stipend payment flow — v1.0
+- ✓ Wellbeing check-ins (UCLA Loneliness Scale + WEMWBS, every 8 weeks) — v1.0
+- ✓ Impact tracking (contributor dashboard — challenges, hours, earnings, unpaid contribution) — v1.0
+- ✓ PWA push notifications + email fallback — v1.0
+- ✓ External social deep links (WhatsApp, Slack, Discord, Teams, Signal) — v1.0
+- ✓ MCP server exposing 14 tools across 4 domains (Contributors, Challenges, Circles, Wellbeing) — v1.0
+- ✓ Basic web UI for all contributor-facing flows (VANTAGE overlays later) — v1.0
+- ✓ PWA configuration (manifest, service worker, home screen install) — v1.0
 
 ### Active
 
-- [ ] CV upload → automated profile generation (< 5 minutes, zero form-filling)
-- [ ] OAuth authentication (Google, LinkedIn) + email/password
-- [ ] Challenge board with filtering and "express interest"
-- [ ] Simple scoring-based matching algorithm
-- [ ] Circle formation (3-7 members, community manager confirms)
-- [ ] Circle workspace (notes feed, member list, external social channel link)
-- [ ] Resolution template and structured submission
-- [ ] Stripe Connect integration (contributor onboarding, 75/25 payment splits)
-- [ ] Knowledge Transition retainer payment flow
-- [ ] Premium challenge stipend payment flow
-- [ ] Wellbeing check-ins (UCLA Loneliness Scale + WEMWBS, every 8 weeks)
-- [ ] Impact tracking (contributor dashboard — challenges, hours, earnings, unpaid contribution)
-- [ ] PWA push notifications + email fallback
-- [ ] External social deep links (WhatsApp, Slack, Discord, Teams, Signal)
-- [ ] MCP server exposing 14 tools across 4 domains (Contributors, Challenges, Circles, Wellbeing)
-- [ ] Basic web UI for all contributor-facing flows (VANTAGE overlays later)
-- [ ] PWA configuration (manifest, service worker, home screen install)
+(None — define with `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -61,6 +61,14 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 - **Pilot plan:** East Midlands, UK. 50-100 contributors, 20-30 challenges, 3-5 institutional partnerships, 1 community manager, 6-month duration.
 - **Funding:** NLCF Community Power Fund £80k (primary for MVP), UnLtd Awards £5-15k, Awards for All £300-£20k. MVP build within Community Power Fund budget.
 - **Key contact:** Maria Zappala GAICD — Australian board director, AI governance & anti-ageism advocate. Potential advisory board member.
+
+### Current State (v1.0 shipped)
+
+- **Codebase:** 16,650 lines TypeScript/TSX/CSS across 223 files
+- **Tech stack:** Node.js/TypeScript monorepo, Express server, React/Vite frontend, PostgreSQL (Drizzle ORM), Stripe Connect, S3, OpenAI, web-push, Resend
+- **Architecture:** MCP server (14 tools) + REST API + React SPA (PWA)
+- **Known tech debt:** 7 items (see milestone audit) — none blocking pilot
+- **Legal pre-launch:** Employment Agencies Act 1973 classification, WEMWBS licence registration, DPIA/APD completion
 
 ### Data Model (6 Core Entities)
 
@@ -110,13 +118,17 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| MCP server architecture | VANTAGE integration requires tool-based API; future-proof for agentic interfaces | — Pending |
-| Basic web UI for MVP | Need pilot-ready interface before VANTAGE overlay; gives contributors immediate access | — Pending |
-| React/Vite for web UI | Consistent with Kirk's other projects (iLearn LSS); fast iteration | — Pending |
-| External social over internal chat | Don't compete with WhatsApp/Slack; reduce build scope; people already have preferences | — Pending |
-| 75/25 payment split | Industry-standard marketplace split; contributor-favourable; sustainable for platform | — Pending |
-| Semi-manual challenge intake | Community manager curates quality for first 100 challenges; self-service is v2 | — Pending |
-| CV upload as onboarding | Reduces friction; emotionally reframes from job-seeking rejection to expertise deployment | — Pending |
+| MCP server architecture | VANTAGE integration requires tool-based API; future-proof for agentic interfaces | ✓ Good — 14 tools across 4 domains |
+| Basic web UI for MVP | Need pilot-ready interface before VANTAGE overlay; gives contributors immediate access | ✓ Good — full contributor flows delivered |
+| React/Vite for web UI | Consistent with Kirk's other projects (iLearn LSS); fast iteration | ✓ Good — PWA with service worker |
+| External social over internal chat | Don't compete with WhatsApp/Slack; reduce build scope; people already have preferences | ✓ Good — 5 platform deep links |
+| 75/25 payment split | Industry-standard marketplace split; contributor-favourable; sustainable for platform | ✓ Good — all 3 payment flows working |
+| Semi-manual challenge intake | Community manager curates quality for first 100 challenges; self-service is v2 | ✓ Good — CM admin interface delivered |
+| CV upload as onboarding | Reduces friction; emotionally reframes from job-seeking rejection to expertise deployment | ✓ Good — < 5 min end-to-end |
+| Match scoring in TypeScript (not SQL) | Drizzle JSONB arrayOverlaps bug #4935; TS scoring is more flexible | ✓ Good — avoids ORM bug, easy to tune |
+| Shared package as TS source (no build step) | Simpler DX for monorepo at pilot scale | ✓ Good — zero build overhead |
+| Tailwind v4 CSS-first with OKLCH | WCAG AAA compliance (7:1+ contrast ratios), modern color space | ✓ Good — accessible from day one |
+| Wellbeing in Phase 6 (not Phase 2) | DPIA/APD legal work must precede code; all personal data stores needed first | ✓ Good — complete data model available |
 
 ---
-*Last updated: 2026-03-09 after initialization*
+*Last updated: 2026-03-15 after v1.0 milestone*
