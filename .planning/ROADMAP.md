@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Challenges and Matching** - Challenge board, filtering, interest expression, scoring algorithm, community manager admin
 - [x] **Phase 4: Circles and Collaboration** - Circle formation, workspace, notes, social links, resolutions, feedback
 - [x] **Phase 5: Payments and Impact** - Payment flows (retainers, stipends, subscriptions), impact dashboard, earnings tracking
-- [ ] **Phase 6: Wellbeing, Notifications, and PWA** - Wellbeing check-ins, notification system, PWA configuration, GDPR compliance, accessibility
+- [x] **Phase 6: Wellbeing, Notifications, and PWA** - Wellbeing check-ins, notification system, PWA configuration, GDPR compliance, accessibility
 
 ## Phase Details
 
@@ -122,9 +122,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Wellbeing check-in flows (UCLA + SWEMWBS), GDPR special category consent, onboarding step, 8-week due check, impact trajectory
-- [ ] 06-02-PLAN.md — Notification system (push via web-push + email fallback via Resend, all 6 event types, in-app bell, preferences)
-- [ ] 06-03-PLAN.md — PWA configuration (vite-plugin-pwa injectManifest, service worker with push handler, manifest, icons, install prompt)
+- [x] 06-01-PLAN.md — Wellbeing check-in flows (UCLA + SWEMWBS), GDPR special category consent, onboarding step, 8-week due check, impact trajectory
+- [x] 06-02-PLAN.md — Notification system (push via web-push + email fallback via Resend, all 6 event types, in-app bell, preferences)
+- [x] 06-03-PLAN.md — PWA configuration (vite-plugin-pwa injectManifest, service worker with push handler, manifest, icons, install prompt)
 
 ## Progress
 
@@ -138,4 +138,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 3. Challenges and Matching | 3/3 | ✓ Complete | 2026-03-12 |
 | 4. Circles and Collaboration | 3/3 | ✓ Complete | 2026-03-13 |
 | 5. Payments and Impact | 3/3 | ✓ Complete | 2026-03-14 |
-| 6. Wellbeing, Notifications, and PWA | 0/3 | Not started | - |
+| 6. Wellbeing, Notifications, and PWA | 3/3 | ✓ Complete | 2026-03-15 |
