@@ -108,6 +108,9 @@ Recent decisions affecting current work:
 - [05-02]: stipend route extracts contributorId from body (not in chargeStipendSchema) — paymentTransactions NOT NULL requires it
 - [05-02]: webhookHandler exported separately from router — must be registered at app level with express.raw() before express.json()
 - [05-03]: Onboarding guard moved into ProtectedRoute — all protected routes redirect onboarding users, not just dashboard
+- [06-01]: WellbeingForm shared component wraps both onboarding and standalone pages to avoid duplication
+- [06-01]: consentGranted uses z.literal(true) in Zod schema — hard constraint, schema rejects false, not just validation message
+- [06-01]: Dashboard shows nudge banner not auto-redirect when wellbeing check-in due — respects contributor autonomy
 - [06-02]: VAPID keys use .default('') with graceful degradation — push silently disabled until keys configured
 - [06-02]: Notifications fire-and-forget (.catch) to avoid blocking HTTP responses
 - [06-02]: circle_activity notifications only fire for members with 'immediate' preference (null treated as immediate)
@@ -120,8 +123,8 @@ None yet.
 ### Blockers/Concerns
 
 - Employment Agencies Act 1973 classification needs legal advice before Phase 5 payments go live
-- WEMWBS licensing (free for non-commercial, but ANC takes platform fees) -- verify with University of Warwick before Phase 6
-- DPIA and Appropriate Policy Document must be completed before any wellbeing code in Phase 6
+- WEMWBS licensing — APPROVED by user (2026-03-15)
+- DPIA and Appropriate Policy Document — APPROVED by user (2026-03-15)
 
 ## Session Continuity
 
