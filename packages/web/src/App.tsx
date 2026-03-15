@@ -17,7 +17,9 @@ import { ReviewProfile } from "./pages/onboarding/ReviewProfile.js";
 import { Affirmation } from "./pages/onboarding/Affirmation.js";
 import { Preferences } from "./pages/onboarding/Preferences.js";
 import { StripeConnect } from "./pages/onboarding/StripeConnect.js";
+import { Wellbeing as OnboardingWellbeing } from "./pages/onboarding/Wellbeing.js";
 import { Complete } from "./pages/onboarding/Complete.js";
+import { WellbeingCheckin } from "./pages/wellbeing/WellbeingCheckin.js";
 import { ChallengeFeed } from "./pages/challenges/ChallengeFeed.js";
 import { MyCircles } from "./pages/circles/MyCircles.js";
 import { CircleWorkspace } from "./pages/circles/CircleWorkspace.js";
@@ -53,6 +55,7 @@ export function App() {
               {/* Plan 03 onboarding pages */}
               <Route path="/onboarding/preferences" element={<Preferences />} />
               <Route path="/onboarding/stripe" element={<StripeConnect />} />
+              <Route path="/onboarding/wellbeing" element={<OnboardingWellbeing />} />
               <Route path="/onboarding/complete" element={<Complete />} />
 
               {/* Challenges */}
@@ -61,6 +64,9 @@ export function App() {
               {/* Circles */}
               <Route path="/circles" element={<MyCircles />} />
               <Route path="/circles/:id" element={<CircleWorkspace />} />
+
+              {/* Wellbeing */}
+              <Route path="/wellbeing/checkin" element={<WellbeingCheckin />} />
 
               {/* Impact */}
               <Route path="/impact" element={<ImpactDashboard />} />

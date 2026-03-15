@@ -31,7 +31,7 @@ export function StripeConnect() {
     setError(null);
     try {
       await skipStripe.mutateAsync();
-      navigate("/onboarding/complete");
+      navigate("/onboarding/wellbeing");
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Something went wrong. Please try again."
