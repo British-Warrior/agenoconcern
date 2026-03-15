@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income -- bridging the pension gap while contributing to communities.
-**Current focus:** Phase 5 COMPLETE — ready for verification
+**Current focus:** Phase 6 — Wellbeing, Notifications, PWA (plan 2/3 complete)
 
 ## Current Position
 
-Phase: 5 of 6 (Payments and Impact) — COMPLETE
-Plan: 3 of 3 in phase 5 (all complete, human verified)
-Status: Phase 5 complete — awaiting phase verification
-Last activity: 2026-03-14 -- Phase 5 complete. Human verification passed. Onboarding guard fix applied (ProtectedRoute redirects all protected routes).
+Phase: 6 of 6 (Wellbeing, Notifications, PWA) — In progress
+Plan: 2 of 3 in phase 6 (06-01 wellbeing, 06-02 notifications complete)
+Status: In progress
+Last activity: 2026-03-15 -- Completed 06-02-PLAN.md — notification system with push, email fallback, in-app bell, wellbeing reminder job
 
-Progress: [██████████████████████████████░] 16/16 plans (phases 1-5 complete)
+Progress: [████████████████████████████████░░░] 17/19 plans (phases 1-5 complete, 06-01 + 06-02 done)
 
 ## Performance Metrics
 
@@ -108,6 +108,10 @@ Recent decisions affecting current work:
 - [05-02]: stipend route extracts contributorId from body (not in chargeStipendSchema) — paymentTransactions NOT NULL requires it
 - [05-02]: webhookHandler exported separately from router — must be registered at app level with express.raw() before express.json()
 - [05-03]: Onboarding guard moved into ProtectedRoute — all protected routes redirect onboarding users, not just dashboard
+- [06-02]: VAPID keys use .default('') with graceful degradation — push silently disabled until keys configured
+- [06-02]: Notifications fire-and-forget (.catch) to avoid blocking HTTP responses
+- [06-02]: circle_activity notifications only fire for members with 'immediate' preference (null treated as immediate)
+- [06-02]: 410/404 push errors trigger automatic subscription cleanup from pushSubscriptions table
 
 ### Pending Todos
 
@@ -121,6 +125,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14
-Stopped at: Phase 5 COMPLETE (3/3 plans done, human verified) — Payment schema, Stripe service, payment routes, webhook, impact dashboard, onboarding guard
-Resume file: .planning/phases/05-payments-and-impact/05-VERIFICATION.md
+Last session: 2026-03-15
+Stopped at: Phase 6 plan 2/3 complete — Notification system done (push, email fallback, REST API, NotificationBell, wellbeing reminder job)
+Resume file: .planning/phases/06-wellbeing-notifications-and-pwa/06-03-PLAN.md
