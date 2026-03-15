@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income -- bridging the pension gap while contributing to communities.
-**Current focus:** Phase 6 — Wellbeing, Notifications, PWA (plan 2/3 complete)
+**Current focus:** Phase 6 COMPLETE — all 3 plans executed, awaiting verification
 
 ## Current Position
 
-Phase: 6 of 6 (Wellbeing, Notifications, PWA) — In progress
-Plan: 2 of 3 in phase 6 (06-01 wellbeing, 06-02 notifications complete)
-Status: In progress
-Last activity: 2026-03-15 -- Completed 06-02-PLAN.md — notification system with push, email fallback, in-app bell, wellbeing reminder job
+Phase: 6 of 6 (Wellbeing, Notifications, PWA) — COMPLETE
+Plan: 3 of 3 in phase 6 (all complete)
+Status: Phase 6 complete — awaiting phase verification
+Last activity: 2026-03-15 -- Completed 06-03-PLAN.md — PWA configuration (service worker, manifest, push subscription, install prompt)
 
-Progress: [████████████████████████████████░░░] 17/19 plans (phases 1-5 complete, 06-01 + 06-02 done)
+Progress: [███████████████████████████████████] 19/19 plans (all phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 16
+- Total plans completed: 19
 - Average duration: ~15 min
-- Total execution time: ~240 min
+- Total execution time: ~290 min
 
 **By Phase:**
 
@@ -32,6 +32,7 @@ Progress: [███████████████████████
 | 03-challenges-and-matching | 3/3 | ~115 min | ~38 min |
 | 04-circles-and-collaboration | 3/3 | ~38 min | ~13 min |
 | 05-payments-and-impact | 3/3 | ~30 min | ~10 min |
+| 06-wellbeing-notifications-pwa | 3/3 | ~45 min | ~15 min |
 
 *Updated after each plan completion*
 
@@ -115,6 +116,10 @@ Recent decisions affecting current work:
 - [06-02]: Notifications fire-and-forget (.catch) to avoid blocking HTTP responses
 - [06-02]: circle_activity notifications only fire for members with 'immediate' preference (null treated as immediate)
 - [06-02]: 410/404 push errors trigger automatic subscription cleanup from pushSubscriptions table
+- [06-03]: sw.ts excluded from main tsconfig — vite-plugin-pwa compiles it separately with WebWorker types
+- [06-03]: registerSW auto-updates on refresh — no update prompt UI needed at pilot scale
+- [06-03]: Push subscription uses .buffer as ArrayBuffer cast — TypeScript strict ArrayBuffer/SharedArrayBuffer distinction
+- [06-03]: Notification and install buttons are text-only in navbar — unobtrusive, no modal prompts
 
 ### Pending Todos
 
@@ -129,5 +134,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-15
-Stopped at: Phase 6 plan 2/3 complete — Notification system done (push, email fallback, REST API, NotificationBell, wellbeing reminder job)
-Resume file: .planning/phases/06-wellbeing-notifications-and-pwa/06-03-PLAN.md
+Stopped at: Phase 6 COMPLETE (3/3 plans done) — Wellbeing, notifications, PWA all implemented. Awaiting phase verification.
+Resume file: .planning/phases/06-wellbeing-notifications-and-pwa/06-03-SUMMARY.md
