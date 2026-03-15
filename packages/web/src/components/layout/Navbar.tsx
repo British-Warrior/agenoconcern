@@ -4,11 +4,15 @@ import { ROUTES } from "../../lib/constants.js";
 import { Button } from "../ui/Button.js";
 import { useCallback, useState } from "react";
 import { NotificationBell } from "./NotificationBell.js";
+import { usePushSubscription } from "../../hooks/usePushSubscription.js";
+import { useInstallPrompt } from "../../hooks/useInstallPrompt.js";
 
 export function Navbar() {
   const { contributor, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const [loggingOut, setLoggingOut] = useState(false);
+  const { subscribe, isSubscribed, isSupported } = usePushSubscription();
+  const { canInstall, triggerInstall } = useInstallPrompt();
 
   const handleLogout = useCallback(async () => {
     setLoggingOut(true);
@@ -45,6 +49,22 @@ export function Navbar() {
               My Impact
             </Link>
             <NotificationBell />
+            {isSupported && !isSubscribed && typeof Notification !== "undefined" && Notification.permission !== "denied" && (
+              <button
+                onClick={subscribe}
+                className="text-xs font-medium text-primary-700 hover:text-primary-900 transition-colors"
+              >
+                Enable Notifications
+              </button>
+            )}
+            {canInstall && (
+              <button
+                onClick={triggerInstall}
+                className="text-xs font-medium text-primary-700 hover:text-primary-900 transition-colors"
+              >
+                Install App
+              </button>
+            )}
             <span className="text-base text-neutral-700">
               {contributor?.name}
             </span>
