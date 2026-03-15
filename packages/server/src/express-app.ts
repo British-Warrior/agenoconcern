@@ -9,6 +9,7 @@ import { challengeRoutes } from "./routes/challenges.js";
 import { circleRoutes } from "./routes/circles.js";
 import { webhookHandler, paymentRoutes } from "./routes/payments.js";
 import { impactRoutes } from "./routes/impact.js";
+import { wellbeingRoutes } from "./routes/wellbeing.js";
 import { notificationRoutes } from "./routes/notifications.js";
 
 const app = express();
@@ -52,6 +53,9 @@ app.use("/api/payments", paymentRoutes);
 
 // Impact routes
 app.use("/api/impact", impactRoutes);
+
+// Wellbeing routes
+app.use("/api/wellbeing", wellbeingRoutes);
 
 // Notification routes
 app.use("/api/notifications", notificationRoutes);

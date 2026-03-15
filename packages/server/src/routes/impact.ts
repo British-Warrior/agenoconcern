@@ -10,9 +10,10 @@ import {
   circleResolutions,
   resolutionRatings,
   circles,
+  wellbeingCheckins,
 } from "../db/schema.js";
 import { authMiddleware } from "../middleware/auth.js";
-import type { ImpactSummary, ImpactChallenge, ImpactEarning, ChallengerImpact } from "@agenoconcern/shared";
+import type { ImpactSummary, ImpactChallenge, ImpactEarning, ChallengerImpact, WellbeingTrajectoryPoint } from "@agenoconcern/shared";
 
 const router = Router();
 
@@ -21,7 +22,7 @@ router.get("/summary", authMiddleware, async (req, res) => {
   const contributorId = req.contributor!.id;
   const db = getDb();
 
-  const [challengeRows, hoursRows, earningsRows] = await Promise.all([
+  const [challengeRows, hoursRows, earningsRows, wellbeingRows] = await Promise.all([
     // a. Challenges participated
     db
       .select({
@@ -53,6 +54,17 @@ router.get("/summary", authMiddleware, async (req, res) => {
       .from(paymentTransactions)
       .where(eq(paymentTransactions.contributorId, contributorId))
       .orderBy(desc(paymentTransactions.createdAt)),
+
+    // d. Wellbeing trajectory
+    db
+      .select({
+        uclaScore: wellbeingCheckins.uclaScore,
+        wemwbsScore: wellbeingCheckins.wemwbsScore,
+        completedAt: wellbeingCheckins.completedAt,
+      })
+      .from(wellbeingCheckins)
+      .where(eq(wellbeingCheckins.contributorId, contributorId))
+      .orderBy(wellbeingCheckins.completedAt),
   ]);
 
   // Deduplicate challenges — a contributor may appear in multiple circle members rows
@@ -88,6 +100,12 @@ router.get("/summary", authMiddleware, async (req, res) => {
     createdAt: t.createdAt.toISOString(),
   }));
 
+  const wellbeingTrajectory: WellbeingTrajectoryPoint[] = wellbeingRows.map((r) => ({
+    uclaScore: r.uclaScore,
+    wemwbsScore: r.wemwbsScore,
+    completedAt: r.completedAt.toISOString(),
+  }));
+
   const summary: ImpactSummary = {
     challengesParticipated,
     totalHours,
@@ -95,7 +113,7 @@ router.get("/summary", authMiddleware, async (req, res) => {
     unpaidHours,
     totalEarningsPence,
     earnings,
-    wellbeingTrajectory: [],
+    wellbeingTrajectory,
   };
 
   res.json(summary);

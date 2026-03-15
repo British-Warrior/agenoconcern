@@ -1,4 +1,5 @@
 import type { PaymentType, PaymentStatus } from './payments.js';
+import type { WellbeingTrajectoryPoint } from './wellbeing.js';
 
 export interface ImpactChallenge {
   id: string;
@@ -24,7 +25,7 @@ export interface ImpactSummary {
   unpaidHours: number;
   totalEarningsPence: number;
   earnings: ImpactEarning[];
-  wellbeingTrajectory: never[];
+  wellbeingTrajectory: WellbeingTrajectoryPoint[];
 }
 
 export interface ChallengerChallenge {
