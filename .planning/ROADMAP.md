@@ -59,7 +59,10 @@ Plans:
   2. Chart includes a visible UK population benchmark line for SWEMWBS
   3. Each score displays its band label (low / average / high per UK norms) alongside the numeric value
   4. An accessible data table of the same wellbeing scores is present for screen reader users
-**Plans:** TBD
+**Plans:** 1 plan
+
+Plans:
+- [ ] 08-01-PLAN.md — Install recharts, build WellbeingChart component, integrate into ImpactDashboard
 
 ### Phase 9: Server Foundation and VANTAGE
 
@@ -111,7 +114,7 @@ Plans:
 | 5. Payments and Impact | v1.0 | 3/3 | Complete | 2026-03-14 |
 | 6. Wellbeing, Notifications, and PWA | v1.0 | 3/3 | Complete | 2026-03-15 |
 | 7. UX Fixes | v1.1 | 3/3 | Complete | 2026-03-16 |
-| 8. Wellbeing Visualisation | v1.1 | 0/TBD | Not started | - |
+| 8. Wellbeing Visualisation | v1.1 | 0/1 | Not started | - |
 | 9. Server Foundation and VANTAGE | v1.1 | 0/TBD | Not started | - |
 | 10. Challenger Portal | v1.1 | 0/TBD | Not started | - |
 | 11. Kiosk Mode and Institutional Pages | v1.1 | 0/TBD | Not started | - |
