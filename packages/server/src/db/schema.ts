@@ -26,6 +26,7 @@ export const contributorRoleEnum = pgEnum("contributor_role", [
   "contributor",
   "community_manager",
   "admin",
+  "challenger",
 ]);
 
 export const contributorStatusEnum = pgEnum("contributor_status", [
@@ -451,6 +452,29 @@ export const wellbeingCheckins = pgTable("wellbeing_checkins", {
   wemwbsScore: smallint("wemwbs_score").notNull(),
   completedAt: timestamp("completed_at", { withTimezone: true }).defaultNow().notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// API keys (VANTAGE authentication)
+export const apiKeys = pgTable("api_keys", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 100 }).notNull(),
+  keyHash: varchar("key_hash", { length: 64 }).notNull().unique(),
+  scopes: jsonb("scopes").$type<string[]>().notNull().default([]),
+  isActive: boolean("is_active").notNull().default(true),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  createdBy: uuid("created_by").references(() => contributors.id, { onDelete: "set null" }),
+});
+
+// Challenger organisations
+export const challengerOrganisations = pgTable("challenger_organisations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 255 }).notNull(),
+  contactEmail: varchar("contact_email", { length: 255 }).notNull(),
+  apiKeyId: uuid("api_key_id").references(() => apiKeys.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 // Contributor hours
