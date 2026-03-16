@@ -102,7 +102,7 @@ export function ResolutionCard({
             <button
               type="button"
               onClick={() => setShowEditForm(false)}
-              className="text-xs text-neutral-500 hover:text-neutral-700 transition-colors"
+              className="text-xs text-neutral-500 hover:text-neutral-700 transition-colors cursor-pointer"
             >
               Cancel
             </button>
@@ -133,7 +133,7 @@ export function ResolutionCard({
             <button
               type="button"
               onClick={() => setShowEditForm(true)}
-              className="text-xs font-medium text-primary-700 border border-primary-300 hover:bg-primary-50 rounded-[var(--radius-md)] px-2.5 py-1 transition-colors duration-150"
+              className="text-xs font-medium text-primary-700 border border-primary-300 hover:bg-primary-50 rounded-[var(--radius-md)] px-2.5 py-1 transition-colors duration-150 cursor-pointer"
             >
               Edit Resolution
             </button>

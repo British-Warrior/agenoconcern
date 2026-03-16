@@ -122,7 +122,7 @@ export function TeamCompositionCard({ composition, index, challengeId }: TeamCom
       <button
         type="button"
         onClick={() => setSelected((v) => !v)}
-        className={`w-full py-2 rounded-[var(--radius-md)] text-sm font-medium transition-colors duration-150 ${
+        className={`w-full py-2 rounded-[var(--radius-md)] text-sm font-medium transition-colors duration-150 cursor-pointer ${
           selected
             ? "bg-primary-600 text-white hover:bg-primary-500"
             : "border border-primary-300 text-primary-700 hover:bg-primary-50"
@@ -136,7 +136,7 @@ export function TeamCompositionCard({ composition, index, challengeId }: TeamCom
         <button
           type="button"
           onClick={() => setShowFormationModal(true)}
-          className="w-full mt-2 py-2 rounded-[var(--radius-md)] text-sm font-medium bg-violet-600 text-white hover:bg-violet-500 transition-colors duration-150"
+          className="w-full mt-2 py-2 rounded-[var(--radius-md)] text-sm font-medium bg-violet-600 text-white hover:bg-violet-500 transition-colors duration-150 cursor-pointer"
         >
           Form Circle
         </button>
