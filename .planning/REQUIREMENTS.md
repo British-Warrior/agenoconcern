@@ -92,43 +92,43 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| UX-01 | — | Pending |
-| UX-02 | — | Pending |
-| UX-03 | — | Pending |
-| UX-04 | — | Pending |
-| UX-05 | — | Pending |
-| UX-06 | — | Pending |
-| UX-07 | — | Pending |
-| UX-08 | — | Pending |
-| UX-09 | — | Pending |
-| UX-10 | — | Pending |
-| UX-11 | — | Pending |
-| WELL-01 | — | Pending |
-| WELL-02 | — | Pending |
-| WELL-03 | — | Pending |
-| VANT-01 | — | Pending |
-| VANT-02 | — | Pending |
-| VANT-03 | — | Pending |
-| VANT-04 | — | Pending |
-| KIOSK-01 | — | Pending |
-| KIOSK-02 | — | Pending |
-| KIOSK-03 | — | Pending |
-| KIOSK-04 | — | Pending |
-| CHAL-01 | — | Pending |
-| CHAL-02 | — | Pending |
-| CHAL-03 | — | Pending |
-| CHAL-04 | — | Pending |
-| CHAL-05 | — | Pending |
-| CHAL-06 | — | Pending |
-| INST-01 | — | Pending |
-| INST-02 | — | Pending |
-| INST-03 | — | Pending |
+| UX-01 | Phase 7 | Pending |
+| UX-02 | Phase 7 | Pending |
+| UX-03 | Phase 7 | Pending |
+| UX-04 | Phase 7 | Pending |
+| UX-05 | Phase 7 | Pending |
+| UX-06 | Phase 7 | Pending |
+| UX-07 | Phase 7 | Pending |
+| UX-08 | Phase 7 | Pending |
+| UX-09 | Phase 7 | Pending |
+| UX-10 | Phase 7 | Pending |
+| UX-11 | Phase 7 | Pending |
+| WELL-01 | Phase 8 | Pending |
+| WELL-02 | Phase 8 | Pending |
+| WELL-03 | Phase 8 | Pending |
+| VANT-01 | Phase 9 | Pending |
+| VANT-02 | Phase 9 | Pending |
+| VANT-03 | Phase 9 | Pending |
+| VANT-04 | Phase 9 | Pending |
+| CHAL-01 | Phase 10 | Pending |
+| CHAL-02 | Phase 10 | Pending |
+| CHAL-03 | Phase 10 | Pending |
+| CHAL-04 | Phase 10 | Pending |
+| CHAL-05 | Phase 10 | Pending |
+| CHAL-06 | Phase 10 | Pending |
+| KIOSK-01 | Phase 11 | Pending |
+| KIOSK-02 | Phase 11 | Pending |
+| KIOSK-03 | Phase 11 | Pending |
+| KIOSK-04 | Phase 11 | Pending |
+| INST-01 | Phase 11 | Pending |
+| INST-02 | Phase 11 | Pending |
+| INST-03 | Phase 11 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 31 total
-- Mapped to phases: 0
-- Unmapped: 31 ⚠️
+- Mapped to phases: 31
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-15*
-*Last updated: 2026-03-15 after initial definition*
+*Last updated: 2026-03-16 — traceability complete, all 31 requirements mapped to phases 7-11*
