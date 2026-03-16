@@ -1,6 +1,6 @@
 export type AuthProvider = "email" | "google" | "linkedin" | "phone" | "cm_created";
 
-export type ContributorRole = "contributor" | "community_manager" | "admin";
+export type ContributorRole = "contributor" | "community_manager" | "admin" | "challenger";
 
 export type ContributorStatus = "onboarding" | "active" | "paused" | "inactive";
 
