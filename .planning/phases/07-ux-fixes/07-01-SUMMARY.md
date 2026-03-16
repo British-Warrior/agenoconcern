@@ -64,7 +64,7 @@ Each task was committed atomically:
 1. **Task 1: Add missing ROUTES constants and complete Navbar links** - `3e6cc64` (feat)
 2. **Task 2: Add hover states and cursor-pointer to interactive elements** - `6f961e2` (fix)
 
-**Plan metadata:** (pending)
+**Plan metadata:** `4119d53` (docs: complete plan)
 
 ## Files Created/Modified
 - `packages/web/src/lib/constants.ts` - Added CHALLENGES, CIRCLES, IMPACT, WELLBEING_CHECKIN to ROUTES
