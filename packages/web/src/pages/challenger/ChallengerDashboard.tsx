@@ -106,6 +106,7 @@ export function ChallengerDashboard() {
 
   const challenges = challengesQuery.data ?? [];
   const isLoading = orgQuery.isLoading || challengesQuery.isLoading;
+  const hasError = orgQuery.isError || challengesQuery.isError;
 
   return (
     <div className="py-8 max-w-3xl mx-auto">
@@ -133,6 +134,19 @@ export function ChallengerDashboard() {
           {Array.from({ length: 3 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
+        </div>
+      ) : hasError && challenges.length === 0 ? (
+        <div className="text-center py-16 text-neutral-500">
+          <p className="text-base mb-2">
+            Could not load challenger data.
+          </p>
+          <p className="text-sm">
+            If you switched roles via the dev tool, register at{" "}
+            <Link to={ROUTES.CHALLENGER_REGISTER} className="text-primary-800 underline">
+              /challenger/register
+            </Link>{" "}
+            to create an organisation first.
+          </p>
         </div>
       ) : challenges.length === 0 ? (
         <div className="text-center py-16 text-neutral-500">
