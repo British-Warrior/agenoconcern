@@ -9,7 +9,7 @@ import type {
 
 export interface RegisterChallengerResponse {
   contributor: { id: string; name: string; email: string; role: string };
-  org: ChallengerOrg;
+  organisation: { id: string; name: string; organisationType: string };
 }
 
 export const challengerApi = {
@@ -20,26 +20,30 @@ export const challengerApi = {
     });
   },
 
-  getOrg(): Promise<ChallengerOrg> {
-    return apiClient<ChallengerOrg>("/api/challenger/me");
+  async getOrg(): Promise<ChallengerOrg> {
+    const res = await apiClient<{ organisation: ChallengerOrg }>("/api/challenger/me");
+    return res.organisation;
   },
 
-  getMyChallenges(): Promise<ChallengerPortalChallenge[]> {
-    return apiClient<ChallengerPortalChallenge[]>("/api/challenger/challenges");
+  async getMyChallenges(): Promise<ChallengerPortalChallenge[]> {
+    const res = await apiClient<{ challenges: ChallengerPortalChallenge[] }>("/api/challenger/challenges");
+    return res.challenges;
   },
 
-  getChallengeDetail(id: string): Promise<ChallengerPortalChallengeDetail> {
-    return apiClient<ChallengerPortalChallengeDetail>(
+  async getChallengeDetail(id: string): Promise<ChallengerPortalChallengeDetail> {
+    const res = await apiClient<{ challenge: ChallengerPortalChallengeDetail }>(
       `/api/challenger/challenges/${id}`,
     );
+    return res.challenge;
   },
 
-  submitChallenge(
+  async submitChallenge(
     data: SubmitChallengerChallengeInput,
   ): Promise<ChallengerPortalChallenge> {
-    return apiClient<ChallengerPortalChallenge>("/api/challenger/challenges", {
+    const res = await apiClient<{ challenge: ChallengerPortalChallenge }>("/api/challenger/challenges", {
       method: "POST",
       body: JSON.stringify(data),
     });
+    return res.challenge;
   },
 };
