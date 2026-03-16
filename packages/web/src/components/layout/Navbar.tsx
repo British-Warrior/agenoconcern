@@ -37,16 +37,34 @@ export function Navbar() {
         {isAuthenticated ? (
           <>
             <Link
-              to="/circles"
+              to={ROUTES.DASHBOARD}
+              className="text-sm font-medium text-neutral-700 hover:text-primary-800 transition-colors no-underline"
+            >
+              Dashboard
+            </Link>
+            <Link
+              to={ROUTES.CHALLENGES}
+              className="text-sm font-medium text-neutral-700 hover:text-primary-800 transition-colors no-underline"
+            >
+              Challenges
+            </Link>
+            <Link
+              to={ROUTES.CIRCLES}
               className="text-sm font-medium text-neutral-700 hover:text-primary-800 transition-colors no-underline"
             >
               My Circles
             </Link>
             <Link
-              to="/impact"
+              to={ROUTES.IMPACT}
               className="text-sm font-medium text-neutral-700 hover:text-primary-800 transition-colors no-underline"
             >
               My Impact
+            </Link>
+            <Link
+              to={ROUTES.WELLBEING_CHECKIN}
+              className="text-sm font-medium text-neutral-700 hover:text-primary-800 transition-colors no-underline"
+            >
+              Wellbeing
             </Link>
             <NotificationBell />
             {isSupported && !isSubscribed && typeof Notification !== "undefined" && Notification.permission !== "denied" && (
