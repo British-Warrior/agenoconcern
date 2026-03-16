@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 7 of 11 (UX Fixes)
-Plan: 1 of 3 complete
+Plan: 2 of 3 complete
 Status: In progress
-Last activity: 2026-03-16 — Completed 07-01-PLAN.md (nav links + hover affordances)
+Last activity: 2026-03-16 — Completed 07-02-PLAN.md (Dashboard live data + wellbeing norm bands)
 
-Progress: [█░░░░░░░░░░░░░░░] v1.1 ~6% (1/16 plans, v1.0 complete)
+Progress: [██░░░░░░░░░░░░░░] v1.1 ~12% (2/16 plans, v1.0 complete)
 
 ## Performance Metrics
 
@@ -43,6 +43,9 @@ Decisions are logged in PROJECT.md Key Decisions table (updated at v1.0 mileston
 Recent decisions for v1.1:
 - Phase 7 Plan 01: All navigation paths defined in ROUTES constants — no hardcoded strings in components
 - Phase 7 Plan 01: cursor-pointer applied to raw `<button>` elements only — Button component already includes it
+- Phase 7 Plan 02: Combined isLoading from 3 queries into one boolean — single skeleton prevents multiple spinners
+- Phase 7 Plan 02: wellbeing-norms.ts is single source of truth for UK norm thresholds (reusable in Phase 8 charts)
+- Phase 7 Plan 02: UCLA trend arrows inverted vs SWEMWBS (down=green for UCLA because lower=less lonely)
 - Phase 9: Postgres enum `ALTER TYPE ADD VALUE` is irreversible — staging deploy verification required before production push
 - Phase 10: Challenger registration flow decision (Option A: full account vs Option B: guest submission) — defer to Phase 10 kickoff
 
@@ -61,5 +64,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-16
-Stopped at: Phase 7 Plan 01 complete — ready for Phase 7 Plan 02
-Resume file: .planning/phases/07-ux-fixes/07-02-PLAN.md
+Stopped at: Phase 7 Plan 02 complete — ready for Phase 7 Plan 03
+Resume file: .planning/phases/07-ux-fixes/07-03-PLAN.md
