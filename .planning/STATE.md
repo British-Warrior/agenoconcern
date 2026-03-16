@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income -- bridging the pension gap while contributing to communities.
-**Current focus:** v1.1 Pilot-Ready — Phase 8: Wellbeing Visualisation
+**Current focus:** v1.1 Pilot-Ready — Phase 9: Server Foundation and VANTAGE
 
 ## Current Position
 
-Phase: 8 of 11 (Wellbeing Visualisation)
-Plan: 1 of 1 complete
-Status: Phase complete
-Last activity: 2026-03-16 — Completed 08-01-PLAN.md (Recharts WellbeingChart + ImpactDashboard integration)
+Phase: 9 of 11 (Server Foundation and VANTAGE)
+Plan: 1 of N complete
+Status: In progress
+Last activity: 2026-03-16 — Completed 09-01-PLAN.md (Schema migration: challenger enum + api_keys + challenger_organisations)
 
-Progress: [████░░░░░░░░░░░░] v1.1 ~25% (4/16 plans, v1.0 complete)
+Progress: [████░░░░░░░░░░░░] v1.1 ~31% (5/16 plans, v1.0 complete)
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Recent decisions for v1.1:
 - Phase 8 Plan 01: recharts 3.x uses TooltipContentProps (not TooltipProps) for custom tooltip content — payload/active/label are omitted from TooltipProps via PropertiesReadFromContext
 - Phase 8 Plan 01: Tooltip content prop requires a render function, not a JSX element, to satisfy recharts 3.x type checker
 - Phase 9: Postgres enum `ALTER TYPE ADD VALUE` is irreversible — staging deploy verification required before production push
+- Phase 9 Plan 01: Migration applied manually (targeted SQL) because Drizzle journal was empty while DB had all prior tables — drizzle-kit migrate would have re-created existing tables. Applied only ALTER TYPE + CREATE TABLEs + FKs, marked 0002 as applied in drizzle.__drizzle_migrations.
 - Phase 10: Challenger registration flow decision (Option A: full account vs Option B: guest submission) — defer to Phase 10 kickoff
 
 ### Pending Todos
@@ -69,5 +70,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-16
-Stopped at: Phase 8 Plan 01 complete — recharts WellbeingChart built and integrated
-Resume file: .planning/phases/09-*/
+Stopped at: Phase 9 Plan 01 complete — schema migration applied (challenger enum + api_keys + challenger_organisations)
+Resume file: .planning/phases/09-server-foundation-and-vantage/
