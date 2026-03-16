@@ -144,7 +144,7 @@ if (getEnv().NODE_ENV === "development") {
     async (req: Request, res: Response) => {
       try {
         const { role } = req.body as { role: string };
-        const validRoles = ["contributor", "community_manager", "admin"];
+        const validRoles = ["contributor", "community_manager", "admin", "challenger"];
         if (!validRoles.includes(role)) {
           res.status(400).json({ error: `Invalid role. Must be one of: ${validRoles.join(", ")}` });
           return;
@@ -153,7 +153,7 @@ if (getEnv().NODE_ENV === "development") {
         const db = getDb();
         await db
           .update(contributors)
-          .set({ role: role as "contributor" | "community_manager" | "admin", updatedAt: new Date() })
+          .set({ role: role as "contributor" | "community_manager" | "admin" | "challenger", updatedAt: new Date() })
           .where(eq(contributors.id, req.contributor!.id));
 
         // Re-issue tokens with new role

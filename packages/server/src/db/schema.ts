@@ -164,7 +164,13 @@ export const cvParseJobs = pgTable("cv_parse_jobs", {
 });
 
 // Challenge enums
-export const challengeTypeEnum = pgEnum("challenge_type", ["paid", "free"]);
+export const challengeTypeEnum = pgEnum("challenge_type", [
+  "paid",
+  "free",
+  "community",
+  "premium",
+  "knowledge_transition",
+]);
 
 export const challengeStatusEnum = pgEnum("challenge_status", [
   "draft",

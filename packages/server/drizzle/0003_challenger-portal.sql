@@ -1,3 +1,6 @@
 ALTER TABLE "challenger_organisations" ADD COLUMN "contributor_id" uuid;--> statement-breakpoint
 ALTER TABLE "challenger_organisations" ADD COLUMN "organisation_type" varchar(100) DEFAULT '' NOT NULL;--> statement-breakpoint
-ALTER TABLE "challenger_organisations" ADD CONSTRAINT "challenger_organisations_contributor_id_contributors_id_fk" FOREIGN KEY ("contributor_id") REFERENCES "public"."contributors"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "challenger_organisations" ADD CONSTRAINT "challenger_organisations_contributor_id_contributors_id_fk" FOREIGN KEY ("contributor_id") REFERENCES "public"."contributors"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TYPE "public"."challenge_type" ADD VALUE 'community';--> statement-breakpoint
+ALTER TYPE "public"."challenge_type" ADD VALUE 'premium';--> statement-breakpoint
+ALTER TYPE "public"."challenge_type" ADD VALUE 'knowledge_transition';
