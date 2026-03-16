@@ -3,6 +3,8 @@ import { useCircleWorkspace } from "../../hooks/useCircles.js";
 import { CircleWorkspaceShell } from "../../components/circles/CircleWorkspaceShell.js";
 import { useAuth } from "../../hooks/useAuth.js";
 
+const UUID_PATTERN = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
 function Spinner() {
   return (
     <div className="flex justify-center py-16" aria-label="Loading workspace">
@@ -49,12 +51,16 @@ export function CircleWorkspace() {
   if (isError) {
     const is403 =
       error instanceof Error && error.message.toLowerCase().includes("403");
+    const rawMessage = error instanceof Error ? error.message : "";
+    const safeMessage = rawMessage && !UUID_PATTERN.test(rawMessage)
+      ? rawMessage
+      : "Failed to load workspace.";
     return (
       <div className="max-w-xl mx-auto px-4 py-16 text-center">
         <p className="text-sm text-neutral-700 font-medium mb-2">
           {is403
             ? "You're not a member of this Circle."
-            : "Failed to load workspace."}
+            : safeMessage}
         </p>
         <p className="text-xs text-neutral-400">
           {is403

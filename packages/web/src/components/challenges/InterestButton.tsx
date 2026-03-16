@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useInterestToggle } from "../../hooks/useChallenges.js";
 import { ApiResponseError } from "../../api/client.js";
 
+const UUID_PATTERN = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
 interface MyInterest {
   status: "active" | "withdrawn";
   note: string | null;
@@ -75,7 +77,10 @@ export function InterestButton({
         const hours = (err.data as { cooldownRemainingHours?: number }).cooldownRemainingHours;
         setCooldownHours(hours ?? 24);
       } else if (err instanceof Error) {
-        setErrorMessage(err.message);
+        const msg = UUID_PATTERN.test(err.message)
+          ? "Something went wrong. Please try again."
+          : err.message;
+        setErrorMessage(msg);
       } else {
         setErrorMessage("Something went wrong. Please try again.");
       }
@@ -93,7 +98,10 @@ export function InterestButton({
         const hours = (err.data as { cooldownRemainingHours?: number }).cooldownRemainingHours;
         setCooldownHours(hours ?? 24);
       } else if (err instanceof Error) {
-        setErrorMessage(err.message);
+        const msg = UUID_PATTERN.test(err.message)
+          ? "Something went wrong. Please try again."
+          : err.message;
+        setErrorMessage(msg);
       } else {
         setErrorMessage("Something went wrong. Please try again.");
       }

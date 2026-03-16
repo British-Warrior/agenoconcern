@@ -2,6 +2,8 @@ import { useNavigate } from "react-router";
 import { Button } from "../ui/Button.js";
 import { useCreateCircle } from "../../hooks/useCircles.js";
 
+const UUID_PATTERN = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
 interface CircleFormationModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -61,23 +63,26 @@ export function CircleFormationModal({
 
         {/* Member list */}
         <ul className="space-y-2 mb-6">
-          {memberNames.map((name, i) => (
-            <li key={memberIds[i]} className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
-                <span className="text-xs font-semibold text-primary-700">
-                  {name.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <span className="text-sm text-neutral-800">{name}</span>
-            </li>
-          ))}
+          {memberNames.map((name, i) => {
+            const displayName = (!name || UUID_PATTERN.test(name)) ? "Unknown contributor" : name;
+            return (
+              <li key={memberIds[i]} className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-semibold text-primary-700">
+                    {displayName.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <span className="text-sm text-neutral-800">{displayName}</span>
+              </li>
+            );
+          })}
         </ul>
 
         {/* Error message */}
         {createCircle.isError && (
           <div className="mb-4 rounded-[var(--radius-md)] bg-red-50 border border-red-200 px-3 py-2">
             <p className="text-sm text-red-700">
-              {createCircle.error instanceof Error
+              {createCircle.error instanceof Error && !UUID_PATTERN.test(createCircle.error.message)
                 ? createCircle.error.message
                 : "Failed to form circle. Please try again."}
             </p>

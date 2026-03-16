@@ -133,7 +133,12 @@ export function ResolutionCard({
             <button
               type="button"
               onClick={() => setShowEditForm(true)}
-              className="text-xs font-medium text-primary-700 border border-primary-300 hover:bg-primary-50 rounded-[var(--radius-md)] px-2.5 py-1 transition-colors duration-150 cursor-pointer"
+              disabled={showEditForm}
+              className={`text-xs font-medium text-primary-700 border border-primary-300 rounded-[var(--radius-md)] px-2.5 py-1 transition-colors duration-150 cursor-pointer ${
+                showEditForm
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-primary-50"
+              }`}
             >
               Edit Resolution
             </button>
