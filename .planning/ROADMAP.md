@@ -42,7 +42,12 @@
   3. CM sees their created circles on the circles page with role-appropriate actions (no contributor-specific copy)
   4. All interactive cards, buttons, and links respond visually to hover and show pointer cursor
   5. Error messages, circle formation member names, and resolution edit button states are accurate and human-readable
-**Plans:** TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Navigation links + route constants + hover affordances
+- [ ] 07-02-PLAN.md — Dashboard summary cards + wellbeing score interpretation
+- [ ] 07-03-PLAN.md — CM role-conditional circles + error sanitisation + isolated bugs
 
 ### Phase 8: Wellbeing Visualisation
 
@@ -105,7 +110,7 @@
 | 4. Circles and Collaboration | v1.0 | 3/3 | Complete | 2026-03-13 |
 | 5. Payments and Impact | v1.0 | 3/3 | Complete | 2026-03-14 |
 | 6. Wellbeing, Notifications, and PWA | v1.0 | 3/3 | Complete | 2026-03-15 |
-| 7. UX Fixes | v1.1 | 0/TBD | Not started | - |
+| 7. UX Fixes | v1.1 | 0/3 | Planned | - |
 | 8. Wellbeing Visualisation | v1.1 | 0/TBD | Not started | - |
 | 9. Server Foundation and VANTAGE | v1.1 | 0/TBD | Not started | - |
 | 10. Challenger Portal | v1.1 | 0/TBD | Not started | - |
