@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 7 of 11 (UX Fixes)
-Plan: — (not yet planned)
-Status: Ready to plan
-Last activity: 2026-03-16 — v1.1 roadmap created (phases 7-11, 31 requirements)
+Plan: 1 of 3 complete
+Status: In progress
+Last activity: 2026-03-16 — Completed 07-01-PLAN.md (nav links + hover affordances)
 
-Progress: [░░░░░░░░░░░░░░░░] v1.1 0% (v1.0 complete)
+Progress: [█░░░░░░░░░░░░░░░] v1.1 ~6% (1/16 plans, v1.0 complete)
 
 ## Performance Metrics
 
@@ -41,6 +41,8 @@ Progress: [░░░░░░░░░░░░░░░░] v1.1 0% (v1.0 compl
 Decisions are logged in PROJECT.md Key Decisions table (updated at v1.0 milestone).
 
 Recent decisions for v1.1:
+- Phase 7 Plan 01: All navigation paths defined in ROUTES constants — no hardcoded strings in components
+- Phase 7 Plan 01: cursor-pointer applied to raw `<button>` elements only — Button component already includes it
 - Phase 9: Postgres enum `ALTER TYPE ADD VALUE` is irreversible — staging deploy verification required before production push
 - Phase 10: Challenger registration flow decision (Option A: full account vs Option B: guest submission) — defer to Phase 10 kickoff
 
@@ -59,5 +61,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-16
-Stopped at: v1.1 roadmap created — ready to plan Phase 7
-Resume file: None
+Stopped at: Phase 7 Plan 01 complete — ready for Phase 7 Plan 02
+Resume file: .planning/phases/07-ux-fixes/07-02-PLAN.md
