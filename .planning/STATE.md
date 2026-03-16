@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 10 of 11 (Challenger Portal)
-Plan: 1 of 2 complete
-Status: In progress
-Last activity: 2026-03-16 — Completed 10-01-PLAN.md (schema migration + all server endpoints + shared types)
+Plan: 2 of 2 (awaiting checkpoint verification)
+Status: In progress — checkpoint:human-verify pending
+Last activity: 2026-03-16 — Tasks 1-2 of 10-02-PLAN.md complete, dev server running at http://localhost:5173
 
-Progress: [██████░░░░░░░░░░] v1.1 ~44% (7/16 plans, v1.0 complete)
+Progress: [███████░░░░░░░░░] v1.1 ~50% (8/16 plans, v1.0 complete)
 
 ## Performance Metrics
 
@@ -61,6 +61,9 @@ Recent decisions for v1.1:
 - Phase 10 Plan 01: ChallengerPortalChallenge (not ChallengerChallenge) — avoids conflict with existing ChallengerChallenge in types/impact.ts
 - Phase 10 Plan 01: challenge_type enum extended with community/premium/knowledge_transition — challenger portal uses different type taxonomy than CM-created challenges
 - Phase 10 Plan 01: Migration applied manually (targeted SQL) — same Drizzle journal issue as Phase 9
+- Phase 10 Plan 02: ChallengerRoute redirects unauthenticated to /challenger/register (not /login) — challengers have their own registration path
+- Phase 10 Plan 02: SubmitChallenge uses comma-separated text inputs for domain/skillsNeeded arrays — consistent with existing UX patterns
+- Phase 10 Plan 02: useRateResolution from useCircles.ts reused in ChallengeDetail — endpoint already existed, no duplication needed
 
 ### Pending Todos
 
@@ -77,5 +80,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-16
-Stopped at: Phase 10 Plan 1 complete — server foundation, schema migration, 5 endpoints live.
-Resume file: .planning/phases/10-challenger-portal/10-02-PLAN.md
+Stopped at: Phase 10 Plan 2, Task 3 checkpoint:human-verify — dev server running at http://localhost:5173
+Resume file: .planning/phases/10-challenger-portal/10-02-PLAN.md (Task 3, resume after approval)
