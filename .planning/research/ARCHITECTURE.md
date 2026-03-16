@@ -1,927 +1,598 @@
-# Architecture Patterns
+# Architecture Research
 
-**Domain:** Social enterprise expertise deployment platform (MCP server + web UI marketplace)
-**Researched:** 2026-03-10
+**Domain:** Social enterprise platform — v1.1 feature integration
+**Researched:** 2026-03-15
+**Confidence:** HIGH (based on direct codebase inspection)
 
-## Recommended Architecture
+---
 
-### High-Level System Diagram
-
-```
-                         MVP                              Future
-                    +-----------+                    +-------------+
-                    |  React    |                    |  VANTAGE    |
-                    |  Web UI   |                    |  AI Agent   |
-                    +-----+-----+                    +------+------+
-                          |                                 |
-                     REST API                          MCP Client
-                     (Express)                     (Streamable HTTP)
-                          |                                 |
-                    +-----+-----+                           |
-                    |  Express  +---------------------------+
-                    |  Gateway  |
-                    +-----+-----+
-                          |
-                    +-----+-----+
-                    |  Domain   |
-                    |  Services |
-                    +-----+-----+
-                          |
-          +------+--------+--------+------+
-          |      |        |        |      |
-        +---+  +---+   +----+  +----+  +----+
-        |PG |  |S3 |   |Stripe| |Auth|  |Email|
-        +---+  +---+   +------+ +----+  +-----+
-```
-
-### The Key Architectural Insight: Domain Services Are the Core
-
-The MCP server and the REST API are both **thin interfaces** over the same domain service layer. This is the critical decision that makes VANTAGE integration seamless later.
+## System Overview (v1.0 Baseline)
 
 ```
-WRONG:  React UI -> Express REST API -> Database
-        VANTAGE  -> MCP Server -> Database (duplicated logic)
-
-RIGHT:  React UI -> Express REST API -> Domain Services -> Database
-        VANTAGE  -> MCP Server -------> Domain Services -> Database
+┌────────────────────────────────────────────────────────────────┐
+│                         Browser / PWA                          │
+│  ┌───────────────────────────────────────────────────────────┐ │
+│  │  React SPA (Vite)                                         │ │
+│  │  BrowserRouter → AppShell → ProtectedRoute → Pages        │ │
+│  │  AuthProvider (TanStack Query, JWT cookie)                │ │
+│  │  apiClient (fetch + auto-refresh on 401)                  │ │
+│  └──────────────────────┬────────────────────────────────────┘ │
+└─────────────────────────│──────────────────────────────────────┘
+                          │ HTTPS / REST (credentials: include)
+┌─────────────────────────▼──────────────────────────────────────┐
+│                   Express Server (Node.js)                      │
+│  cors → cookieParser → rawBody(Stripe) → express.json          │
+│  Routes: /api/auth  /api/challenges  /api/circles              │
+│          /api/payments  /api/impact  /api/wellbeing             │
+│          /api/notifications  /api/onboarding                   │
+│  Middleware: authMiddleware (JWT cookie) → requireRole()        │
+│  Services: auth, cv, llm, matching, notification, s3, stripe   │
+│  MCP Server (separate process — 14 tool stubs, stdio)          │
+└──────────┬─────────────────────────────────────────────────────┘
+           │ Drizzle ORM (pg driver)
+┌──────────▼──────────────────────────────────────────────────────┐
+│                    PostgreSQL                                    │
+│  18 tables across: contributors, profiles, cv_parse_jobs,       │
+│  challenges, challenge_interests, circles, circle_members,      │
+│  circle_notes, note_attachments, circle_resolutions,            │
+│  resolution_ratings, consent_records, payment_transactions,     │
+│  contributor_hours, wellbeing_checkins, push_subscriptions,     │
+│  notifications, oauth_accounts, password_reset_tokens           │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-Domain services contain ALL business logic. The MCP tool handlers and REST route handlers are both thin wrappers that validate input, call a domain service, and format the response.
+### Component Responsibilities
 
-### Component Boundaries
+| Component | Responsibility | Implementation |
+|-----------|----------------|----------------|
+| `packages/shared` | Shared types, Zod schemas, constants | TypeScript source, no build step |
+| `packages/server/src/routes/` | HTTP handler layer — validates input, calls services, returns JSON | One file per domain |
+| `packages/server/src/services/` | Business logic — auth, CV parsing, matching, notifications, payments, S3 | Stateless functions |
+| `packages/server/src/middleware/auth.ts` | JWT cookie verification, `req.contributor` population, role guard | `authMiddleware` + `requireRole(role)` |
+| `packages/server/src/db/schema.ts` | Single Drizzle schema file for all 18 tables | Drizzle + pg enums |
+| `packages/web/src/api/` | Typed fetch wrappers — one file per domain, auto-refresh on 401 | `apiClient()` base function |
+| `packages/web/src/hooks/useAuth.ts` | Auth state via TanStack Query `["me"]` cache | React context + query |
+| `packages/web/src/components/layout/` | AppShell, Navbar, ProtectedRoute | Shared across all pages |
 
-| Component | Responsibility | Communicates With |
-|-----------|---------------|-------------------|
-| React Web UI | User-facing pages, forms, navigation | Express Gateway (REST) |
-| Express Gateway | REST routes for web UI, MCP Streamable HTTP endpoint, auth middleware, webhook receiver | Domain Services, Auth Provider, Stripe |
-| MCP Server | Exposes 14 tools via MCP protocol for AI clients | Domain Services (same as Express) |
-| Domain Services | ALL business logic -- matching, payments, profiles, circles | Database, S3, Stripe API, Email |
-| PostgreSQL | Persistent data store for 6 core entities | Domain Services only |
-| S3/R2 | CV file storage, attachments | Domain Services only |
-| Stripe Connect | Payment processing, connected accounts | Express (webhooks), Domain Services (API calls) |
-| Auth Layer | JWT issuance, OAuth flows, session validation | Express Gateway middleware |
+---
 
-### Data Flow
+## v1.1 Integration Map
 
-**MVP Flow (Web UI):**
+The four v1.1 features each have a distinct integration profile. This section maps each to exactly what is new, what is modified, and what is untouched.
+
+---
+
+### Feature 1: UX Navigation Overhaul
+
+**What changes:**
+
+The Navbar (`packages/web/src/components/layout/Navbar.tsx`) is a flat horizontal bar with no role-awareness, no active state indicators, and no mobile drawer. The AppShell (`AppShell.tsx`) uses a fixed `max-w-5xl` container with no provision for a sidebar. Authenticated nav only shows "My Circles" and "My Impact" — missing Challenges, Dashboard, and CM-specific links.
+
+**New components:**
+
 ```
-User action in React UI
-  -> HTTP request to Express REST endpoint
-  -> Auth middleware validates JWT
-  -> Route handler calls domain service
-  -> Domain service executes business logic
-  -> Domain service reads/writes PostgreSQL
-  -> Response flows back through Express -> React
-```
-
-**Future Flow (VANTAGE):**
-```
-User speaks/types to VANTAGE
-  -> VANTAGE decides which MCP tool to call
-  -> MCP client sends tool call via Streamable HTTP
-  -> MCP server handler calls SAME domain service
-  -> Domain service executes business logic
-  -> Response flows back through MCP -> VANTAGE -> User
+packages/web/src/components/layout/
+├── Sidebar.tsx              # Role-aware nav drawer (contributor vs challenger vs CM)
+├── MobileNavDrawer.tsx      # Hamburger → slide-in drawer for <md breakpoint
+└── NavLink.tsx              # Wrapper with active state via useLocation()
 ```
 
-**Stripe Payment Flow:**
-```
-Contributor onboarding:
-  React UI -> Express -> Stripe API (create Express account + Account Link)
-  -> Redirect to Stripe hosted onboarding -> Webhook confirms account ready
+**Modified components:**
 
-Challenge payment:
-  Challenger pays -> Stripe PaymentIntent (destination charge)
-  -> Platform takes 25% fee -> 75% to contributor's connected account
-  -> Webhook confirms payment -> Domain service updates challenge status
-```
+- `Navbar.tsx` — replace flat links with role-based nav items; add mobile hamburger button
+- `AppShell.tsx` — add optional sidebar column for authenticated routes; keep public routes minimal
+- `App.tsx` — add role-specific redirect logic post-login (contributor → `/dashboard`, challenger → `/challenger`, CM → `/challenges`)
+- `packages/web/src/lib/constants.ts` — add all missing ROUTES entries
 
-**CV Upload Flow:**
-```
-React UI uploads file
-  -> Express route receives multipart upload
-  -> Domain service stores raw file in S3/R2
-  -> Domain service calls CV parser (pdf-parse + LLM extraction)
-  -> Parsed profile stored as JSONB in contributor record
-  -> Contributor can edit parsed fields via UI
+**Data flow change:** None on the server. `useAuth()` already provides `contributor.role`. Navigation component reads role and renders appropriate link set.
+
+**Pattern:**
+
+```typescript
+// Navbar reads role, renders appropriate nav set
+const { contributor } = useAuth();
+const navItems = contributor?.role === "challenger"
+  ? challengerNavItems
+  : contributor?.role === "community_manager"
+  ? cmNavItems
+  : contributorNavItems;
 ```
 
 ---
 
-## MCP Server Structure: Organizing 14 Tools Across 4 Domains
+### Feature 2: VANTAGE REST API Integration
 
-Use a domain-grouped file structure. Each domain gets its own directory with tool definitions and the domain service it delegates to.
+**What VANTAGE needs:**
 
-**Confidence: HIGH** -- Based on official MCP TypeScript SDK patterns and community best practices.
+VANTAGE calls REST APIs directly using typed client modules (the `ilisten-client.ts` pattern confirmed in PROJECT.md). It does not use the MCP server. It needs:
 
-### Tool Organization Pattern
+1. **API key authentication** — service-to-service, not cookie-based
+2. **Stable versioned URL prefix** — so VANTAGE client modules do not break on non-breaking server changes
+3. **Locked endpoint contracts** — breaking changes require a version bump
+
+**New server components:**
 
 ```
-packages/server/src/
-  tools/
-    contributors/
-      get-contributor-profile.ts
-      update-contributor-profile.ts
-      get-contributor-circles.ts
-      get-contributor-impact.ts
-    challenges/
-      list-challenges.ts
-      get-challenge-detail.ts
-      express-interest.ts
-      submit-challenge.ts
-    circles/
-      get-circle-detail.ts
-      add-circle-note.ts
-      get-circle-notes.ts
-      submit-resolution.ts
-      update-social-link.ts
-    wellbeing/
-      submit-wellbeing-checkin.ts
-    index.ts              # Registers all tools with McpServer
-  services/
-    contributor.service.ts  # Business logic for contributors
-    challenge.service.ts    # Business logic for challenges
-    circle.service.ts       # Business logic for circles
-    wellbeing.service.ts    # Business logic for wellbeing
-    matching.service.ts     # Challenge-to-contributor matching
-    payment.service.ts      # Stripe Connect operations
-    storage.service.ts      # S3/R2 file operations
-    cv-parser.service.ts    # CV upload + parse pipeline
-    auth.service.ts         # Auth logic
-    email.service.ts        # Notification dispatch
-  db/
-    schema.ts               # Drizzle ORM schema definitions
-    migrations/             # SQL migration files
-    index.ts                # Database connection pool
-  mcp-server.ts             # McpServer instance + tool registration
-  express-app.ts            # Express app with REST routes + MCP endpoint
-  index.ts                  # Entry point
+packages/server/src/middleware/
+└── api-key-auth.ts          # Reads X-API-Key header, validates against VANTAGE_API_KEY env var
 ```
 
-### Tool Definition Pattern
+**Modified server components:**
 
-Each tool file exports a registration function. Tools are thin -- they validate input with Zod, call the domain service, and return formatted MCP content.
+- `config/env.ts` — add `VANTAGE_API_KEY: z.string().default("")`
+- `express-app.ts` — apply `apiKeyAuth` middleware to VANTAGE-specific route mounts; optionally add `/api/v1/` prefix mounts for contract stability
+
+**API key middleware:**
 
 ```typescript
-// tools/contributors/get-contributor-profile.ts
-import { z } from "zod";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
-import { contributorService } from "../../services/contributor.service";
-
-export function registerGetContributorProfile(server: McpServer) {
-  server.tool(
-    "get_contributor_profile",
-    "Retrieve a contributor's parsed profile including expertise, availability, and preferences",
-    {
-      contributor_id: z.string().uuid().describe("The contributor's unique ID"),
-    },
-    async ({ contributor_id }) => {
-      const profile = await contributorService.getProfile(contributor_id);
-      return {
-        content: [{ type: "text", text: JSON.stringify(profile, null, 2) }],
-      };
-    }
-  );
-}
-```
-
-### Tool Registration (index.ts)
-
-```typescript
-// tools/index.ts
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
-import { registerGetContributorProfile } from "./contributors/get-contributor-profile";
-import { registerUpdateContributorProfile } from "./contributors/update-contributor-profile";
-// ... all 14 imports
-
-export function registerAllTools(server: McpServer) {
-  // Contributors domain
-  registerGetContributorProfile(server);
-  registerUpdateContributorProfile(server);
-  registerGetContributorCircles(server);
-  registerGetContributorImpact(server);
-
-  // Challenges domain
-  registerListChallenges(server);
-  registerGetChallengeDetail(server);
-  registerExpressInterest(server);
-  registerSubmitChallenge(server);
-
-  // Circles domain
-  registerGetCircleDetail(server);
-  registerAddCircleNote(server);
-  registerGetCircleNotes(server);
-  registerSubmitResolution(server);
-  registerUpdateSocialLink(server);
-
-  // Wellbeing domain
-  registerSubmitWellbeingCheckin(server);
-}
-```
-
----
-
-## Web UI to MCP Server Connection: The Express Gateway Pattern
-
-**Recommendation: Do NOT make the React UI an MCP client.** Use a conventional Express REST API that shares domain services with the MCP server.
-
-**Confidence: HIGH** -- This is the dominant pattern. MCP is designed for AI agent communication, not browser-to-server communication. Web UIs need REST conventions (HTTP verbs, status codes, pagination, auth headers).
-
-### Why Not Direct MCP Client in Browser?
-
-1. MCP Streamable HTTP is designed for AI tool-calling semantics, not CRUD operations
-2. React needs standard HTTP patterns -- loading states, error codes, pagination cursors
-3. Auth patterns differ -- MCP auth is OAuth 2.1 server-to-server; web UI needs cookie/JWT flows
-4. MCP returns `content[]` arrays with text/image types -- web UI needs structured JSON
-
-### The Gateway Pattern
-
-Express serves dual roles in a single process:
-
-```typescript
-// express-app.ts
-import express from "express";
-import { mcpServer } from "./mcp-server";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp";
-import { contributorRoutes } from "./routes/contributors";
-import { challengeRoutes } from "./routes/challenges";
-import { circleRoutes } from "./routes/circles";
-import { authRoutes } from "./routes/auth";
-import { webhookRoutes } from "./routes/webhooks";
-import { authMiddleware } from "./middleware/auth";
-
-const app = express();
-
-// --- Stripe webhook route (needs raw body, BEFORE json parser) ---
-app.use("/webhooks/stripe", webhookRoutes);
-
-// --- JSON parser for all other routes ---
-app.use(express.json());
-
-// --- REST API routes (for React web UI) ---
-app.use("/api/auth", authRoutes);
-app.use("/api/contributors", authMiddleware, contributorRoutes);
-app.use("/api/challenges", authMiddleware, challengeRoutes);
-app.use("/api/circles", authMiddleware, circleRoutes);
-app.use("/api/wellbeing", authMiddleware, wellbeingRoutes);
-
-// --- MCP endpoint (for VANTAGE / AI clients) ---
-app.post("/mcp", async (req, res) => {
-  const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
-  await mcpServer.connect(transport);
-  await transport.handleRequest(req, res);
-});
-
-export { app };
-```
-
-### REST Route Example (thin wrapper over same service)
-
-```typescript
-// routes/contributors.ts
-import { Router } from "express";
-import { contributorService } from "../services/contributor.service";
-
-const router = Router();
-
-router.get("/:id/profile", async (req, res) => {
-  const profile = await contributorService.getProfile(req.params.id);
-  if (!profile) return res.status(404).json({ error: "Not found" });
-  res.json(profile);
-});
-
-router.patch("/:id/profile", async (req, res) => {
-  const updated = await contributorService.updateProfile(req.params.id, req.body);
-  res.json(updated);
-});
-
-export { router as contributorRoutes };
-```
-
-The MCP tool and the REST route call the SAME `contributorService.getProfile()`. Zero duplicated logic.
-
----
-
-## Database Schema Organization
-
-**Recommendation: Hybrid approach.** Normalize core relationships. Use JSONB for genuinely variable data (parsed CV profiles, payment config, preferences).
-
-**Confidence: HIGH** -- Standard PostgreSQL best practice confirmed by AWS and PostgreSQL documentation.
-
-### Schema Design Principles
-
-1. **Normalize entities that participate in JOINs** -- contributors, challenges, circles
-2. **Use JSONB for truly variable-shape data** -- parsed_profile (varies by CV), preferences, payment config
-3. **Never store queryable fields in JSONB** -- if you filter/sort by it, it gets a column
-4. **Use proper foreign keys** -- circle_id, contributor_id, challenge_id as real FK constraints
-5. **Use UUIDs** -- v7 (time-sortable) for primary keys
-
-### Recommended Schema (Drizzle ORM)
-
-```typescript
-// db/schema.ts
-import { pgTable, uuid, text, timestamp, jsonb, integer, varchar, pgEnum } from "drizzle-orm/pg-core";
-
-export const contributorStatus = pgEnum("contributor_status", ["onboarding", "active", "paused", "inactive"]);
-
-export const contributors = pgTable("contributors", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull(),
-  email: varchar("email", { length: 255 }).notNull().unique(),
-  authProvider: varchar("auth_provider", { length: 20 }).notNull(), // "google", "linkedin", "email"
-  authProviderId: varchar("auth_provider_id", { length: 255 }),
-  passwordHash: text("password_hash"),                              // Only for email auth
-  cvFileUrl: text("cv_file_url"),
-  parsedProfile: jsonb("parsed_profile"),                           // Variable-shape CV data
-  availability: varchar("availability", { length: 50 }),            // "full-time", "part-time", "adhoc"
-  preferences: jsonb("preferences"),                                // Notification prefs, etc.
-  stripeConnectId: varchar("stripe_connect_id", { length: 255 }),
-  stripeOnboardingComplete: integer("stripe_onboarding_complete").default(0),
-  status: contributorStatus("status").default("onboarding"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const challengeType = pgEnum("challenge_type", ["community", "premium", "knowledge_transition"]);
-export const challengeStatus = pgEnum("challenge_status", ["draft", "open", "matching", "active", "completed", "cancelled"]);
-
-export const challenges = pgTable("challenges", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  title: varchar("title", { length: 255 }).notNull(),
-  brief: text("brief").notNull(),
-  domain: varchar("domain", { length: 100 }),
-  skillsNeeded: text("skills_needed").array(),                      // Array column, not JSONB
-  perspectivesNeeded: text("perspectives_needed").array(),
-  type: challengeType("type").notNull(),
-  payment: jsonb("payment"),                                         // { model, amount, split, currency }
-  challengerName: varchar("challenger_name", { length: 255 }),
-  challengerEmail: varchar("challenger_email", { length: 255 }),
-  challengerOrg: varchar("challenger_org", { length: 255 }),
-  deadline: timestamp("deadline"),
-  status: challengeStatus("status").default("draft"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const circleStatus = pgEnum("circle_status", ["forming", "active", "completed", "dissolved"]);
-
-export const circles = pgTable("circles", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  challengeId: uuid("challenge_id").references(() => challenges.id).notNull(),
-  maxMembers: integer("max_members").default(5),
-  socialChannel: jsonb("social_channel"),                             // { platform, url }
-  status: circleStatus("status").default("forming"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Junction table for circle membership (NOT a JSON array)
-export const circleMembers = pgTable("circle_members", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  circleId: uuid("circle_id").references(() => circles.id).notNull(),
-  contributorId: uuid("contributor_id").references(() => contributors.id).notNull(),
-  role: varchar("role", { length: 50 }).default("member"),           // "member", "lead"
-  joinedAt: timestamp("joined_at").defaultNow(),
-});
-
-export const noteType = pgEnum("note_type", ["note", "file", "decision", "milestone"]);
-
-export const circleNotes = pgTable("circle_notes", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  circleId: uuid("circle_id").references(() => circles.id).notNull(),
-  contributorId: uuid("contributor_id").references(() => contributors.id).notNull(),
-  content: text("content").notNull(),
-  attachments: jsonb("attachments"),                                  // [{ url, filename, type }]
-  type: noteType("type").default("note"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const resolutions = pgTable("resolutions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  circleId: uuid("circle_id").references(() => circles.id).notNull(),
-  challengeId: uuid("challenge_id").references(() => challenges.id).notNull(),
-  content: jsonb("content").notNull(),                                // { recommendations, summary, ... }
-  feedback: jsonb("feedback"),                                        // { rating, comments }
-  submittedAt: timestamp("submitted_at").defaultNow(),
-});
-
-export const wellbeingCheckins = pgTable("wellbeing_checkins", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  contributorId: uuid("contributor_id").references(() => contributors.id).notNull(),
-  uclaLonelinessScore: integer("ucla_loneliness_score"),
-  wemwbsScore: integer("wemwbs_score"),
-  freetextNote: text("freetext_note"),
-  completedAt: timestamp("completed_at").defaultNow(),
-});
-
-// Track challenge interest expressions
-export const challengeInterests = pgTable("challenge_interests", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  challengeId: uuid("challenge_id").references(() => challenges.id).notNull(),
-  contributorId: uuid("contributor_id").references(() => contributors.id).notNull(),
-  message: text("message"),
-  status: varchar("status", { length: 20 }).default("pending"),      // "pending", "accepted", "declined"
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-// Stripe webhook event log (idempotency)
-export const stripeEvents = pgTable("stripe_events", {
-  id: varchar("id", { length: 255 }).primaryKey(),                   // Stripe event ID
-  type: varchar("type", { length: 100 }).notNull(),
-  processedAt: timestamp("processed_at").defaultNow(),
-});
-```
-
-### Key Schema Decisions
-
-| Decision | Rationale |
-|----------|-----------|
-| `circle_members` junction table instead of JSON array | Enables JOINs, COUNT queries, membership constraints |
-| `challenge_interests` separate table | Track interest status per contributor, not buried in JSON |
-| `stripe_events` table | Webhook idempotency -- check if event already processed |
-| `skills_needed` as text array, not JSONB | PostgreSQL array supports `@>` containment queries |
-| `parsed_profile` as JSONB | Genuinely variable shape depending on CV content |
-| `payment` as JSONB | Variable structure per challenge type (retainer vs stipend vs free) |
-| pgEnums for status fields | Database-enforced valid states, better than varchar |
-
----
-
-## Stripe Connect Integration Architecture
-
-**Recommendation: Use Express connected accounts with Stripe-hosted onboarding.** This minimizes compliance burden while giving contributors a clean onboarding experience.
-
-**Confidence: MEDIUM** -- Based on Stripe documentation patterns. Specific API versions and features should be verified at implementation time.
-
-### Account Type: Express
-
-Express accounts let Stripe handle identity verification, compliance, and the onboarding UI. Your platform controls the payment flow. Contributors see a lightweight Stripe Express Dashboard for payouts.
-
-### Payment Architecture
-
-```
-Challenge Payment Flow:
-1. Challenger submits challenge with payment (or platform creates on behalf)
-2. Platform creates Stripe PaymentIntent with destination charge
-3. PaymentIntent specifies:
-   - amount: full challenge fee
-   - application_fee_amount: 25% platform cut
-   - transfer_data.destination: contributor's connected account
-4. On success, webhook updates challenge/circle status
-
-Knowledge Transition Retainer Flow:
-1. Platform creates Stripe Subscription for challenger
-2. Monthly invoice auto-charges
-3. Each invoice payment triggers transfer to contributor (75%)
-4. Platform retains 25% as application fee
-```
-
-### Critical Webhooks to Handle
-
-| Webhook Event | Action |
-|---------------|--------|
-| `account.updated` | Check if onboarding complete, update contributor record |
-| `payment_intent.succeeded` | Mark challenge as funded, trigger circle formation |
-| `payment_intent.payment_failed` | Notify challenger, pause challenge |
-| `invoice.paid` | Process KT retainer payment, transfer to contributor |
-| `payout.failed` | Alert contributor about bank account issue |
-
-### Webhook Handler Pattern
-
-```typescript
-// routes/webhooks.ts -- must use raw body parser
-import { Router } from "express";
-import express from "express";
-import Stripe from "stripe";
-import { paymentService } from "../services/payment.service";
-import { db } from "../db";
-import { stripeEvents } from "../db/schema";
-
-const router = Router();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
-router.post("/",
-  express.raw({ type: "application/json" }),
-  async (req, res) => {
-    const sig = req.headers["stripe-signature"] as string;
-    let event: Stripe.Event;
-
-    try {
-      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
-    } catch (err) {
-      return res.status(400).send("Webhook signature verification failed");
-    }
-
-    // Idempotency check
-    const existing = await db.select().from(stripeEvents).where(eq(stripeEvents.id, event.id));
-    if (existing.length > 0) return res.json({ received: true });
-
-    // Process event
-    switch (event.type) {
-      case "account.updated":
-        await paymentService.handleAccountUpdate(event.data.object);
-        break;
-      case "payment_intent.succeeded":
-        await paymentService.handlePaymentSuccess(event.data.object);
-        break;
-      // ... other handlers
-    }
-
-    // Record processed event
-    await db.insert(stripeEvents).values({ id: event.id, type: event.type });
-    res.json({ received: true });
+// packages/server/src/middleware/api-key-auth.ts
+export function apiKeyAuth(req: Request, res: Response, next: NextFunction): void {
+  const key = req.headers["x-api-key"];
+  if (!key || key !== getEnv().VANTAGE_API_KEY) {
+    res.status(401).json({ error: "Invalid API key" });
+    return;
   }
+  next();
+}
+```
+
+**Auth separation principle:**
+
+VANTAGE uses API key auth (stateless, `X-API-Key` header). Human users use JWT cookies (`authMiddleware`). These are separate middleware applied to separate route groups. A VANTAGE request carries no cookie and `req.contributor` is not populated. If VANTAGE-specific routes need to identify the caller, pass an identifier in the request body, not via `req.contributor`.
+
+**VANTAGE client module pattern (in the VANTAGE repo):**
+
+```typescript
+// In VANTAGE: indomitable-unity-client.ts
+const BASE = "https://api.indomitableunity.org/api/v1";
+const HEADERS = { "X-API-Key": process.env.IU_API_KEY };
+
+export async function listChallenges(filters?: ChallengeFilters) {
+  return fetch(`${BASE}/challenges`, { headers: HEADERS }).then(r => r.json());
+}
+```
+
+**Endpoint contract discipline:**
+
+Existing routes consumed by VANTAGE must not change response shapes without a version bump. A `VANTAGE-CONTRACT.md` listing every consumed endpoint, its request shape, and response shape is a v1.1 deliverable alongside the integration work.
+
+---
+
+### Feature 3: Kiosk Mode
+
+**What kiosk mode is:**
+
+A stripped-down interface for shared computers in libraries and community centres. Large touch targets, no persistent login, auto-logout after inactivity, guided flows with no open navigation.
+
+**Architecture approach: React render mode, not a separate app or build.**
+
+A URL path prefix (`/kiosk/*`) selects `KioskShell` instead of `AppShell`. Same bundle, same API, same cookie auth — different UI skin with inactivity management layered on top.
+
+**New React components:**
+
+```
+packages/web/src/components/layout/
+└── KioskShell.tsx           # No top nav, no sidebar, large footer with "End session" button
+
+packages/web/src/contexts/
+└── KioskContext.tsx          # isKiosk flag + inactivity timer state
+
+packages/web/src/hooks/
+└── useInactivityLogout.ts    # setTimeout reset on user interaction events
+```
+
+**New pages:**
+
+```
+packages/web/src/pages/kiosk/
+├── KioskLanding.tsx         # "Start here" — simplified entry point for shared computer
+└── KioskChallenges.tsx      # Read-only challenge browser, large cards
+```
+
+**Session management:**
+
+The kiosk problem: user completes task, leaves computer, next user must not see previous data.
+
+Solution:
+1. `useInactivityLogout` — after N minutes of no interaction, POST `/api/auth/logout` and clear TanStack Query cache
+2. `KioskShell` renders an always-visible "End session" button triggering immediate logout
+3. After logout, React re-renders to `KioskLanding` (unauthenticated state), ready for next user
+
+No new DB tables needed. The logout endpoint already exists (`POST /api/auth/logout`).
+
+**Inactivity logout hook:**
+
+```typescript
+// packages/web/src/hooks/useInactivityLogout.ts
+export function useInactivityLogout(timeoutMs: number) {
+  const { logout } = useAuth();
+  useEffect(() => {
+    let timer = setTimeout(logout, timeoutMs);
+    const reset = () => { clearTimeout(timer); timer = setTimeout(logout, timeoutMs); };
+    const events = ["mousemove", "keydown", "touchstart", "click"];
+    events.forEach(e => window.addEventListener(e, reset));
+    return () => { clearTimeout(timer); events.forEach(e => window.removeEventListener(e, reset)); };
+  }, [logout, timeoutMs]);
+}
+```
+
+**Kiosk routing addition to App.tsx:**
+
+```typescript
+<Route element={<KioskShell />}>
+  <Route path="/kiosk" element={<KioskLanding />} />
+  <Route path="/kiosk/challenges" element={<KioskChallenges />} />
+</Route>
+```
+
+No server changes required. Kiosk mode is entirely a frontend concern.
+
+---
+
+### Feature 4: Challenger Portal
+
+**What challengers are:**
+
+Organisations (companies, councils, NHS trusts, voluntary groups) that post challenges. Not contributors. They need separate accounts, separate onboarding, and a separate view into challenge progress and resolutions.
+
+**DB schema changes:**
+
+New enum value on existing enum:
+```sql
+ALTER TYPE contributor_role ADD VALUE 'challenger';
+```
+
+New table:
+```sql
+CREATE TABLE challenger_organisations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  account_id UUID NOT NULL UNIQUE REFERENCES contributors(id) ON DELETE CASCADE,
+  organisation_name TEXT NOT NULL,
+  organisation_type TEXT NOT NULL,  -- 'company', 'council', 'nhs', 'charity', 'other'
+  contact_name TEXT NOT NULL,
+  website TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
+```
 
-export { router as webhookRoutes };
+Modified column on existing table:
+```sql
+ALTER TABLE challenges ADD COLUMN challenger_org_id UUID REFERENCES challenger_organisations(id);
+```
+Nullable — existing CM-created challenges have no challenger org.
+
+**Shared package changes:**
+
+- `types/auth.ts` — add `"challenger"` to `ContributorRole` union
+- `constants.ts` — add `"challenger"` to `CONTRIBUTOR_ROLES`
+- `types/challenger.ts` — new: `ChallengerOrg` type
+- `schemas/challenger.ts` — new: `createChallengerOrgSchema`, `submitChallengeSchema`
+
+**New server route file:**
+
+```
+packages/server/src/routes/
+└── challenger.ts
+```
+
+Route surface:
+- `POST /api/auth/register-challenger` — create challenger account + org record atomically (public)
+- `GET /api/challenger/profile` — get org profile (challenger auth required)
+- `PUT /api/challenger/profile` — update org profile
+- `GET /api/challenger/challenges` — list challenges posted by this org
+- `POST /api/challenger/challenges` — submit challenge draft (feeds CM review queue)
+- `GET /api/challenger/challenges/:id/progress` — circle status, resolution status
+- `GET /api/challenger/challenges/:id/resolution` — view completed resolution
+
+**Modified server components:**
+
+- `routes/auth.ts` — add `POST /api/auth/register-challenger` endpoint: creates contributor with `role: "challenger"` and inserts into `challenger_organisations` in a single transaction
+- `routes/challenges.ts` — draft submission path: `POST /api/challenger/challenges` forces `status: "draft"` and `challenger_org_id` from authenticated challenger's org; CM uses existing `PUT /api/challenges/:id` to flip to `"open"`
+- `middleware/auth.ts` — no code change; `requireRole("challenger")` works immediately because `requireRole` is a generic factory comparing `req.contributor.role` to its argument
+- `db/schema.ts` — add enum value, new table, FK column
+- `express-app.ts` — mount `challengerRoutes`
+
+**Why a separate register-challenger endpoint:**
+
+The existing `POST /api/auth/register` defaults `role: "contributor"`. Challenger registration requires atomically creating both the contributor record (role: challenger) and the organisation record. Separate endpoint keeps the auth logic readable and avoids conditionals in a sensitive code path.
+
+**New web pages:**
+
+```
+packages/web/src/pages/challenger/
+├── ChallengerRegister.tsx       # Organisation registration flow
+├── ChallengerDashboard.tsx      # Overview: active, draft, completed challenges
+├── ChallengerChallengeForm.tsx  # Submit / edit a challenge brief
+└── ChallengerProgress.tsx       # Read-only: circle status + resolution view
+```
+
+**Modified web components:**
+
+- `App.tsx` — add public `/challenger/register` route and protected challenger routes
+- `Navbar.tsx` / `Sidebar.tsx` — challenger-specific nav items
+- `ProtectedRoute.tsx` — challenger role can access `/challenger/*` but not `/dashboard`, `/wellbeing`, `/circles` etc.
+- `web/src/api/challenger.ts` — new typed fetch wrappers for challenger endpoints
+
+---
+
+## Recommended Project Structure Changes for v1.1
+
+```
+packages/
+├── server/src/
+│   ├── middleware/
+│   │   ├── auth.ts              # UNCHANGED in code; role enum expands via DB/types
+│   │   └── api-key-auth.ts      # NEW: VANTAGE API key validation
+│   ├── routes/
+│   │   ├── auth.ts              # MODIFIED: add /register-challenger endpoint
+│   │   ├── challenger.ts        # NEW: challenger portal routes
+│   │   └── challenges.ts        # MODIFIED: challenger draft submission path
+│   ├── db/
+│   │   └── schema.ts            # MODIFIED: challenger role enum value, challenger_organisations table, FK on challenges
+│   └── express-app.ts           # MODIFIED: mount challenger routes; add apiKeyAuth for VANTAGE paths
+│
+├── shared/src/
+│   ├── types/
+│   │   ├── auth.ts              # MODIFIED: add 'challenger' to ContributorRole
+│   │   └── challenger.ts        # NEW: ChallengerOrg type
+│   ├── schemas/
+│   │   └── challenger.ts        # NEW: Zod schemas for challenger input
+│   └── constants.ts             # MODIFIED: add 'challenger' to CONTRIBUTOR_ROLES
+│
+└── web/src/
+    ├── components/layout/
+    │   ├── AppShell.tsx         # MODIFIED: isKiosk path-based check, sidebar column
+    │   ├── Navbar.tsx           # MODIFIED: role-aware nav items, mobile hamburger
+    │   ├── Sidebar.tsx          # NEW: role-based authenticated sidebar
+    │   ├── MobileNavDrawer.tsx  # NEW: mobile hamburger drawer
+    │   ├── NavLink.tsx          # NEW: active-state nav link wrapper
+    │   └── KioskShell.tsx       # NEW: kiosk-specific shell
+    ├── contexts/
+    │   └── KioskContext.tsx     # NEW: isKiosk flag + inactivity state
+    ├── hooks/
+    │   └── useInactivityLogout.ts  # NEW: auto-logout on inactivity
+    ├── pages/
+    │   ├── challenger/          # NEW: 4 challenger portal pages
+    │   └── kiosk/               # NEW: 2 kiosk pages
+    ├── api/
+    │   └── challenger.ts        # NEW: typed fetch wrappers for challenger routes
+    └── App.tsx                  # MODIFIED: challenger + kiosk routes added
 ```
 
 ---
 
-## Auth Flow Architecture
+## Architectural Patterns
 
-**Recommendation: OAuth (Google + LinkedIn) + email/password, with JWT tokens stored in httpOnly cookies.**
+### Pattern 1: Role Enum Expansion
 
-**Confidence: HIGH** -- Standard pattern for web apps with OAuth providers.
+**What:** Add `"challenger"` to the PostgreSQL `contributor_role` enum and the shared `ContributorRole` TypeScript union simultaneously, with a Drizzle migration.
 
-### Flow
+**When to use:** Any time a new actor type is added.
 
-```
-OAuth Flow:
-  React UI -> "Sign in with Google/LinkedIn" button
-  -> Redirect to provider's OAuth consent screen
-  -> Provider redirects back to /api/auth/callback/:provider
-  -> Express verifies OAuth token, creates/finds contributor
-  -> Issues JWT, sets httpOnly cookie
-  -> Redirects to React app
+**Caution:** PostgreSQL enum values can be added but not removed or reordered without table rewrites. Add the value; do not replace existing ones.
 
-Email/Password Flow:
-  React UI -> POST /api/auth/register { email, password, name }
-  -> Express hashes password (bcrypt), creates contributor
-  -> Issues JWT, sets httpOnly cookie
-  -> Returns contributor profile
+**The `requireRole()` factory in `middleware/auth.ts` already handles any role string** — it compares `req.contributor.role` to its argument. `requireRole("challenger")` works the moment the enum value and type are added.
 
-MCP Auth (Future - VANTAGE):
-  VANTAGE -> MCP Streamable HTTP with Bearer token
-  -> Express middleware validates token
-  -> MCP server processes tool calls with authenticated context
-```
+### Pattern 2: Dual Auth Paths (Cookie vs API Key)
 
-### Key Decisions
+**What:** Human users authenticate via JWT cookies (`authMiddleware`). VANTAGE authenticates via `X-API-Key` header (`apiKeyAuth`). Independent middleware applied to separate route groups.
 
-| Decision | Rationale |
-|----------|-----------|
-| httpOnly cookies over localStorage | XSS protection -- JS cannot read the token |
-| JWT (not sessions) | Stateless, works with MCP auth later |
-| Short-lived access token + refresh token | 15min access, 7-day refresh, limits damage from token leak |
-| Passport.js for OAuth | Battle-tested, Kirk's stack is Node/Express |
-| bcrypt for passwords | Industry standard, auto-salting |
+**Implementation:**
 
----
-
-## CV Upload Pipeline
-
-**Confidence: MEDIUM** -- The parsing approach (pdf-parse + LLM extraction) needs validation at implementation time. CV parsing quality varies wildly.
-
-### Pipeline Steps
-
-```
-1. User selects CV file (PDF, DOCX)
-2. React UI uploads via multipart POST to /api/contributors/:id/cv
-3. Express middleware validates file type and size (max 10MB)
-4. Domain service uploads raw file to S3/R2, stores URL in contributor record
-5. Domain service extracts text:
-   - PDF: pdf-parse library
-   - DOCX: mammoth library
-6. Domain service sends extracted text to LLM for structured extraction:
-   - Professional summary
-   - Skills array
-   - Work history array
-   - Education array
-   - Certifications array
-   - Industries array
-7. Structured profile stored as JSONB in contributors.parsed_profile
-8. Contributor reviews and edits parsed fields via web UI
-```
-
-### S3/R2 Configuration
-
-Use Cloudflare R2 over AWS S3 because: no egress fees, S3-compatible API, simpler pricing. Use presigned URLs if you need direct browser uploads later, but for MVP a simple server-side upload is fine.
-
----
-
-## Monorepo Folder Structure
-
-**Recommendation: pnpm workspaces with a simple packages/ layout. No Turborepo initially -- overkill for 2 packages.**
-
-**Confidence: HIGH** -- Based on established pnpm workspace patterns and Kirk's existing experience with Node/React projects.
-
-```
-indomitable-unity/
-  package.json                    # Root -- workspace config, shared scripts
-  pnpm-workspace.yaml             # Declares workspace packages
-  tsconfig.base.json              # Shared TypeScript config
-  .env.example                    # Environment variables template
-  .gitignore
-  BUILD_OVERVIEW.md
-  .planning/                      # GSD planning files
-
-  packages/
-    server/                        # MCP server + Express API (single deployable)
-      package.json
-      tsconfig.json
-      src/
-        index.ts                   # Entry point -- starts Express
-        express-app.ts             # Express app setup
-        mcp-server.ts              # McpServer instance
-        middleware/
-          auth.ts                  # JWT verification, OAuth callbacks
-          error-handler.ts         # Global error handling
-          rate-limiter.ts          # Rate limiting
-        routes/
-          auth.ts                  # /api/auth/*
-          contributors.ts          # /api/contributors/*
-          challenges.ts            # /api/challenges/*
-          circles.ts               # /api/circles/*
-          wellbeing.ts             # /api/wellbeing/*
-          webhooks.ts              # /webhooks/stripe
-          uploads.ts               # /api/uploads/*
-        tools/                     # MCP tool definitions (14 tools, 4 domains)
-          contributors/
-          challenges/
-          circles/
-          wellbeing/
-          index.ts
-        services/                  # Domain services (shared by routes + tools)
-          contributor.service.ts
-          challenge.service.ts
-          circle.service.ts
-          wellbeing.service.ts
-          matching.service.ts
-          payment.service.ts
-          storage.service.ts
-          cv-parser.service.ts
-          auth.service.ts
-          email.service.ts
-        db/
-          schema.ts                # Drizzle schema
-          migrations/
-          index.ts                 # Connection pool
-        types/                     # Shared TypeScript types
-          contributor.ts
-          challenge.ts
-          circle.ts
-
-    web/                           # React/Vite web UI
-      package.json
-      tsconfig.json
-      vite.config.ts
-      index.html
-      src/
-        main.tsx
-        App.tsx
-        api/                       # API client functions
-          client.ts                # Axios/fetch wrapper with auth
-          contributors.ts
-          challenges.ts
-          circles.ts
-        pages/
-          Login.tsx
-          Onboarding.tsx           # CV upload + profile review
-          Dashboard.tsx            # Contributor home
-          ChallengeBoard.tsx       # Browse challenges
-          ChallengeDetail.tsx
-          CircleWorkspace.tsx      # Notes, members, resolution
-          WellbeingCheckin.tsx
-          Profile.tsx
-        components/
-          Layout.tsx
-          Navbar.tsx
-          ChallengeCard.tsx
-          CircleMemberList.tsx
-          CVUploader.tsx
-          WellbeingForm.tsx
-        hooks/
-          useAuth.ts
-          useContributor.ts
-        lib/
-          auth.ts                  # Auth state management
-        styles/
-          globals.css              # Tailwind base
-
-    shared/                        # Shared types between server and web
-      package.json
-      src/
-        types.ts                   # Contributor, Challenge, Circle interfaces
-        constants.ts               # Status enums, domain constants
-        validation.ts              # Shared Zod schemas
-```
-
-### pnpm-workspace.yaml
-
-```yaml
-packages:
-  - "packages/*"
-```
-
-### Why This Structure
-
-| Decision | Rationale |
-|----------|-----------|
-| Single `server` package (Express + MCP) | One deployable process, shared domain services, simpler deployment |
-| `shared` package for types | Web and server both import from `@indomitable-unity/shared` -- type safety across the stack |
-| No Turborepo | Only 2 packages. Add it later if build times become a problem |
-| Services separate from routes/tools | This is the core principle -- domain logic is interface-agnostic |
-
----
-
-## VANTAGE Integration Path (Future)
-
-**Confidence: MEDIUM** -- The MCP Streamable HTTP pattern is well-documented, but VANTAGE's specific client implementation will determine exact integration details.
-
-### How VANTAGE Connects
-
-VANTAGE is an MCP client. It connects to the same Express server via the `/mcp` Streamable HTTP endpoint. It authenticates via Bearer token (JWT or API key). It calls the same 14 tools that the web UI accesses through REST routes.
-
-```
-VANTAGE MCP Client
-  -> POST /mcp (Streamable HTTP)
-  -> Auth middleware validates Bearer token
-  -> MCP server routes tool call to handler
-  -> Handler calls domain service
-  -> Response returned via MCP protocol
-```
-
-### What Changes When VANTAGE Arrives
-
-1. **Nothing in domain services** -- they already work
-2. **MCP auth middleware** -- add Bearer token validation on `/mcp` endpoint
-3. **MCP session management** -- handle multiple concurrent VANTAGE sessions
-4. **Tool descriptions get richer** -- better descriptions help VANTAGE choose the right tool
-5. **Web UI becomes optional** -- VANTAGE is the primary interface, web UI becomes admin/fallback
-
-### Preparing for VANTAGE Now
-
-- Write thorough tool descriptions (these become VANTAGE's understanding of what each tool does)
-- Return structured data from domain services (not HTML or formatted strings)
-- Keep tool granularity at the right level (14 tools, not 50 micro-operations)
-- Use consistent error patterns so VANTAGE can handle failures gracefully
-
----
-
-## Patterns to Follow
-
-### Pattern 1: Domain Service as Single Source of Truth
-**What:** All business logic lives in service files. Routes and MCP tools are thin wrappers.
-**When:** Always. Every database query, validation rule, and side effect goes through a service.
-**Example:**
 ```typescript
-// services/challenge.service.ts
-export const challengeService = {
-  async listChallenges(filters: ChallengeFilters) {
-    // Business logic: filtering, sorting, pagination
-    // Database query via Drizzle
-    // Returns typed result
-  },
-
-  async expressInterest(challengeId: string, contributorId: string, message?: string) {
-    // Validate contributor can express interest
-    // Check challenge status is "open"
-    // Check contributor hasn't already expressed interest
-    // Insert into challenge_interests
-    // Trigger notification to challenge owner
-  },
-};
+// express-app.ts — separate mount points, never mixed on same route
+app.use("/api/v1/challenges", apiKeyAuth, challengeRoutes);  // VANTAGE
+app.use("/api/challenges", authMiddleware, challengeRoutes);  // Web UI (cookie)
 ```
 
-### Pattern 2: Error Boundaries at the Interface Layer
-**What:** Domain services throw typed errors. Routes catch and convert to HTTP status codes. MCP tools catch and convert to MCP error responses.
-**When:** Always.
-**Example:**
-```typescript
-// services/errors.ts
-export class NotFoundError extends Error { statusCode = 404; }
-export class ForbiddenError extends Error { statusCode = 403; }
-export class ValidationError extends Error { statusCode = 400; }
+**Trade-off:** API key is a shared secret. For pilot scale, a single key in env is sufficient. At scale, per-client keys with a DB-backed key table are appropriate.
 
-// In Express route:
-try {
-  const result = await challengeService.expressInterest(id, userId);
-  res.json(result);
-} catch (err) {
-  if (err instanceof NotFoundError) return res.status(404).json({ error: err.message });
-  // ...
-}
+### Pattern 3: Kiosk as Render Mode
 
-// In MCP tool:
-try {
-  const result = await challengeService.expressInterest(id, userId);
-  return { content: [{ type: "text", text: JSON.stringify(result) }] };
-} catch (err) {
-  return { content: [{ type: "text", text: `Error: ${err.message}` }], isError: true };
-}
+**What:** Kiosk mode is activated by URL path prefix (`/kiosk/*`), which React Router uses to render `KioskShell` instead of `AppShell`. Same bundle, same API, different skin.
+
+**Why not a separate Vite build target:** Doubles build complexity, diverges the codebase, makes it easy for kiosk to fall behind on security patches. Single build, conditional render.
+
+### Pattern 4: Challenger Challenge Submission as Draft Flow
+
+**What:** Challengers submit challenges with `status: "draft"`. CM reviews and publishes. This preserves the v1.0 principle that CM curates quality.
+
+**Why not a direct publish:** The existing `POST /api/challenges` is CM-only. Rather than weakening that guard, add `POST /api/challenger/challenges` which creates with `status: "draft"` and sets `challenger_org_id`. CM uses the existing `PUT /api/challenges/:id` to set `status: "open"`.
+
+---
+
+## Data Flow
+
+### Standard Contributor Request Flow (unchanged in v1.1)
+
+```
+Browser (TanStack Query)
+    ↓ fetch /api/challenges (credentials: include — sends cookie)
+Express authMiddleware
+    ↓ JWT cookie → req.contributor = { id, role }
+Route handler → Drizzle query → PostgreSQL
+    ↓
+JSON response → TanStack Query cache → React re-render
 ```
 
-### Pattern 3: Dependency Injection via Factory Functions
-**What:** Services accept their dependencies (db, stripe, s3) as constructor/factory params.
-**When:** For testability and flexibility.
-**Example:**
-```typescript
-export function createContributorService(db: Database, storage: StorageService) {
-  return {
-    async getProfile(id: string) { /* uses db and storage */ },
-  };
-}
+### VANTAGE Request Flow (new in v1.1)
+
+```
+VANTAGE agent (external Node.js process)
+    ↓ fetch /api/v1/challenges (X-API-Key: <key>)
+Express apiKeyAuth middleware
+    ↓ key validated — no req.contributor set
+Route handler → Drizzle query → PostgreSQL
+    ↓
+JSON response → VANTAGE typed client module
+```
+
+### Challenger Challenge Submission Flow (new in v1.1)
+
+```
+Challenger portal (React)
+    ↓ POST /api/challenger/challenges
+authMiddleware (cookie) → requireRole("challenger")
+    ↓ challenger_organisations lookup for authenticated challenger
+challenges INSERT (status: "draft", challenger_org_id: org.id)
+    ↓
+CM sees draft in challenge list with "pending review" indicator
+    ↓ PUT /api/challenges/:id { status: "open" }
+Challenge visible to contributors in feed
+```
+
+### Kiosk Auto-Logout Flow (new in v1.1)
+
+```
+User interaction stops
+    ↓ N minutes elapses (useInactivityLogout setTimeout)
+POST /api/auth/logout
+    ↓ server clears httpOnly cookies
+queryClient.setQueryData(["me"], null)
+    ↓
+React re-renders → KioskLanding (unauthenticated state)
+Next user sees clean entry point, no previous user data
 ```
 
 ---
 
-## Anti-Patterns to Avoid
+## Integration Points — New vs Modified Summary
 
-### Anti-Pattern 1: Duplicating Logic in Route and Tool Handlers
-**What:** Writing database queries directly in Express routes AND in MCP tool handlers.
-**Why bad:** Two places to maintain. They drift apart. Bugs get fixed in one but not the other.
-**Instead:** Both call the same domain service function.
+| Component | Status | Feature |
+|-----------|--------|---------|
+| `middleware/api-key-auth.ts` | NEW | VANTAGE auth |
+| `routes/challenger.ts` | NEW | Challenger portal |
+| `routes/auth.ts` | MODIFIED | Add `/register-challenger` |
+| `routes/challenges.ts` | MODIFIED | Challenger draft path |
+| `db/schema.ts` | MODIFIED | Challenger role enum, `challenger_organisations` table, FK on `challenges` |
+| `express-app.ts` | MODIFIED | Mount challenger routes, VANTAGE auth |
+| `config/env.ts` | MODIFIED | Add `VANTAGE_API_KEY` |
+| `shared/types/auth.ts` | MODIFIED | Add `"challenger"` to ContributorRole |
+| `shared/types/challenger.ts` | NEW | ChallengerOrg type |
+| `shared/schemas/challenger.ts` | NEW | Zod schemas for challenger input |
+| `shared/constants.ts` | MODIFIED | Add `"challenger"` to CONTRIBUTOR_ROLES |
+| `web/components/layout/AppShell.tsx` | MODIFIED | Kiosk path detection, sidebar column |
+| `web/components/layout/Navbar.tsx` | MODIFIED | Role-aware items, mobile hamburger |
+| `web/components/layout/Sidebar.tsx` | NEW | Authenticated sidebar |
+| `web/components/layout/KioskShell.tsx` | NEW | Kiosk wrapper |
+| `web/contexts/KioskContext.tsx` | NEW | isKiosk flag |
+| `web/hooks/useInactivityLogout.ts` | NEW | Auto-logout on inactivity |
+| `web/pages/challenger/` | NEW | 4 pages |
+| `web/pages/kiosk/` | NEW | 2 pages |
+| `web/api/challenger.ts` | NEW | Typed fetch wrappers |
+| `web/App.tsx` | MODIFIED | New routes |
+| `web/lib/constants.ts` | MODIFIED | New ROUTES entries |
 
-### Anti-Pattern 2: Storing Circle Members as JSON Array
-**What:** `members: jsonb("members")` containing `["uuid1", "uuid2"]`.
-**Why bad:** Cannot JOIN, cannot enforce foreign keys, cannot query "which circles is contributor X in?" efficiently.
-**Instead:** Use the `circle_members` junction table.
+### Unchanged Components
 
-### Anti-Pattern 3: Building a Custom MCP Transport
-**What:** Writing your own HTTP handler for MCP protocol messages.
-**Why bad:** The protocol is complex (JSON-RPC, session management, SSE). Bugs are subtle.
-**Instead:** Use `@modelcontextprotocol/express` middleware and `StreamableHTTPServerTransport` from the official SDK.
-
-### Anti-Pattern 4: Making the Web UI an MCP Client
-**What:** Having React use an MCP client library to call tools directly.
-**Why bad:** MCP semantics don't map to web UI needs (pagination, HTTP caching, error codes, form validation).
-**Instead:** Standard REST API for the web UI. MCP endpoint for AI clients only.
+All of the following are NOT touched by v1.1 work:
+- All existing route files except `auth.ts` and `challenges.ts`
+- All service files
+- All MCP tools
+- All existing web pages (onboarding, wellbeing, circles, impact, dashboard)
+- PostgreSQL migration history — only additive changes
 
 ---
 
-## Scalability Considerations
+## Recommended Build Order
 
-| Concern | At 100 users (Pilot) | At 10K users | At 1M users |
-|---------|---------------------|--------------|-------------|
-| Database | Single managed PostgreSQL instance | Read replicas, connection pooling (PgBouncer) | Sharding by region |
-| File storage | S3/R2 direct uploads | Presigned URLs for direct browser-to-S3 upload | CDN for CV downloads |
-| Payments | Single Stripe account | Same -- Stripe scales automatically | Same |
-| MCP connections | Single VANTAGE instance | Multiple VANTAGE instances with session management | Load balancer + horizontal scaling |
-| Search/matching | PostgreSQL full-text search | pg_trgm + GIN indexes | Dedicated search service (Typesense) |
-| Server | Single Railway/Vercel instance | Horizontal scaling behind load balancer | Kubernetes or serverless |
+Feature dependencies within v1.1 determine safe sequencing.
 
-For the pilot (50-100 contributors), a single Railway instance with managed PostgreSQL handles everything comfortably. Do not over-engineer.
+**Phase A — Shared foundation (pre-requisite for all other features)**
+1. Expand `ContributorRole` to add `"challenger"` in `shared/types/auth.ts` and `shared/constants.ts`
+2. Add Drizzle migration: `challenger_organisations` table + FK column on `challenges` + enum value
+3. Update `shared/types/challenger.ts` and `shared/schemas/challenger.ts`
+4. Add missing ROUTES constants
+
+Rationale: Challenger portal, UX nav, and kiosk mode all reference the role type. DB migrations are safest done before any routes are added that depend on the new schema.
+
+**Phase B — VANTAGE API integration (no dependencies except Phase A env changes)**
+1. Add `api-key-auth.ts` middleware
+2. Add `VANTAGE_API_KEY` to `env.ts`
+3. Mount existing routes at versioned prefix in `express-app.ts`
+4. Write `VANTAGE-CONTRACT.md`
+
+Rationale: Pure server addition. No DB changes. No UI changes. Safe to ship independently and unblocks VANTAGE development in parallel.
+
+**Phase C — Challenger portal (server first, then UI)**
+1. Server: `routes/challenger.ts` + modify `routes/auth.ts` + modify `routes/challenges.ts`
+2. Web: `api/challenger.ts` + 4 pages + routing in `App.tsx`
+
+Rationale: Server routes must exist before web pages can call them. Role type from Phase A must exist before routes can use it.
+
+**Phase D — UX navigation overhaul**
+1. `Sidebar.tsx`, `NavLink.tsx`, `MobileNavDrawer.tsx`
+2. Modify `Navbar.tsx`, `AppShell.tsx`
+3. Update `App.tsx` role-based redirects
+
+Rationale: Depends on knowing all roles (Phase A). Challenger portal pages must exist before the sidebar links to them (Phase C).
+
+**Phase E — Kiosk mode (self-contained, no server changes)**
+1. `KioskContext.tsx`, `useInactivityLogout.ts`, `KioskShell.tsx`
+2. Kiosk pages
+3. Kiosk routing in `App.tsx`
+
+Rationale: Entirely frontend. Builds on the cleaned-up `AppShell` from Phase D. The logout endpoint it calls already exists.
 
 ---
 
-## Suggested Build Order (Based on Dependencies)
+## Anti-Patterns
 
-```
-Phase 1: Foundation (no dependencies)
-  1. Monorepo setup (pnpm workspace, tsconfig, packages)
-  2. Database schema + Drizzle ORM setup + migrations
-  3. Express app skeleton with error handling
-  4. Auth flow (OAuth + email/password + JWT)
-  5. Basic React app with auth pages
+### Anti-Pattern 1: Mixing Cookie and API Key Auth on the Same Route
 
-Phase 2: Core Domain (depends on Phase 1)
-  6. Contributor service + CV upload pipeline
-  7. Challenge service + challenge board
-  8. MCP server skeleton + first tools registered
-  9. Matching service (simple scoring)
-  10. Circle formation + workspace
+**What people do:** Apply both `authMiddleware` and `apiKeyAuth` to the same route with OR logic.
 
-Phase 3: Money (depends on Phases 1-2)
-  11. Stripe Connect account creation + onboarding
-  12. Payment flows (destination charges, subscriptions)
-  13. Webhook handler + idempotency
+**Why it's wrong:** Creates identity ambiguity. VANTAGE is a service, not a contributor. If VANTAGE triggers a route that populates `req.contributor`, that ID is meaningless and may appear in audit logs, notification queues, or wellbeing records.
 
-Phase 4: Polish (depends on Phases 1-3)
-  14. Wellbeing check-in flow
-  15. Impact tracking / dashboard
-  16. Notifications (email via SendGrid/Postmark)
-  17. PWA configuration
+**Do this instead:** Separate route groups. VANTAGE has its own route prefix with `apiKeyAuth`. Human routes keep `authMiddleware`. If the same data is needed by both, extract a service function called from both handlers.
 
-Phase 5: VANTAGE (depends on Phase 2 MCP server)
-  18. MCP auth for AI clients
-  19. Connect VANTAGE as MCP client
-  20. Test all 14 tools via VANTAGE
-```
+### Anti-Pattern 2: Giving Challengers Access to Contributor Routes
 
-The critical dependency chain: Database schema -> Domain services -> REST routes AND MCP tools (parallel) -> Stripe integration -> VANTAGE connection.
+**What people do:** Add `"challenger"` to `requireRole("contributor")` guards to give challengers access to challenge feed, circles, etc.
+
+**Why it's wrong:** Challengers should not see wellbeing check-ins, impact dashboards, Stripe Connect onboarding, or circle workspaces. Role guards exist for separation, not just access control.
+
+**Do this instead:** Challenger-specific routes under `/api/challenger/` and `/challenger/*` in the React router. `ProtectedRoute.tsx` redirects challengers attempting to access `/dashboard` to `/challenger/dashboard`.
+
+### Anti-Pattern 3: Kiosk as a Separate Vite Build Target
+
+**What people do:** Create a second Vite entry point (`kiosk.html`) for the kiosk interface.
+
+**Why it's wrong:** Doubles build complexity, diverges the codebase, makes security patches harder to apply consistently.
+
+**Do this instead:** Single build. Kiosk mode is activated by URL path (`/kiosk/*`) triggering `KioskShell`. Institutions are given the `/kiosk` URL.
+
+### Anti-Pattern 4: Implicit VANTAGE Endpoint Contracts
+
+**What people do:** Let the API contract live only in route handler code and VANTAGE client modules with no documentation.
+
+**Why it's wrong:** When a route changes, no one knows which VANTAGE calls break until VANTAGE fails in production.
+
+**Do this instead:** Maintain `VANTAGE-CONTRACT.md` listing every endpoint consumed, its request shape, and response shape. Update it when a consumed route changes. This is a required deliverable alongside the VANTAGE integration work.
+
+---
+
+## Scaling Considerations
+
+| Scale | Architecture Adjustments |
+|-------|--------------------------|
+| 0-1k users (pilot) | Monolith is fine; single `VANTAGE_API_KEY` in env; kiosk on institutional shared computers only |
+| 1k-10k users | API key per VANTAGE instance; rate limiting on challenger challenge submissions; challenger org table is the natural split point if needed |
+| 10k+ users | `/api/v1/` prefix already in place — easier to extract challenger and VANTAGE surfaces to separate services without breaking existing clients |
 
 ---
 
 ## Sources
 
-- [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) -- Official SDK, Express middleware, Streamable HTTP transport (HIGH confidence)
-- [MCP Specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25) -- Protocol spec (HIGH confidence)
-- [MCP Build Server Guide](https://modelcontextprotocol.io/docs/develop/build-server) -- Official tool definition patterns (HIGH confidence)
-- [Anthropic MCP Builder Skills](https://github.com/anthropics/skills/blob/main/skills/mcp-builder/reference/node_mcp_server.md) -- Node.js MCP reference implementation (HIGH confidence)
-- [Stripe Connect Documentation](https://docs.stripe.com/connect) -- Express accounts, marketplace patterns (HIGH confidence)
-- [Stripe End-to-End Marketplace Guide](https://docs.stripe.com/connect/end-to-end-marketplace) -- Payment flows, onboarding (HIGH confidence)
-- [Stripe Webhook Setup](https://docs.stripe.com/webhooks/quickstart?lang=node) -- Node.js webhook patterns (HIGH confidence)
-- [PostgreSQL JSONB Best Practices (AWS)](https://aws.amazon.com/blogs/database/postgresql-as-a-json-database-advanced-patterns-and-best-practices/) -- Hybrid schema approach (HIGH confidence)
-- [MCP Streamable HTTP Starter](https://github.com/ferrants/mcp-streamable-http-typescript-server) -- Reference implementation (MEDIUM confidence)
-- [MCP Transport Future Blog](http://blog.modelcontextprotocol.io/posts/2025-12-19-mcp-transport-future/) -- Transport evolution (MEDIUM confidence)
-- [pnpm Workspaces Guide](https://jsdev.space/complete-monorepo-guide/) -- Monorepo setup patterns (MEDIUM confidence)
+- Direct codebase inspection: `packages/server/src/` (routes, middleware, services, db/schema.ts, config/env.ts, express-app.ts)
+- Direct codebase inspection: `packages/web/src/` (App.tsx, hooks/useAuth.ts, components/layout/AppShell.tsx, components/layout/Navbar.tsx, api/client.ts, lib/constants.ts)
+- Direct codebase inspection: `packages/shared/src/` (types/auth.ts, constants.ts, index.ts)
+- Direct codebase inspection: `packages/server/src/tools/index.ts` (14 MCP stubs confirmed)
+- `.planning/PROJECT.md` — confirmed VANTAGE calls REST directly (not MCP), kiosk intent, challenger portal requirements
+- Confidence: HIGH — all claims derived from reading actual code, not training data assumptions
+
+---
+
+*Architecture research for: Indomitable Unity v1.1 (VANTAGE integration, kiosk mode, challenger portal, UX navigation overhaul)*
+*Researched: 2026-03-15*
