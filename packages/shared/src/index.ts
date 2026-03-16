@@ -181,3 +181,20 @@ export type {
   PushSubscriptionSchemaInput,
   NotificationPreferencesInput,
 } from "./schemas/notifications.js";
+
+// Challenger portal types
+export type {
+  ChallengerOrg,
+  ChallengerPortalChallenge,
+  ChallengerPortalChallengeDetail,
+} from "./types/challenger.js";
+
+// Challenger portal schemas
+export {
+  registerChallengerSchema,
+  submitChallengerChallengeSchema,
+} from "./schemas/challenger.js";
+export type {
+  RegisterChallengerInput,
+  SubmitChallengerChallengeInput,
+} from "./schemas/challenger.js";

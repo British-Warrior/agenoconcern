@@ -473,6 +473,8 @@ export const challengerOrganisations = pgTable("challenger_organisations", {
   name: varchar("name", { length: 255 }).notNull(),
   contactEmail: varchar("contact_email", { length: 255 }).notNull(),
   apiKeyId: uuid("api_key_id").references(() => apiKeys.id, { onDelete: "set null" }),
+  contributorId: uuid("contributor_id").references(() => contributors.id, { onDelete: "cascade" }),
+  organisationType: varchar("organisation_type", { length: 100 }).notNull().default(""),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
