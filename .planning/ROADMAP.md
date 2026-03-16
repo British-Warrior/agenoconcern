@@ -25,7 +25,7 @@
 
 - [x] **Phase 7: UX Fixes** (3/3 plans) — completed 2026-03-16
 - [x] **Phase 8: Wellbeing Visualisation** (1/1 plans) — completed 2026-03-16
-- [ ] **Phase 9: Server Foundation and VANTAGE** (0/2 plans) — DB migration for challenger role + API key auth for VANTAGE
+- [x] **Phase 9: Server Foundation and VANTAGE** (2/2 plans) — completed 2026-03-16
 - [ ] **Phase 10: Challenger Portal** — Organisation accounts, challenge submission, status tracking, resolution rating
 - [ ] **Phase 11: Kiosk Mode and Institutional Pages** — Institutional embedding with auto-logout and per-institution landing pages
 
@@ -78,8 +78,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — Schema changes (challenger enum, api_keys table, challenger_organisations table) + Drizzle migration
-- [ ] 09-02-PLAN.md — API key middleware + rate limiter + VANTAGE routes + contract document
+- [x] 09-01-PLAN.md — Schema changes (challenger enum, api_keys table, challenger_organisations table) + Drizzle migration
+- [x] 09-02-PLAN.md — API key middleware + rate limiter + VANTAGE routes + contract document
 
 ### Phase 10: Challenger Portal
 
@@ -119,7 +119,7 @@ Plans:
 | 6. Wellbeing, Notifications, and PWA | v1.0 | 3/3 | Complete | 2026-03-15 |
 | 7. UX Fixes | v1.1 | 3/3 | Complete | 2026-03-16 |
 | 8. Wellbeing Visualisation | v1.1 | 1/1 | Complete | 2026-03-16 |
-| 9. Server Foundation and VANTAGE | v1.1 | 0/2 | Not started | - |
+| 9. Server Foundation and VANTAGE | v1.1 | 2/2 | Complete | 2026-03-16 |
 | 10. Challenger Portal | v1.1 | 0/TBD | Not started | - |
 | 11. Kiosk Mode and Institutional Pages | v1.1 | 0/TBD | Not started | - |
 
