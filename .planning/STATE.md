@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 9 of 11 (Server Foundation and VANTAGE)
-Plan: 1 of N complete
-Status: In progress
-Last activity: 2026-03-16 — Completed 09-01-PLAN.md (Schema migration: challenger enum + api_keys + challenger_organisations)
+Plan: 2 of 2 complete
+Status: Phase 9 complete
+Last activity: 2026-03-16 — Completed 09-02-PLAN.md (API key middleware + VANTAGE routes + contract doc)
 
-Progress: [████░░░░░░░░░░░░] v1.1 ~31% (5/16 plans, v1.0 complete)
+Progress: [█████░░░░░░░░░░░] v1.1 ~37% (6/16 plans, v1.0 complete)
 
 ## Performance Metrics
 
@@ -53,6 +53,10 @@ Recent decisions for v1.1:
 - Phase 8 Plan 01: Tooltip content prop requires a render function, not a JSX element, to satisfy recharts 3.x type checker
 - Phase 9: Postgres enum `ALTER TYPE ADD VALUE` is irreversible — staging deploy verification required before production push
 - Phase 9 Plan 01: Migration applied manually (targeted SQL) because Drizzle journal was empty while DB had all prior tables — drizzle-kit migrate would have re-created existing tables. Applied only ALTER TYPE + CREATE TABLEs + FKs, marked 0002 as applied in drizzle.__drizzle_migrations.
+- Phase 9 Plan 02: Rate limiter applied before apiKeyMiddleware — throttles unauthenticated flooding without DB hit
+- Phase 9 Plan 02: timingSafeEqual secondary check after DB hash lookup — prevents timing attacks on comparison
+- Phase 9 Plan 02: last_used_at update is fire-and-forget — non-blocking, failure logged but not surfaced to caller
+- Phase 9 Plan 02: Key creation uses cookie/JWT admin auth, not API key auth — bootstrapping concern (admin creates the first key)
 - Phase 10: Challenger registration flow decision (Option A: full account vs Option B: guest submission) — defer to Phase 10 kickoff
 
 ### Pending Todos
@@ -70,5 +74,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-16
-Stopped at: Phase 9 Plan 01 complete — schema migration applied (challenger enum + api_keys + challenger_organisations)
-Resume file: .planning/phases/09-server-foundation-and-vantage/
+Stopped at: Phase 9 complete — all 2 plans done. API key auth + VANTAGE routes live.
+Resume file: .planning/phases/ (next: Phase 10)
