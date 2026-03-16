@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/Button.js";
 import { Input } from "../../components/ui/Input.js";
 import { useImpactSummary, useLogHours } from "../../hooks/useImpact.js";
 import type { ImpactChallenge, ImpactEarning, WellbeingTrajectoryPoint } from "@indomitable-unity/shared";
+import { swemwbsBand, uclaBand, trendDirection } from "../../lib/wellbeing-norms.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -318,6 +319,35 @@ function WellbeingSection({ trajectory }: { trajectory: WellbeingTrajectoryPoint
     );
   }
 
+  const swemwbsScores = trajectory.map((p) => p.wemwbsScore);
+  const uclaScores = trajectory.map((p) => p.uclaScore);
+  const swemwbsTrend = trendDirection(swemwbsScores);
+  const uclaTrend = trendDirection(uclaScores);
+
+  // For SWEMWBS: up = good (green arrow), down = concerning (red arrow)
+  // For UCLA: down = good (less lonely = green arrow), up = concerning (red arrow)
+  const swemwbsTrendEl =
+    trajectory.length >= 2 ? (
+      swemwbsTrend === "up" ? (
+        <span className="text-green-600 font-bold" title="Improving">&#8593;</span>
+      ) : swemwbsTrend === "down" ? (
+        <span className="text-red-600 font-bold" title="Declining">&#8595;</span>
+      ) : (
+        <span className="text-neutral-400" title="Stable">&#8212;</span>
+      )
+    ) : null;
+
+  const uclaTrendEl =
+    trajectory.length >= 2 ? (
+      uclaTrend === "down" ? (
+        <span className="text-green-600 font-bold" title="Less lonely">&#8595;</span>
+      ) : uclaTrend === "up" ? (
+        <span className="text-red-600 font-bold" title="More lonely">&#8593;</span>
+      ) : (
+        <span className="text-neutral-400" title="Stable">&#8212;</span>
+      )
+    ) : null;
+
   return (
     <Card>
       <h2 className="text-lg font-semibold text-neutral-700 mb-4">Wellbeing Trajectory</h2>
@@ -328,23 +358,38 @@ function WellbeingSection({ trajectory }: { trajectory: WellbeingTrajectoryPoint
             month: "short",
             year: "numeric",
           });
+          const swBand = swemwbsBand(point.wemwbsScore);
+          const ucBand = uclaBand(point.uclaScore);
           return (
             <div key={point.completedAt} className="flex items-center justify-between border-b border-neutral-100 pb-2 last:border-0">
               <span className="text-sm text-neutral-600">{date}</span>
-              <div className="flex gap-4 text-sm">
+              <div className="flex gap-6 text-sm">
                 <span className="text-neutral-700">
-                  UCLA: <span className="font-medium">{point.uclaScore}</span>
+                  UCLA:{" "}
+                  <span className="font-medium">{point.uclaScore}/12</span>{" "}
+                  <span className={`text-xs font-semibold ${ucBand.color}`}>{ucBand.label}</span>
                 </span>
                 <span className="text-neutral-700">
-                  SWEMWBS: <span className="font-medium">{point.wemwbsScore}</span>
+                  SWEMWBS:{" "}
+                  <span className="font-medium">{point.wemwbsScore}/35</span>{" "}
+                  <span className={`text-xs font-semibold ${swBand.color}`}>{swBand.label}</span>
                 </span>
               </div>
             </div>
           );
         })}
       </div>
+
+      {trajectory.length >= 2 && (
+        <div className="mt-3 flex gap-6 text-sm text-neutral-600">
+          <span>SWEMWBS trend: {swemwbsTrendEl}</span>
+          <span>UCLA trend: {uclaTrendEl}</span>
+        </div>
+      )}
+
       <p className="text-xs text-neutral-400 mt-3">
-        Lower UCLA scores indicate less loneliness. Higher SWEMWBS scores indicate better wellbeing.
+        SWEMWBS: 7–35 (Low &lt; 19, Average 19–26, High &gt; 26). Higher = better wellbeing.
+        UCLA: 3–12 (Low &lt; 5, Average 5–7, High &gt; 7). Lower = less loneliness.
       </p>
     </Card>
   );
