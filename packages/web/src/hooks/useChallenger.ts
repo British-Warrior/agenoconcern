@@ -10,8 +10,8 @@ export function useRegisterChallenger() {
   return useMutation({
     mutationFn: (data: RegisterChallengerInput) =>
       challengerApi.register(data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+    onSuccess: (data) => {
+      queryClient.setQueryData(["me"], { contributor: data.contributor });
     },
   });
 }
