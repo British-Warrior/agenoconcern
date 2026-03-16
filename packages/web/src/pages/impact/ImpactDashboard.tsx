@@ -6,6 +6,7 @@ import { Input } from "../../components/ui/Input.js";
 import { useImpactSummary, useLogHours } from "../../hooks/useImpact.js";
 import type { ImpactChallenge, ImpactEarning, WellbeingTrajectoryPoint } from "@indomitable-unity/shared";
 import { swemwbsBand, uclaBand, trendDirection } from "../../lib/wellbeing-norms.js";
+import { WellbeingChart } from "../../components/wellbeing/WellbeingChart.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -308,84 +309,57 @@ function UnpaidRecognitionSection({ unpaidHours }: { unpaidHours: number }) {
 // ─── Section: Wellbeing Trajectory ────────────────────────────────────────────
 
 function WellbeingSection({ trajectory }: { trajectory: WellbeingTrajectoryPoint[] }) {
-  if (trajectory.length === 0) {
-    return (
-      <Card className="opacity-60 bg-neutral-50">
-        <h2 className="text-lg font-semibold text-neutral-700 mb-4">Wellbeing Trajectory</h2>
-        <p className="text-sm text-neutral-500">
-          Your wellbeing journey will appear here after your first check-in.
-        </p>
-      </Card>
-    );
-  }
+  const hasData = trajectory.length > 0;
+  const latest = hasData ? trajectory[trajectory.length - 1] : null;
 
-  const swemwbsScores = trajectory.map((p) => p.wemwbsScore);
-  const uclaScores = trajectory.map((p) => p.uclaScore);
-  const swemwbsTrend = trendDirection(swemwbsScores);
-  const uclaTrend = trendDirection(uclaScores);
+  // Trend arrows (only when 2+ data points available)
+  // SWEMWBS: up = good (green), down = concerning (red)
+  // UCLA: down = good (less lonely = green), up = concerning (red) — inverted per Phase 7 decision
+  const swemwbsTrendEl = (() => {
+    if (!hasData || trajectory.length < 2 || !latest) return null;
+    const prev = trajectory[trajectory.length - 2];
+    const dir = trendDirection([prev.wemwbsScore, latest.wemwbsScore]);
+    if (dir === "up") return <span className="text-green-600 font-bold" title="Improving">&#8593;</span>;
+    if (dir === "down") return <span className="text-red-600 font-bold" title="Declining">&#8595;</span>;
+    return <span className="text-neutral-400" title="Stable">&#8212;</span>;
+  })();
 
-  // For SWEMWBS: up = good (green arrow), down = concerning (red arrow)
-  // For UCLA: down = good (less lonely = green arrow), up = concerning (red arrow)
-  const swemwbsTrendEl =
-    trajectory.length >= 2 ? (
-      swemwbsTrend === "up" ? (
-        <span className="text-green-600 font-bold" title="Improving">&#8593;</span>
-      ) : swemwbsTrend === "down" ? (
-        <span className="text-red-600 font-bold" title="Declining">&#8595;</span>
-      ) : (
-        <span className="text-neutral-400" title="Stable">&#8212;</span>
-      )
-    ) : null;
+  const uclaTrendEl = (() => {
+    if (!hasData || trajectory.length < 2 || !latest) return null;
+    const prev = trajectory[trajectory.length - 2];
+    const dir = trendDirection([prev.uclaScore, latest.uclaScore]);
+    if (dir === "down") return <span className="text-green-600 font-bold" title="Less lonely">&#8595;</span>;
+    if (dir === "up") return <span className="text-red-600 font-bold" title="More lonely">&#8593;</span>;
+    return <span className="text-neutral-400" title="Stable">&#8212;</span>;
+  })();
 
-  const uclaTrendEl =
-    trajectory.length >= 2 ? (
-      uclaTrend === "down" ? (
-        <span className="text-green-600 font-bold" title="Less lonely">&#8595;</span>
-      ) : uclaTrend === "up" ? (
-        <span className="text-red-600 font-bold" title="More lonely">&#8593;</span>
-      ) : (
-        <span className="text-neutral-400" title="Stable">&#8212;</span>
-      )
-    ) : null;
+  const swBand = latest ? swemwbsBand(latest.wemwbsScore) : null;
+  const ucBand = latest ? uclaBand(latest.uclaScore) : null;
 
   return (
     <Card>
       <h2 className="text-lg font-semibold text-neutral-700 mb-4">Wellbeing Trajectory</h2>
-      <div className="space-y-3">
-        {trajectory.map((point) => {
-          const date = new Date(point.completedAt).toLocaleDateString("en-GB", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          });
-          const swBand = swemwbsBand(point.wemwbsScore);
-          const ucBand = uclaBand(point.uclaScore);
-          return (
-            <div key={point.completedAt} className="flex items-center justify-between border-b border-neutral-100 pb-2 last:border-0">
-              <span className="text-sm text-neutral-600">{date}</span>
-              <div className="flex gap-6 text-sm">
-                <span className="text-neutral-700">
-                  UCLA:{" "}
-                  <span className="font-medium">{point.uclaScore}/12</span>{" "}
-                  <span className={`text-xs font-semibold ${ucBand.color}`}>{ucBand.label}</span>
-                </span>
-                <span className="text-neutral-700">
-                  SWEMWBS:{" "}
-                  <span className="font-medium">{point.wemwbsScore}/35</span>{" "}
-                  <span className={`text-xs font-semibold ${swBand.color}`}>{swBand.label}</span>
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
 
-      {trajectory.length >= 2 && (
-        <div className="mt-3 flex gap-6 text-sm text-neutral-600">
-          <span>SWEMWBS trend: {swemwbsTrendEl}</span>
-          <span>UCLA trend: {uclaTrendEl}</span>
+      {/* Latest score summary — shown only when data exists */}
+      {hasData && latest && swBand && ucBand && (
+        <div className="flex flex-wrap gap-6 text-sm mb-4">
+          <span className="text-neutral-700">
+            SWEMWBS:{" "}
+            <span className="font-medium">{latest.wemwbsScore}/35</span>{" "}
+            <span className={`text-xs font-semibold ${swBand.color}`}>{swBand.label}</span>
+            {swemwbsTrendEl && <>{" "}{swemwbsTrendEl}</>}
+          </span>
+          <span className="text-neutral-700">
+            UCLA:{" "}
+            <span className="font-medium">{latest.uclaScore}/12</span>{" "}
+            <span className={`text-xs font-semibold ${ucBand.color}`}>{ucBand.label}</span>
+            {uclaTrendEl && <>{" "}{uclaTrendEl}</>}
+          </span>
         </div>
       )}
+
+      {/* Chart (handles empty state internally) */}
+      <WellbeingChart trajectory={trajectory} />
 
       <p className="text-xs text-neutral-400 mt-3">
         SWEMWBS: 7–35 (Low &lt; 19, Average 19–26, High &gt; 26). Higher = better wellbeing.
