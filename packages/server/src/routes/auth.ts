@@ -3,7 +3,7 @@ import * as arctic from "arctic";
 import type { Request, Response } from "express";
 import { eq } from "drizzle-orm";
 import { getDb } from "../db/index.js";
-import { contributors } from "../db/schema.js";
+import { contributors, challengerOrganisations } from "../db/schema.js";
 import { getEnv } from "../config/env.js";
 import { authMiddleware, requireRole } from "../middleware/auth.js";
 import {
@@ -151,13 +151,39 @@ if (getEnv().NODE_ENV === "development") {
         }
 
         const db = getDb();
+        const contributorId = req.contributor!.id;
+
         await db
           .update(contributors)
           .set({ role: role as "contributor" | "community_manager" | "admin" | "challenger", updatedAt: new Date() })
-          .where(eq(contributors.id, req.contributor!.id));
+          .where(eq(contributors.id, contributorId));
+
+        // When switching to challenger, auto-create org record if missing
+        if (role === "challenger") {
+          const [existingOrg] = await db
+            .select({ id: challengerOrganisations.id })
+            .from(challengerOrganisations)
+            .where(eq(challengerOrganisations.contributorId, contributorId))
+            .limit(1);
+
+          if (!existingOrg) {
+            const [contributor] = await db
+              .select({ name: contributors.name, email: contributors.email })
+              .from(contributors)
+              .where(eq(contributors.id, contributorId))
+              .limit(1);
+
+            await db.insert(challengerOrganisations).values({
+              name: `${contributor!.name}'s Organisation`,
+              contactEmail: contributor!.email ?? "dev@test.local",
+              contributorId,
+              organisationType: "dev-test",
+            });
+          }
+        }
 
         // Re-issue tokens with new role
-        const tokens = await createTokens(req.contributor!.id, role);
+        const tokens = await createTokens(contributorId, role);
         setAuthCookies(res, tokens);
 
         res.json({ role });
