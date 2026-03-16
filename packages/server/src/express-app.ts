@@ -11,6 +11,7 @@ import { webhookHandler, paymentRoutes } from "./routes/payments.js";
 import { impactRoutes } from "./routes/impact.js";
 import { wellbeingRoutes } from "./routes/wellbeing.js";
 import { notificationRoutes } from "./routes/notifications.js";
+import { vantageRoutes } from "./routes/vantage.js";
 
 const app = express();
 
@@ -59,6 +60,9 @@ app.use("/api/wellbeing", wellbeingRoutes);
 
 // Notification routes
 app.use("/api/notifications", notificationRoutes);
+
+// VANTAGE routes (API key auth)
+app.use("/api/vantage", vantageRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
