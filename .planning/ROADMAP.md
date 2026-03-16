@@ -24,7 +24,7 @@
 **Milestone Goal:** Make the platform usable for real pilot deployment — fix critical UX issues, enable VANTAGE AI overlay, add kiosk mode for institutional embedding, and give challengers their own portal.
 
 - [x] **Phase 7: UX Fixes** (3/3 plans) — completed 2026-03-16
-- [ ] **Phase 8: Wellbeing Visualisation** — Add recharts line chart and score interpretation to impact dashboard
+- [x] **Phase 8: Wellbeing Visualisation** (1/1 plans) — completed 2026-03-16
 - [ ] **Phase 9: Server Foundation and VANTAGE** — DB migration for challenger role + API key auth for VANTAGE
 - [ ] **Phase 10: Challenger Portal** — Organisation accounts, challenge submission, status tracking, resolution rating
 - [ ] **Phase 11: Kiosk Mode and Institutional Pages** — Institutional embedding with auto-logout and per-institution landing pages
@@ -62,7 +62,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 08-01-PLAN.md — Install recharts, build WellbeingChart component, integrate into ImpactDashboard
+- [x] 08-01-PLAN.md — Install recharts, build WellbeingChart component, integrate into ImpactDashboard
 
 ### Phase 9: Server Foundation and VANTAGE
 
@@ -114,7 +114,7 @@ Plans:
 | 5. Payments and Impact | v1.0 | 3/3 | Complete | 2026-03-14 |
 | 6. Wellbeing, Notifications, and PWA | v1.0 | 3/3 | Complete | 2026-03-15 |
 | 7. UX Fixes | v1.1 | 3/3 | Complete | 2026-03-16 |
-| 8. Wellbeing Visualisation | v1.1 | 0/1 | Not started | - |
+| 8. Wellbeing Visualisation | v1.1 | 1/1 | Complete | 2026-03-16 |
 | 9. Server Foundation and VANTAGE | v1.1 | 0/TBD | Not started | - |
 | 10. Challenger Portal | v1.1 | 0/TBD | Not started | - |
 | 11. Kiosk Mode and Institutional Pages | v1.1 | 0/TBD | Not started | - |
