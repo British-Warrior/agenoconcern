@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 7 of 11 (UX Fixes)
-Plan: 2 of 3 complete
-Status: In progress
-Last activity: 2026-03-16 — Completed 07-02-PLAN.md (Dashboard live data + wellbeing norm bands)
+Plan: 3 of 3 complete
+Status: Phase complete
+Last activity: 2026-03-16 — Completed 07-03-PLAN.md (CM role gates, UUID error sanitisation, Edit Resolution disabled state)
 
-Progress: [██░░░░░░░░░░░░░░] v1.1 ~12% (2/16 plans, v1.0 complete)
+Progress: [███░░░░░░░░░░░░░] v1.1 ~19% (3/16 plans, v1.0 complete)
 
 ## Performance Metrics
 
@@ -46,6 +46,9 @@ Recent decisions for v1.1:
 - Phase 7 Plan 02: Combined isLoading from 3 queries into one boolean — single skeleton prevents multiple spinners
 - Phase 7 Plan 02: wellbeing-norms.ts is single source of truth for UK norm thresholds (reusable in Phase 8 charts)
 - Phase 7 Plan 02: UCLA trend arrows inverted vs SWEMWBS (down=green for UCLA because lower=less lonely)
+- Phase 7 Plan 03: UUID_PATTERN defined at module scope across all files — prevents recreation on render
+- Phase 7 Plan 03: CircleWorkspace is403 branch keeps hardcoded string; UUID guard only applies to generic fallback path
+- Phase 7 Plan 03: "Unknown contributor" fallback for member names (not empty string) — avatar initial uses charAt(0) and needs non-empty value
 - Phase 9: Postgres enum `ALTER TYPE ADD VALUE` is irreversible — staging deploy verification required before production push
 - Phase 10: Challenger registration flow decision (Option A: full account vs Option B: guest submission) — defer to Phase 10 kickoff
 
@@ -64,5 +67,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-16
-Stopped at: Phase 7 Plan 02 complete — ready for Phase 7 Plan 03
-Resume file: .planning/phases/07-ux-fixes/07-03-PLAN.md
+Stopped at: Phase 7 complete (all 3 plans done) — ready for Phase 8
+Resume file: .planning/phases/08-*/
