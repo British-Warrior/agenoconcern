@@ -3,11 +3,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../hooks/useAuth.js";
 import { apiClient } from "../../api/client.js";
 
-const ROLES = ["contributor", "community_manager", "admin"] as const;
+const ROLES = ["contributor", "community_manager", "admin", "challenger"] as const;
 const ROLE_LABELS: Record<string, string> = {
   contributor: "Contributor",
   community_manager: "CM",
   admin: "Admin",
+  challenger: "Challenger",
 };
 
 export function DevRoleSwitcher() {
@@ -27,6 +28,7 @@ export function DevRoleSwitcher() {
       });
       await queryClient.invalidateQueries({ queryKey: ["me"] });
       await queryClient.invalidateQueries({ queryKey: ["challenges"] });
+      await queryClient.invalidateQueries({ queryKey: ["challenger"] });
     } finally {
       setSwitching(false);
     }
