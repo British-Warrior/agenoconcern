@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 ## Current Position
 
-Phase: 9 of 11 (Server Foundation and VANTAGE)
-Plan: 2 of 2 complete
-Status: Phase 9 complete
-Last activity: 2026-03-16 — Completed 09-02-PLAN.md (API key middleware + VANTAGE routes + contract doc)
+Phase: 10 of 11 (Challenger Portal)
+Plan: 1 of 2 complete
+Status: In progress
+Last activity: 2026-03-16 — Completed 10-01-PLAN.md (schema migration + all server endpoints + shared types)
 
-Progress: [█████░░░░░░░░░░░] v1.1 ~37% (6/16 plans, v1.0 complete)
+Progress: [██████░░░░░░░░░░] v1.1 ~44% (7/16 plans, v1.0 complete)
 
 ## Performance Metrics
 
@@ -58,6 +58,9 @@ Recent decisions for v1.1:
 - Phase 9 Plan 02: last_used_at update is fire-and-forget — non-blocking, failure logged but not surfaced to caller
 - Phase 9 Plan 02: Key creation uses cookie/JWT admin auth, not API key auth — bootstrapping concern (admin creates the first key)
 - Phase 10: Challenger registration flow decision (Option A: full account vs Option B: guest submission) — defer to Phase 10 kickoff
+- Phase 10 Plan 01: ChallengerPortalChallenge (not ChallengerChallenge) — avoids conflict with existing ChallengerChallenge in types/impact.ts
+- Phase 10 Plan 01: challenge_type enum extended with community/premium/knowledge_transition — challenger portal uses different type taxonomy than CM-created challenges
+- Phase 10 Plan 01: Migration applied manually (targeted SQL) — same Drizzle journal issue as Phase 9
 
 ### Pending Todos
 
@@ -74,5 +77,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-16
-Stopped at: Phase 9 complete — all 2 plans done. API key auth + VANTAGE routes live.
-Resume file: .planning/phases/ (next: Phase 10)
+Stopped at: Phase 10 Plan 1 complete — server foundation, schema migration, 5 endpoints live.
+Resume file: .planning/phases/10-challenger-portal/10-02-PLAN.md
