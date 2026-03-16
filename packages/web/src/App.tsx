@@ -2,6 +2,11 @@ import { BrowserRouter, Routes, Route } from "react-router";
 import { AuthProvider } from "./hooks/useAuth.js";
 import { AppShell } from "./components/layout/AppShell.js";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute.js";
+import { ChallengerRoute } from "./components/layout/ChallengerRoute.js";
+import { ChallengerRegister } from "./pages/challenger/ChallengerRegister.js";
+import { ChallengerDashboard } from "./pages/challenger/ChallengerDashboard.js";
+import { SubmitChallenge } from "./pages/challenger/SubmitChallenge.js";
+import { ChallengeDetail } from "./pages/challenger/ChallengeDetail.js";
 import { Landing } from "./pages/Landing.js";
 import { Login } from "./pages/Login.js";
 import { Register } from "./pages/Register.js";
@@ -33,6 +38,16 @@ export function App() {
       <AuthProvider>
         <Routes>
           <Route element={<AppShell />}>
+            {/* Challenger public route */}
+            <Route path="/challenger/register" element={<ChallengerRegister />} />
+
+            {/* Challenger portal — guarded by ChallengerRoute */}
+            <Route element={<ChallengerRoute />}>
+              <Route path="/challenger" element={<ChallengerDashboard />} />
+              <Route path="/challenger/submit" element={<SubmitChallenge />} />
+              <Route path="/challenger/challenges/:id" element={<ChallengeDetail />} />
+            </Route>
+
             {/* Public routes */}
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />

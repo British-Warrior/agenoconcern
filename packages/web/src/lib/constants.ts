@@ -16,6 +16,9 @@ export const ROUTES = {
   WELLBEING_CHECKIN: "/wellbeing/checkin",
   PRIVACY: "/privacy",
   COOKIES: "/cookies",
+  CHALLENGER: "/challenger",
+  CHALLENGER_REGISTER: "/challenger/register",
+  CHALLENGER_SUBMIT: "/challenger/submit",
 } as const;
 
 /** localStorage keys */

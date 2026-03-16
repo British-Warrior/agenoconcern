@@ -1,9 +1,8 @@
-import { Navigate, Outlet, useLocation } from "react-router";
+import { Navigate, Outlet } from "react-router";
 import { useAuth } from "../../hooks/useAuth.js";
 
-export function ProtectedRoute() {
+export function ChallengerRoute() {
   const { isAuthenticated, isLoading, contributor } = useAuth();
-  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -35,20 +34,14 @@ export function ProtectedRoute() {
   }
 
   if (!isAuthenticated) {
-    const returnUrl = encodeURIComponent(
-      location.pathname + location.search,
-    );
-    return <Navigate to={`/login?returnUrl=${returnUrl}`} replace />;
+    return <Navigate to="/challenger/register" replace />;
   }
 
-  // Redirect onboarding users to CV upload unless already on an onboarding page
-  if (contributor?.status === "onboarding" && !location.pathname.startsWith("/onboarding")) {
-    return <Navigate to="/onboarding/upload" replace />;
-  }
-
-  // Redirect challenger-role users to their portal
-  if (contributor?.role === "challenger" && !location.pathname.startsWith("/challenger")) {
-    return <Navigate to="/challenger" replace />;
+  if (
+    contributor?.role !== "challenger" &&
+    contributor?.role !== "admin"
+  ) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <Outlet />;
