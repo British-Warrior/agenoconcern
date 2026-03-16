@@ -99,7 +99,7 @@ export function MyCircles() {
                 Post a challenge and form a Circle from interested contributors.
               </p>
               <Link
-                to="/challenges/manage"
+                to="/challenges"
                 className="inline-flex items-center mt-4 px-4 py-2 rounded-[var(--radius-md)] text-sm font-medium bg-primary-800 text-white hover:bg-primary-700 transition-colors duration-150 no-underline"
               >
                 Manage Challenges
