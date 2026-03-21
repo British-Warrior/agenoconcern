@@ -485,6 +485,19 @@ export const challengerOrganisations = pgTable("challenger_organisations", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Institutions (library, community centre kiosk landing pages)
+export const institutions = pgTable("institutions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  description: text("description").notNull().default(""),
+  city: varchar("city", { length: 100 }),
+  statsJson: jsonb("stats_json").$type<{ contributors: number; challenges: number; hours: number }>().default({ contributors: 0, challenges: 0, hours: 0 }),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // Contributor hours
 export const contributorHours = pgTable(
   "contributor_hours",
