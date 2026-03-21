@@ -19,6 +19,8 @@ export const ROUTES = {
   CHALLENGER: "/challenger",
   CHALLENGER_REGISTER: "/challenger/register",
   CHALLENGER_SUBMIT: "/challenger/submit",
+  INSTITUTION: (slug: string) => `/i/${slug}` as const,
+  INSTITUTION_BASE: "/i",
 } as const;
 
 /** localStorage keys */

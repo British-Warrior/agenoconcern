@@ -32,6 +32,7 @@ import { MyCircles } from "./pages/circles/MyCircles.js";
 import { CircleWorkspace } from "./pages/circles/CircleWorkspace.js";
 import { ImpactDashboard } from "./pages/impact/ImpactDashboard.js";
 import { ChallengerView } from "./pages/impact/ChallengerView.js";
+import { InstitutionLanding } from "./pages/institution/InstitutionLanding.js";
 
 export function App() {
   return (
@@ -49,6 +50,9 @@ export function App() {
               <Route path="/challenger/submit" element={<SubmitChallenge />} />
               <Route path="/challenger/challenges/:id" element={<ChallengeDetail />} />
             </Route>
+
+            {/* Institution landing pages — public, kiosk entry points */}
+            <Route path="/i/:slug" element={<InstitutionLanding />} />
 
             {/* Public routes */}
             <Route path="/" element={<Landing />} />
