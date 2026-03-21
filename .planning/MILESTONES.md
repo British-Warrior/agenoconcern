@@ -1,5 +1,33 @@
 # Milestones: Indomitable Unity
 
+## v1.1 Pilot-Ready (Shipped: 2026-03-21)
+
+**Delivered:** Platform ready for East Midlands pilot — UX overhaul, VANTAGE API integration, challenger self-service portal, kiosk mode for institutional embedding, and public institution landing pages.
+
+**Phases completed:** 7-11 (11 plans total)
+
+**Key accomplishments:**
+
+- UX overhaul — full navigation, dashboard summary cards, CM-specific views, wellbeing score interpretation, hover affordances
+- Wellbeing visualisation — recharts line chart with UK population benchmarks, band labels, accessible data table
+- VANTAGE API integration — API key auth (SHA-256), rate-limiting, documented endpoint contract
+- Challenger portal — self-service organisation registration, challenge submission, status tracking, resolution rating
+- Kiosk mode — URL-param activation, 10-min idle timer with 60-sec countdown, full session cleanup (cookies + cache)
+- Institutional landing pages — public /i/:slug pages with impact stats and kiosk auto-activation
+
+**Stats:**
+
+- 48 files changed (+8,083 lines)
+- 24,799 lines of TypeScript/TSX/CSS (total codebase)
+- 5 phases, 11 plans, 31 requirements
+- 6 days from 2026-03-16 to 2026-03-21
+
+**Git range:** `3e6cc64` → `0c82086`
+
+**What's next:** TBD — pilot deployment, user testing, v2.0 planning
+
+---
+
 ## v1.0 MVP (Shipped: 2026-03-15)
 
 **Delivered:** Pilot-ready expertise marketplace — experienced professionals can upload a CV, get matched to challenges, collaborate in Circles, earn income via Stripe Connect, and track their wellbeing and impact, all as an installable PWA.

@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Indomitable Unity is a social enterprise platform that deploys experienced professionals (50-75+) who have been involuntarily excluded from the workforce into paid advisory work and unpaid community contribution. It addresses the "pension gap" — the ~12-year financial void between involuntary career exit (~55) and state pension eligibility (67+ UK). The platform is an MCP server exposing 14 domain tools, with a React/Vite web UI that VANTAGE (Kirk's adaptive AI agent) will overlay as the sole interface. v1.0 MVP shipped 2026-03-15 with all 50 requirements satisfied — pilot-ready for East Midlands deployment.
+Indomitable Unity is a social enterprise platform that deploys experienced professionals (50-75+) who have been involuntarily excluded from the workforce into paid advisory work and unpaid community contribution. It addresses the "pension gap" — the ~12-year financial void between involuntary career exit (~55) and state pension eligibility (67+ UK). The platform is an MCP server exposing 14 domain tools, with a React/Vite web UI that VANTAGE (Kirk's adaptive AI agent) will overlay as the sole interface. v1.1 Pilot-Ready shipped 2026-03-21 — institutional embedding (kiosk mode), challenger self-service portal, VANTAGE API integration, and UX overhaul complete. Ready for East Midlands pilot deployment.
 
 ## Core Value
 
@@ -30,23 +30,24 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 - ✓ Basic web UI for all contributor-facing flows (VANTAGE overlays later) — v1.0
 - ✓ PWA configuration (manifest, service worker, home screen install) — v1.0
 
+- ✓ Full navigation from every authenticated page — v1.1
+- ✓ Dashboard summary cards (circles, matches, earnings, hours, wellbeing) — v1.1
+- ✓ Wellbeing visualisation with UK benchmarks and accessible data table — v1.1
+- ✓ CM-specific circle views with role-appropriate messaging — v1.1
+- ✓ VANTAGE API key auth (SHA-256 hashed, rate-limited) — v1.1
+- ✓ VANTAGE endpoint contract documented — v1.1
+- ✓ Challenger self-service portal (register, submit, track, rate) — v1.1
+- ✓ Kiosk mode (?kiosk=true, 10-min idle timer, full session cleanup) — v1.1
+- ✓ Institutional landing pages (/i/:slug with impact stats) — v1.1
+- ✓ Kiosk auto-activation from institutional pages — v1.1
+
 ### Active
-
-## Current Milestone: v1.1 Pilot-Ready
-
-**Goal:** Make the platform usable for real pilot deployment — fix critical UX issues, enable VANTAGE AI overlay, add kiosk mode for institutional embedding, and give challengers their own portal.
-
-**Target features:**
-- UX overhaul (10 issues from walkthrough: navigation, dashboard, wellbeing visualisation, CM views, affordances)
-- VANTAGE integration (stable API URLs, API key auth, locked endpoint contracts)
-- Kiosk mode for libraries and community centres (large buttons, auto-logout, guided flows)
-- Challenger portal (organisation accounts, challenge submission, progress tracking, resolution rating)
 
 ### Out of Scope
 
 - Admin dashboard — community manager uses spreadsheet exports + monthly reports
 - Public marketing site — single landing page with sign-up only
-- Challenger self-service portal — ~~email intake, manual posting for first 100 challenges~~ (moved to Active for v1.1)
+- ~~Challenger self-service portal~~ — shipped in v1.1
 - AI/ML matching — simple scoring + manual oversight; ML is v2
 - Native mobile app — PWA via web UI handles mobile
 - Internal messaging — external apps (WhatsApp/Slack/Discord) handle this
@@ -70,12 +71,12 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 - **Funding:** NLCF Community Power Fund £80k (primary for MVP), UnLtd Awards £5-15k, Awards for All £300-£20k. MVP build within Community Power Fund budget.
 - **Key contact:** Maria Zappala GAICD — Australian board director, AI governance & anti-ageism advocate. Potential advisory board member.
 
-### Current State (v1.0 shipped)
+### Current State (v1.1 shipped)
 
-- **Codebase:** 16,650 lines TypeScript/TSX/CSS across 223 files
-- **Tech stack:** Node.js/TypeScript monorepo, Express server, React/Vite frontend, PostgreSQL (Drizzle ORM), Stripe Connect, S3, OpenAI, web-push, Resend
-- **Architecture:** MCP server (14 tools) + REST API + React SPA (PWA)
-- **Known tech debt:** 7 items (see milestone audit) — none blocking pilot
+- **Codebase:** 24,799 lines TypeScript/TSX/CSS across 204 source files
+- **Tech stack:** Node.js/TypeScript monorepo, Express server, React/Vite frontend, PostgreSQL (Drizzle ORM), Stripe Connect, S3, OpenAI, web-push, Resend, react-idle-timer, recharts
+- **Architecture:** MCP server (14 tools) + REST API + React SPA (PWA) + VANTAGE API (key auth) + Kiosk mode + Challenger portal + Institutional landing pages
+- **Known tech debt:** 4 items (see v1.1 milestone audit) — none blocking pilot
 - **Legal pre-launch:** Employment Agencies Act 1973 classification, WEMWBS licence registration, DPIA/APD completion
 
 ### Data Model (6 Core Entities)
@@ -138,9 +139,12 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 | Tailwind v4 CSS-first with OKLCH | WCAG AAA compliance (7:1+ contrast ratios), modern color space | ✓ Good — accessible from day one |
 | Wellbeing in Phase 6 (not Phase 2) | DPIA/APD legal work must precede code; all personal data stores needed first | ✓ Good — complete data model available |
 
-| Kiosk mode for institutional embedding | Libraries/community centres need simplified interface for shared computers | — Pending |
-| Challenger portal (v1.1) | Organisations need self-service to scale beyond CM manual intake | — Pending |
+| Kiosk mode for institutional embedding | Libraries/community centres need simplified interface for shared computers | ✓ Good — ?kiosk=true with idle timer + full session cleanup |
+| Challenger portal (v1.1) | Organisations need self-service to scale beyond CM manual intake | ✓ Good — full registration, submission, tracking, rating |
 | VANTAGE REST integration over MCP | VANTAGE calls REST APIs directly with typed client modules, not MCP | ✓ Good — aligns with existing architecture |
+| Module-level kiosk flag persistence | ?kiosk=true disappears on navigation; module-level variable survives SPA routing | ✓ Good — simpler than threading param through every navigate() |
+| MVP institution stats as JSONB | No contributor-institution FK exists; seed stats as JSON for pilot | ✓ Good — avoids schema complexity, unblocks landing pages |
+| react-idle-timer over custom listeners | Purpose-built idle detection handles edge cases (visibility, cross-tab, throttle) | ✓ Good — 560k weekly downloads, stable |
 
 ---
-*Last updated: 2026-03-15 after v1.1 milestone start*
+*Last updated: 2026-03-21 after v1.1 milestone completion*
