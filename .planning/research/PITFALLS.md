@@ -52,7 +52,35 @@ For the JSONB-to-live-aggregation transition: keep `statsJson` populated and rea
 
 ---
 
-### Pitfall 2: iThink Webhook Receiver Using String `===` for Signature Comparison
+### Pitfall 2: Webhook Receiver Built Before Institution FK Migration Lands
+
+**What goes wrong:**
+The iThink webhook handler verifies that the claimed contributor is enrolled at the claimed institution by querying `contributors.institution_id`. But that column does not exist until the Institution Management migration runs. If a developer implements the webhook receiver in a parallel phase or before the FK column is added, the relationship check query either fails at runtime with a Postgres column-not-found error or — if the check is skipped because the column is not yet present — the webhook handler stores `attention_flags` rows with no relationship validation at all.
+
+This is a phase-ordering trap unique to this project: the webhook integration (iThink phase) has a hard schema dependency on the institution management phase (FK column on `contributors`). The two could be planned as separate phases, and if the ordering is wrong, one of two outcomes occurs — silent security regression (relationship check omitted) or runtime crashes.
+
+**Why it happens:**
+Phases are planned as logical features, not schema dependency graphs. The institution FK and the webhook receiver feel like separate concerns. The dependency only becomes visible when you trace the webhook handler's DB query to its column reference.
+
+**How to avoid:**
+Enforce this sequencing in the roadmap explicitly:
+
+1. Phase A (Institution Management) must include and verify the `institution_id` FK column on `contributors` before Phase B (Webhook Receiver) begins.
+2. The webhook receiver phase plan must include a prerequisite check: `\d contributors | grep institution_id` — if the column is absent, the phase cannot start.
+3. The Drizzle schema must be updated to include `institutionId` on the `contributors` table as part of Phase A, not as part of the webhook phase.
+
+Write the relationship check query in the webhook handler from day one, even if it initially cannot be fully tested until seed data exists.
+
+**Warning signs:**
+- Webhook receiver phase begins before Phase A (Institution Management) has been verified complete
+- Webhook handler omits the contributor-institution relationship check "for now, to be added later"
+- `packages/server/src/db/schema.ts` does not include `institutionId` on the `contributors` table when the webhook route file is created
+
+**Phase to address:** Roadmap ordering — Institution Management phase must precede and gate Webhook Receiver phase
+
+---
+
+### Pitfall 3: iThink Webhook Receiver Using String `===` for Signature Comparison
 
 **What goes wrong:**
 The HMAC-SHA256 signature verification for incoming iThink webhooks compares the expected and received signatures using JavaScript string equality (`===`). This is vulnerable to a timing attack: an adversary who can send many requests can measure the microsecond difference between "first byte mismatch" (fast return) and "all bytes match" (slow return) to incrementally reconstruct the expected signature. The attack requires many thousands of requests but is feasible against a predictable endpoint.
@@ -96,7 +124,7 @@ Critical: compute the HMAC over the **raw request body bytes**, not the JSON-par
 
 ---
 
-### Pitfall 3: Webhook Replay Attacks — No Timestamp Window or Idempotency Check
+### Pitfall 4: Webhook Replay Attacks — No Timestamp Window or Idempotency Check
 
 **What goes wrong:**
 An attacker (or a misconfigured iThink retry mechanism) replays a previously captured valid webhook. If the IU server has no timestamp check and no idempotency check, the same "needs attention" flag fires repeatedly, creating duplicate entries in the `attention_flags` table, sending duplicate CM notifications, and — if the CM has already cleared the flag — re-surfacing it as unresolved.
@@ -124,7 +152,7 @@ The `webhook_deliveries` table needs only: `delivery_id (varchar PK)`, `processe
 
 ---
 
-### Pitfall 4: Parsing iThink Webhook Payload Without Schema Validation
+### Pitfall 5: Parsing iThink Webhook Payload Without Schema Validation
 
 **What goes wrong:**
 The IU server receives a JSON body from iThink, destructures it with `const { contributorId, institutionId, severity, screeningType } = req.body`, and stores the values directly in `attention_flags`. If iThink changes their payload shape (adds fields, renames a field, changes a type), the IU server silently stores `undefined` for required fields, or crashes on type errors, or — if `contributorId` is absent — creates an unlinked attention flag with a null FK that violates the constraint.
@@ -132,7 +160,7 @@ The IU server receives a JSON body from iThink, destructures it with `const { co
 The same pattern caused problems with VANTAGE response parsing in v1.1 (flagged in v1.1 pitfalls). Cross-app integration is the highest-risk surface for contract drift because iThink and IU are maintained independently.
 
 **Why it happens:**
-Developers trust the sender — iThink is Kirk's own app. Because the contract is "known", no validation is added. When iThink evolves, the IU webhook handler breaks silently.
+Developers trust the sender — iThink is the same developer's own app. Because the contract is "known", no validation is added. When iThink evolves, the IU webhook handler breaks silently.
 
 **How to avoid:**
 Parse every incoming iThink webhook payload through a Zod schema before touching any field:
@@ -168,7 +196,7 @@ On parse failure, return 400 so iThink retries. Log the Zod error in full — sc
 
 ---
 
-### Pitfall 5: Contributor-Institution Matching in Webhook Handler Using Unverified Caller-Supplied IDs
+### Pitfall 6: Contributor-Institution Matching in Webhook Handler Using Unverified Caller-Supplied IDs
 
 **What goes wrong:**
 The iThink webhook payload contains `contributorId` and `institutionId` as supplied by iThink. The IU webhook handler takes these at face value and creates an attention flag for that contributor at that institution. An adversary who can craft a valid webhook (by obtaining the shared secret, or before the secret is rotated after a breach) can flag any contributor at any institution — including contributors who have no relationship with that institution.
@@ -212,7 +240,7 @@ This check costs one indexed DB lookup per webhook and prevents cross-institutio
 
 ---
 
-### Pitfall 6: PDF Generation Blocking the Express Event Loop
+### Pitfall 7: PDF Generation Blocking the Express Event Loop
 
 **What goes wrong:**
 PDF generation for institution impact reports is synchronous-heavy work (data aggregation + layout computation + font rendering). Implementing it as a direct Express route handler (`res.json(await generatePdf(institutionId))`) blocks the Node.js event loop for the duration of generation. While PDF generation is in progress, every other request to the server queues. For a report covering 12 months of contributor activity across 50 contributors, generation may take 2–10 seconds. Server-observed latency for all other endpoints spikes during this window.
@@ -239,7 +267,7 @@ Set an explicit timeout on the PDF route (`req.setTimeout(30_000)`) so a runaway
 
 ---
 
-### Pitfall 7: CM Attention View Has No Access Scope — Any CM Sees All Flagged Contributors
+### Pitfall 8: CM Attention View Has No Access Scope — Any CM Sees All Flagged Contributors
 
 **What goes wrong:**
 The CM attention view lists contributors flagged as needing attention. If the query is `SELECT * FROM attention_flags WHERE cleared_at IS NULL ORDER BY flagged_at DESC`, any authenticated CM sees flags for all institutions. In a multi-institution deployment (even at pilot scale with 3–5 institutions), a CM at one institution should not see contributor attention flags for a different institution.
@@ -287,7 +315,7 @@ Do not store the institution ID in the JWT — it can become stale if the CM is 
 
 ---
 
-### Pitfall 8: Shared iThink Webhook Secret Stored in Source Code or Committed to Git
+### Pitfall 9: Shared iThink Webhook Secret Stored in Source Code or Committed to Git
 
 **What goes wrong:**
 The HMAC secret used to verify iThink webhook signatures is a symmetric pre-shared key. If it is stored in `packages/server/src/config/env.ts` as a fallback default, or checked into `.env` files committed to the repository, the secret is permanently exposed in git history. Rotating the key requires both sides (IU and iThink) to update simultaneously — if they drift, webhooks fail silently.
@@ -310,6 +338,48 @@ Developers add `ITHINK_WEBHOOK_SECRET=dev-secret-here` to the `.env.example` and
 
 ---
 
+### Pitfall 10: Attention Flag Clearing Has No Audit Trail
+
+**What goes wrong:**
+A CM clears an attention flag ("mark as followed up") and the flag row is either deleted or has `cleared_at` set. If a follow-up question later arises ("Was this contributor's flag addressed?", "Which CM cleared this flag and when?"), there is no audit record. Worse, if the flag is physically deleted, any regulatory or safeguarding inquiry that references the flag will find no evidence it ever existed.
+
+For a wellbeing-adjacent system used by a social enterprise, this is not just a UX issue — it is a governance and safeguarding concern. The Employment Agencies Act 1973 concern noted in the project context means IU is in a regulated space where audit trails for wellbeing-adjacent actions may become a compliance requirement.
+
+**Why it happens:**
+"Clear flag" is implemented as `DELETE FROM attention_flags WHERE id = $1` or `UPDATE attention_flags SET cleared_at = NOW()`. The second version preserves the timestamp but not which CM cleared it or any notes about the follow-up action. Soft delete alone is treated as sufficient.
+
+**How to avoid:**
+Design `attention_flags` with full audit columns from the start:
+
+```sql
+CREATE TABLE attention_flags (
+  id UUID PRIMARY KEY,
+  contributor_id UUID NOT NULL REFERENCES contributors(id),
+  institution_id UUID NOT NULL REFERENCES institutions(id),
+  severity VARCHAR(20) NOT NULL,
+  screening_type VARCHAR(100) NOT NULL,
+  triggered_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  -- Clearing / resolution
+  cleared_at TIMESTAMPTZ,
+  cleared_by UUID REFERENCES contributors(id),   -- which CM cleared it
+  follow_up_notes TEXT,                          -- what the CM did
+  -- Delivery tracking
+  delivery_id VARCHAR(255) NOT NULL UNIQUE       -- idempotency key
+);
+```
+
+Never DELETE attention flag rows. The `cleared_at` + `cleared_by` + `follow_up_notes` combination gives a full audit trail for every flag resolution.
+
+**Warning signs:**
+- `attention_flags` table has no `cleared_by` column
+- The "clear flag" endpoint calls `DELETE` instead of `UPDATE ... SET cleared_at, cleared_by`
+- No `follow_up_notes` field in the clear-flag request body
+
+**Phase to address:** CM Attention View phase — `attention_flags` schema designed with audit columns before any API endpoint is written
+
+---
+
 ## Technical Debt Patterns
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
@@ -321,6 +391,8 @@ Developers add `ITHINK_WEBHOOK_SECRET=dev-secret-here` to the `.env.example` and
 | Store iThink webhook secret with a hardcoded fallback | Works in local dev without `.env` | Secret permanently in git history; cannot rotate without code change | Never |
 | CM attention view with no institution scope filter | Works for single-institution pilot | Second institution added → all CMs see all flags; requires emergency hotfix | Never — scope filter costs one indexed DB lookup and must be there from day one |
 | Webhook handler without idempotency check | Simpler handler | Duplicate flags on retry; CM sees resolved issues resurface | Never — `webhook_deliveries` table is small and the check is cheap |
+| `attention_flags` with no `cleared_by` audit column | Simpler schema | Cannot answer "who cleared this flag or when?" for safeguarding inquiry | Never — add `cleared_by` and `follow_up_notes` from the start |
+| Build webhook receiver before institution FK is in place | Faster parallel development | Relationship check query references non-existent column; silently omitted or crashes at runtime | Never — Institution Management phase must complete first |
 
 ---
 
@@ -331,10 +403,11 @@ Developers add `ITHINK_WEBHOOK_SECRET=dev-secret-here` to the `.env.example` and
 | iThink webhook inbound | Parsing `req.body` as JSON before HMAC verification | Use `express.raw({ type: 'application/json' })` on the webhook route; pass raw Buffer to HMAC; parse JSON only after signature is verified |
 | iThink webhook inbound | Computing HMAC over `JSON.stringify(req.body)` instead of raw bytes | The stringified JSON may differ in key order and whitespace from what iThink sent; always HMAC the raw request body Buffer |
 | iThink webhook inbound | Using `===` for signature comparison | Use `crypto.timingSafeEqual` — the pattern is already established in `api-key-auth.ts`; copy it |
-| iThink → IU contributor matching | Trusting `contributorId` in webhook payload without DB verification | After signature passes, verify `contributors.institutionId = payload.institutionId` before writing any flag |
+| iThink → IU contributor matching | Trusting `contributorId` in webhook payload without DB verification | After signature passes, verify `contributors.institution_id = payload.institutionId` before writing any flag |
 | Institution stats migration | Switching `GET /api/institutions/:slug` to live aggregation in one deploy | Deploy live aggregation as a new field alongside `statsJson`; verify parity; then switch the field the response uses; never remove `statsJson` in the same deploy that adds live aggregation |
 | PDF report streaming | Setting `Content-Type: application/pdf` without `Content-Disposition` | Without `Content-Disposition: attachment; filename="report.pdf"`, browsers render the PDF inline, which breaks on mobile; always set both headers |
 | PDF report | Generating report with no data guard | An institution with zero contributors produces an empty PDF or a division-by-zero in percentage calculations; add explicit empty-state handling before PDF generation begins |
+| iThink webhook phase ordering | Starting webhook receiver phase before institution FK migration | The relationship check query references `contributors.institution_id` — if that column does not exist, the handler crashes or the check is silently omitted |
 
 ---
 
@@ -346,6 +419,7 @@ Developers add `ITHINK_WEBHOOK_SECRET=dev-secret-here` to the `.env.example` and
 | PDF generation blocks event loop (no worker/streaming) | All API calls to the server stall for 2–10 seconds when a CM generates a report | Stream PDF to response using PDFKit's `doc.pipe(res)` pattern; set `res.setTimeout(30_000)` | Every concurrent report generation; visible at single-CM pilot scale on slow report datasets |
 | N+1 query in CM attention view (fetching contributor details per flag row) | CM attention view is slow with 10+ flagged contributors | JOIN `attention_flags` with `contributors` in a single query; do not loop over flags fetching contributor data individually | ~10 flagged contributors; visible in pilot |
 | Attention flag cleared/uncleared polling on CM dashboard | CM dashboard refetches attention flags every 30 seconds (polling) and hits the server repeatedly | Acceptable at pilot scale; mark as known tech debt; add WebSocket or SSE in v1.3 if near-real-time is required | ~5 concurrent CMs polling; not a pilot concern |
+| Missing index on `contributors.institution_id` | Institution management page and attention view queries do full table scans | Add `CREATE INDEX idx_contributors_institution_id ON contributors(institution_id)` in the same migration that adds the column | Noticeable from day one if contributor table has more than a few hundred rows |
 
 ---
 
@@ -360,6 +434,7 @@ Developers add `ITHINK_WEBHOOK_SECRET=dev-secret-here` to the `.env.example` and
 | `institution_id` stored in JWT claim | If CM is reassigned, stale JWT grants access to wrong institution's data until token expiry | Resolve CM's `institution_id` from DB on every request; do not embed in JWT |
 | iThink webhook secret in `.env` committed to git | Secret permanently exposed; webhooks can be forged by anyone with repo access | Add `ITHINK_WEBHOOK_SECRET` to `getEnv()` with no fallback; verify `.gitignore` before writing webhook code |
 | PDF report endpoint accessible to contributors | Contributors generate impact reports for institutions they are not assigned to | PDF report route must require `community_manager` role via `requireRole("community_manager")` |
+| Attention flags physically deleted | No audit trail for safeguarding inquiries; potential regulatory exposure | Soft-delete only: `cleared_at` + `cleared_by` + `follow_up_notes`; never DELETE from `attention_flags` |
 
 ---
 
@@ -372,6 +447,7 @@ Developers add `ITHINK_WEBHOOK_SECRET=dev-secret-here` to the `.env.example` and
 | CM dashboard shows "0 contributors" for an institution during the JSONB-to-live-aggregation transition | CM loses confidence in the data | Keep `statsJson` populated and readable until live aggregation is verified; show a "Live" badge only after parity is confirmed |
 | PDF report takes 5–10 seconds with no progress indicator | CM thinks the button did nothing and clicks again (triggering duplicate generation) | Show a loading spinner with "Generating report..." immediately on click; disable the button while in progress |
 | Institution management page allows CM to assign contributors without confirming | Accidental assignment of wrong contributor to institution | Require a review step: "Assign [Name] to [Institution]?" with confirm/cancel before writing to DB |
+| "Clear flag" form has no follow-up notes field | CM cannot record what action was taken; audit trail is incomplete | Include a required or optional free-text "What was done?" field in the clear-flag modal |
 
 ---
 
@@ -379,6 +455,7 @@ Developers add `ITHINK_WEBHOOK_SECRET=dev-secret-here` to the `.env.example` and
 
 - [ ] **FK migration:** Confirm the generated SQL contains `NOT VALID` — run `psql -c "\d contributors"` after migration and verify the FK constraint exists
 - [ ] **FK validation step:** Confirm a separate `VALIDATE CONSTRAINT` migration exists and has been run — the constraint marked `NOT VALID` is not enforcing historical rows until this runs
+- [ ] **institution_id index:** Confirm `idx_contributors_institution_id` index exists — run `\d contributors` and check the Indexes section
 - [ ] **Webhook signature:** Send a test webhook with a wrong signature to the IU endpoint and assert HTTP 401 — a wrong-signature request must never reach the handler body
 - [ ] **Webhook raw body:** Confirm the webhook route uses `express.raw()` not `express.json()` — send a webhook where JSON key order differs from the iThink canonical format and assert signature still passes
 - [ ] **Replay protection:** Send the same webhook payload twice with the same `X-IThink-Delivery-Id` — assert the second call returns 200 but creates no new `attention_flags` row
@@ -389,6 +466,8 @@ Developers add `ITHINK_WEBHOOK_SECRET=dev-secret-here` to the `.env.example` and
 - [ ] **PDF empty state:** Generate a PDF report for an institution with zero contributors — assert no crash, a "No contributors assigned" empty state renders cleanly
 - [ ] **iThink payload validation:** Send a webhook with a missing `contributorId` field — assert HTTP 400 with a Zod-derived error, not a 500 crash
 - [ ] **Stats parity:** After deploying live aggregation, call both the old `statsJson` field and the new live query for a seeded institution — assert the counts match
+- [ ] **Audit trail:** Clear an attention flag via the API; confirm `cleared_by` and `cleared_at` are populated; confirm the row still exists (not deleted)
+- [ ] **Phase ordering gate:** Before starting Webhook Receiver phase, run `\d contributors | grep institution_id` — assert the column is present
 
 ---
 
@@ -402,6 +481,8 @@ Developers add `ITHINK_WEBHOOK_SECRET=dev-secret-here` to the `.env.example` and
 | Duplicate attention flags from webhook replay | LOW | Delete duplicates with `DELETE FROM attention_flags WHERE id NOT IN (SELECT MIN(id) FROM attention_flags GROUP BY contributor_id, institution_id, screening_type)`; add idempotency check before re-opening the endpoint |
 | CM saw another institution's attention flags | HIGH | Assess GDPR breach notification obligation (contributor wellbeing-adjacent data shared without authorisation); fix scope filter; audit access logs to determine what data was visible and to whom; notify affected contributors if exposure was meaningful |
 | PDF generation blocking the server — runaway report hold | MEDIUM | Add `req.setTimeout(30_000)` as immediate mitigation; restart server to clear held connections; refactor to streaming or worker in next sprint |
+| Attention flags deleted instead of soft-deleted | HIGH | Restore from backup if available; implement audit log table going forward; assess safeguarding / regulatory notification obligation |
+| Webhook receiver built before institution FK lands | MEDIUM | Add `institution_id` column to contributors immediately; update Drizzle schema; re-deploy webhook handler with relationship check restored; audit any flags stored without relationship verification |
 
 ---
 
@@ -410,7 +491,9 @@ Developers add `ITHINK_WEBHOOK_SECRET=dev-secret-here` to the `.env.example` and
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
 | FK migration without `NOT VALID` — table lock | Institution Management — first migration task | Run migration on a copy of production data; confirm no downtime; verify constraint in `\d contributors` |
+| institution_id index missing | Institution Management — same migration as FK | Check `\d contributors` Indexes section after migration |
 | JSONB stats stale after live aggregation deployed | Institution Management — stats transition | Integration test: seeded institution stats match live aggregate count |
+| Webhook receiver before institution FK exists | Roadmap phase ordering gate | Institution Management phase verified complete before Webhook Receiver phase begins |
 | String `===` for webhook signature comparison | Webhook Receiver — first function written | Unit test: wrong signature returns 401; inspect code for absence of `===` on signature strings |
 | No raw body on webhook route | Webhook Receiver | Send webhook with canonical vs. non-canonical JSON; both must pass |
 | No timestamp window | Webhook Receiver | Send webhook with timestamp 10 min in past; assert 401 |
@@ -419,14 +502,15 @@ Developers add `ITHINK_WEBHOOK_SECRET=dev-secret-here` to the `.env.example` and
 | CM scope not filtered by institution | CM Attention View — first query written | Two-institution integration test; CM A cannot see CM B's flags |
 | iThink payload schema drift — no Zod validation | Webhook Receiver | Send malformed payload; assert 400 not 500 |
 | PDF blocking event loop | PDF Reports — architecture decision | Generate PDF while load test sends concurrent requests; assert median latency < 500ms for non-PDF endpoints |
-| Webhook secret in git | Webhook Receiver — environment variable setup | `git log --all -p | grep ITHINK_WEBHOOK_SECRET`; assert zero results |
+| Webhook secret in git | Webhook Receiver — environment variable setup | `git log --all -p \| grep ITHINK_WEBHOOK_SECRET`; assert zero results |
 | PDF endpoint missing role guard | PDF Reports | Call PDF endpoint with contributor JWT; assert 403 |
+| Attention flags deleted — no audit trail | CM Attention View — schema design | After clear-flag API call, SELECT the row; assert it still exists with `cleared_at` and `cleared_by` populated |
 
 ---
 
 ## Sources
 
-- Codebase direct inspection (v1.1): `packages/server/src/db/schema.ts`, `packages/server/src/middleware/api-key-auth.ts`, `packages/server/src/middleware/auth.ts`, `packages/server/src/routes/institutions.ts`, `packages/server/src/routes/impact.ts`, `packages/server/scripts/create-institutions-table.mjs`
+- Codebase direct inspection (v1.1): `packages/server/src/db/schema.ts`, `packages/server/src/middleware/api-key-auth.ts`, `packages/server/src/middleware/auth.ts`, `packages/server/src/routes/institutions.ts`, `packages/server/src/routes/impact.ts`, `packages/server/scripts/create-institutions-table.mjs`, `packages/server/scripts/extend-challenge-type.mjs`, `packages/server/scripts/mark-migration.mjs`
 - PostgreSQL FK `NOT VALID`: [Migrating Foreign Keys in PostgreSQL — Thomas Skowron](https://thomas.skowron.eu/blog/migrating-foreign-keys-in-postgresql/); [Postgres: Adding Foreign Keys With Zero Downtime — Travis North](https://travisofthenorth.com/blog/2017/2/2/postgres-adding-foreign-keys-with-zero-downtime); [PostgreSQL ALTER TABLE official docs](https://www.postgresql.org/docs/current/sql-altertable.html)
 - Drizzle ORM migration patterns: [8 Drizzle ORM Patterns for Clean, Fast Migrations — Medium](https://medium.com/@bhagyarana80/8-drizzle-orm-patterns-for-clean-fast-migrations-456c4c35b9d8)
 - HMAC webhook security: [Webhook Signature Verification — Hookdeck](https://hookdeck.com/webhooks/guides/how-to-implement-sha256-webhook-signature-verification); [Validating Webhook Deliveries — GitHub Docs](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries); [Webhook Security Best Practices — Svix](https://www.svix.com/resources/webhook-best-practices/security/)
@@ -434,6 +518,7 @@ Developers add `ITHINK_WEBHOOK_SECRET=dev-secret-here` to the `.env.example` and
 - Webhook idempotency: [Handling Payment Webhooks Reliably — Medium](https://medium.com/@sohail_saifii/handling-payment-webhooks-reliably-idempotency-retries-validation-69b762720bf5); [Webhook Reliability Tricks — Medium](https://medium.com/@kaushalsinh73/top-7-webhook-reliability-tricks-for-idempotency-a098f3ef5809)
 - Node.js PDF generation: [Generating PDFs from HTML in Node.js — DEV Community](https://dev.to/digital_trubador/generating-pdfs-from-html-in-nodejs-and-why-i-stopped-using-puppeteer-4b3e); [The Hidden Cost of Headless Browsers — Medium](https://medium.com/@matveev.dina/the-hidden-cost-of-headless-browsers-a-puppeteer-memory-leak-journey-027e41291367); [Integrating PDF Generation into Node.js — Joyfill](https://joyfill.io/blog/integrating-pdf-generation-into-node-js-backends-tips-gotchas)
 - Denormalization migration: [Denormalization: Solution or Long-Term Trap? — Medium](https://rafaelrampineli.medium.com/denormalization-a-solution-for-performance-or-a-long-term-trap-6b9af5b5b831)
+- Soft delete / audit trail patterns: [Soft Delete in PostgreSQL — Onfido](https://onfido.com/blog/soft-deletes-vs-hard-deletes-in-postgres/); [Safeguarding audit log design — general GDPR data integrity guidance]
 
 ---
 *Pitfalls research for: Indomitable Unity v1.2 — institution management, iThink webhook integration, PDF reports, CM attention view*

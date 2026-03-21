@@ -156,7 +156,7 @@ shadcn/ui chart component (copy-paste, no npm):
 
 **Domain:** Social enterprise platform — v1.2 additions (institution management, PDF reports, webhook integration, CM attention views)
 **Researched:** 2026-03-21
-**Confidence:** HIGH (PDF library, webhook receiving), MEDIUM (iThink webhook dispatch, CM dashboard)
+**Confidence:** HIGH
 
 > This section covers ONLY new stack additions for v1.2.
 > All v1.0 and v1.1 stack (including recharts, react-idle-timer, express-rate-limit) is validated
@@ -171,8 +171,8 @@ shadcn/ui chart component (copy-paste, no npm):
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| pdfkit | ^0.18.0 | Server-side PDF generation for institution impact reports | Pure Node.js, no headless browser required. Ships both CJS (`js/pdfkit.js`) and ESM (`js/pdfkit.es.js`) entry points — imports cleanly into the existing `"type": "module"` server package. Streams directly to Express `res` via `doc.pipe(res)`. v0.18.0 published March 15, 2026. Actively maintained (993 dependents). The report format (text, tables, IU branding) maps directly to PDFKit's programmatic API with no JSX overhead. |
-| @types/pdfkit | ^0.13.x | TypeScript definitions for pdfkit | DefinitelyTyped package; currently v0.13.6. Must install alongside pdfkit since the main package does not include types. |
+| pdfkit | ^0.18.0 | Server-side PDF generation for institution impact reports | Pure Node.js, no headless browser required. Ships both CJS (`js/pdfkit.js`) and ESM (`js/pdfkit.es.js`) entry points — imports cleanly into the existing `"type": "module"` server package. Streams directly to Express `res` via `doc.pipe(res)`. v0.18.0 published March 15, 2026. Actively maintained. The report format (text, tables, IU branding) maps directly to pdfkit's programmatic API with no JSX overhead. |
+| @types/pdfkit | ^0.17.5 | TypeScript definitions for pdfkit | DefinitelyTyped package; currently v0.17.5 (last updated February 2026). Must install alongside pdfkit since the main package does not include types. |
 | Node.js built-in `crypto` | built-in (no install) | HMAC-SHA256 signature verification for incoming iThink webhooks | Already present in the project for API key hashing. `crypto.createHmac('sha256', secret).update(rawBody).digest('hex')` is the standard pattern. No new dependency. |
 | react-native-quick-crypto | ^1.0.17 | HMAC-SHA256 signing for outgoing webhooks dispatched from iThink (React Native) | Margelo's JSI-based drop-in for Node's `crypto` module. Confirmed `createHmac` + `Hmac.digest()` support per implementation coverage docs. v1.0.17 published March 17, 2026. Required because `expo-crypto` only provides one-way digests (no HMAC key signing). Works in bare Expo workflow — does not work in Expo Go. |
 
@@ -180,8 +180,9 @@ shadcn/ui chart component (copy-paste, no npm):
 
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| pdfkit-table | ^0.1.99 | Table rendering helper for pdfkit | Use when the institution impact report requires multi-column data tables (engagement statistics, contributor listings). PDFKit has no native table abstraction — pdfkit-table wraps cell positioning and row spanning. Only add if tables are confirmed in the report design; plain `doc.text()` grid layout suffices for simple grids. |
 | Node.js built-in `express.raw()` | built-in (no install) | Capture raw webhook request body before JSON parsing | Already used for Stripe at `app.post('/api/payments/webhook', express.raw(...))` in `express-app.ts`. Register iThink webhook route with the same pattern before `app.use(express.json())`. No new middleware package needed. |
+
+**Note on PDF table helpers:** `pdfkit-table` and `voilab-pdf-table` are both unmaintained (last published 4 years ago). Do not add either. Impact report tables are data grids with predictable column widths — implement directly using pdfkit's `doc.text()` + `doc.moveDown()` coordinate API. Cell x-positions are constant per report design; manual layout takes ~30 lines of code and does not require an abstraction layer.
 
 ### Development Tools (new for v1.2)
 
@@ -191,16 +192,16 @@ No new dev tooling required. All existing tools (tsx, vitest, TypeScript 5.7, dr
 
 ## PDF Library Comparison
 
-| Criterion | pdfkit ^0.18.0 | @react-pdf/renderer ^4.3.2 | puppeteer ^24.x |
+| Criterion | pdfkit ^0.18.0 | @react-pdf/renderer ^4.3.x | puppeteer ^24.x |
 |-----------|---------------|---------------------------|-----------------|
 | Server weight | ~800KB bundle, no browser | ~5MB bundle, no browser | ~300MB Chromium binary |
-| ESM/CJS | Both (module + main fields) | ESM-only with known CJS gaps; active issues with `__dirname` in Yoga layout | CJS/ESM dual; Chromium download on install |
-| Express streaming | `doc.pipe(res)` — native stream | `renderToStream()` — returns Node stream (works but more setup) | `page.pdf()` returns Buffer (no native stream) |
-| Tables | via `pdfkit-table` plugin | Native `<View>` flex layout | Native CSS tables in HTML |
-| Charts/images | `doc.image(buffer)` — embed recharts SVG rendered to PNG | SVG as `<Image>` | Full CSS rendering of existing web pages |
-| Maintenance | Active (v0.18.0 Mar 2026) | Active (v4.3.2 Dec 2025) but CJS issues since v4.1 | Active — Google-backed |
+| ESM/CJS | Both (`module` + `main` fields in package.json, verified) | ESM-only with active breakage — `__dirname` Yoga layout error, missing named exports, scheduler peer dep missing in 4.1.x | CJS/ESM dual; Chromium download on install |
+| Express streaming | `doc.pipe(res)` — native Node stream | `renderToStream()` — returns Node stream (works but more setup) | `page.pdf()` returns Buffer (no native stream) |
+| Tables | Manual coordinate API (no maintained plugin) | Native `<View>` flex layout | Native CSS tables in HTML |
+| Charts/images | `doc.image(buffer)` — embed PNG | SVG as `<Image>` | Full CSS rendering |
+| Maintenance | Active (v0.18.0 March 2026) | Active but broken for ESM consumers (open issues #2624, #2907, #3017) | Active — Google-backed |
 | Best for | Programmatic data documents | Design-heavy branded documents using React component model | Pixel-perfect HTML-to-PDF from existing web UI |
-| This project fit | HIGH — reports are data tables + IU branding, not design-heavy layouts | MEDIUM — JSX model is nicer but ESM/`__dirname` issues introduce risk in the existing `"type": "module"` + `tsx` server setup | LOW — Chromium binary is operationally heavy for periodic report generation |
+| This project fit | HIGH — data tables + IU branding, not design-heavy layouts | LOW — active ESM breakage in `"type": "module"` + `tsx` server setup | LOW — Chromium binary operationally heavy for periodic report generation |
 
 **Recommendation: pdfkit ^0.18.0.** The institution impact report is a structured data document (statistics, contributor counts, activity summaries). pdfkit's programmatic API handles this without the ESM/CJS friction that @react-pdf/renderer introduces in ESM-first monorepos. If the report design grows into brand-heavy multi-column magazine layouts, migrate to @react-pdf/renderer at that point.
 
@@ -208,7 +209,7 @@ No new dev tooling required. All existing tools (tsx, vitest, TypeScript 5.7, dr
 
 ## Webhook Signing Standard
 
-**Use HMAC-SHA256 with a shared secret.** This is the industry standard (Stripe, GitHub, Shopify, Slack all use it). The Standard Webhooks specification (`standard-webhooks/standard-webhooks`) formalises the same approach with a structured header set.
+**Use HMAC-SHA256 with a shared secret.** This is the industry standard (Stripe, GitHub, Shopify, Slack all use it). The Standard Webhooks specification formalises the same approach with a structured header set.
 
 **IU receiving iThink webhooks:**
 - IU generates a shared secret per integration, stores it server-side
@@ -231,9 +232,6 @@ No new dev tooling required. All existing tools (tsx, vitest, TypeScript 5.7, dr
 # Server package — PDF generation
 pnpm --filter @indomitable-unity/server add pdfkit
 pnpm --filter @indomitable-unity/server add -D @types/pdfkit
-
-# Optional: only if impact report requires complex data tables
-pnpm --filter @indomitable-unity/server add pdfkit-table
 ```
 
 ```bash
@@ -251,12 +249,13 @@ No new packages needed in `packages/web` for this milestone.
 
 | Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|-------------------------|
-| pdfkit ^0.18.0 | @react-pdf/renderer ^4.3.2 | Use react-pdf if the report template is built by a designer using a React component model and the design is complex enough that JSX layout is materially faster to maintain than PDFKit's coordinate API. Not recommended here due to ongoing ESM/`__dirname` issues in ESM-first Node setups (GitHub issues #2624, #2907, #3017 all open as of March 2026). |
-| pdfkit ^0.18.0 | puppeteer | Use puppeteer if the PDF must be pixel-identical to an existing web page (e.g. print the institution's public landing page as a PDF). Operationally expensive: 300MB Chromium binary, memory-heavy per render. Not justified for data reports. |
+| pdfkit ^0.18.0 | @react-pdf/renderer | Use react-pdf if the report template is built by a designer using a React component model and the design is complex enough that JSX layout is materially faster to maintain than pdfkit's coordinate API. Not recommended here due to ongoing ESM breakage in ESM-first Node setups (GitHub issues #2624, #2907, #3017 all open March 2026). |
+| pdfkit ^0.18.0 | puppeteer | Use puppeteer if the PDF must be pixel-identical to an existing web page. Operationally expensive: 300MB Chromium binary, memory-heavy per render. Not justified for data reports. |
 | pdfkit ^0.18.0 | jsPDF | jsPDF is browser-oriented; its Node.js support is a workaround. No streaming to Express response. Not appropriate for server-side generation. |
 | react-native-quick-crypto | expo-crypto | `expo-crypto` only supports one-way digests (SHA-256 hash, no HMAC key). Cannot sign outgoing webhook payloads. expo-crypto is the right choice for hashing; react-native-quick-crypto is needed specifically for HMAC. |
 | react-native-quick-crypto | react-native-hash (JSHmac) | `react-native-hash`'s `JSHmac` is a pure-JS fallback that runs in Expo Go without ejecting. Use it if iThink must remain in Expo Go. react-native-quick-crypto is preferred for production bare builds — native JSI performance and full `node:crypto` API parity. |
-| HMAC-SHA256 (manual) | svix npm package | svix is an enterprise webhook platform SDK — it manages webhook queues, retries, and dashboards. Appropriate if IU later needs to _send_ managed webhooks to third parties at scale. Not needed for a single iThink-to-IU integration with manual retry logic. |
+| HMAC-SHA256 (manual) | svix npm package | svix is an enterprise webhook platform SDK — it manages webhook queues, retries, and dashboards. Appropriate if IU later needs to send managed webhooks to third parties at scale. Not needed for a single iThink-to-IU integration with manual retry logic. |
+| Manual coordinate tables | pdfkit-table / voilab-pdf-table | Both packages are unmaintained (last published 4 years ago). Manual coordinate layout using `doc.text()` is 30 lines of code for a fixed-column data report — no abstraction layer needed. |
 
 ---
 
@@ -264,12 +263,14 @@ No new packages needed in `packages/web` for this milestone.
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| @react-pdf/renderer in the existing ESM server | Active open GitHub issues (#2624, #2907, #3017) report that the ESM bundle lacks the same exports as CJS, and Yoga layout's `__dirname` usage breaks under Node.js ESM without an esbuild inject shim. The `tsx` dev server compounds this. Avoidable risk. | pdfkit ^0.18.0 |
-| puppeteer for report generation | Requires a 300MB Chromium binary bundled with or accessible to the server process. Cold start latency (2–5s) is unacceptable for a synchronous download response. Memory spikes under concurrent requests. | pdfkit ^0.18.0 |
+| @react-pdf/renderer in the existing ESM server | Active open GitHub issues (#2624, #2907, #3017) report ESM bundle lacks exports, Yoga layout's `__dirname` breaks under Node.js ESM without an esbuild inject shim, and scheduler peer dependency missing in 4.1.x. Avoidable risk. | pdfkit ^0.18.0 |
+| puppeteer for report generation | Requires a 300MB Chromium binary. Cold start latency (2–5s) is unacceptable for a synchronous download response. Memory spikes under concurrent requests. | pdfkit ^0.18.0 |
 | html-pdf / phantom.js | Abandoned; PhantomJS project is unmaintained since 2018. html-pdf wraps it. | pdfkit ^0.18.0 |
+| pdfkit-table | Last published 4 years ago, unmaintained. 26 dependents vs pdfkit's hundreds. | pdfkit coordinate API directly |
+| voilab-pdf-table | Also last published 4 years ago, no recent activity. | pdfkit coordinate API directly |
 | express.json() on the webhook route | If `express.json()` runs before HMAC verification, the raw body is consumed and signature verification will fail. The iThink webhook route must use `express.raw({ type: 'application/json' })` — the exact same guard already in place for the Stripe route. | `express.raw()` registered before `app.use(express.json())` |
-| expo-crypto for HMAC signing | `expo-crypto` does not expose `createHmac`. It provides `digestStringAsync` (one-way hash only). Attempting HMAC with it requires a full HMAC reimplementation in JS — fragile and unnecessary. | react-native-quick-crypto |
-| crypto-js in React Native | crypto-js is a pure-JS library that has not been actively maintained; it was replaced by native alternatives in pdfkit 0.18.0's own dependency tree for this reason. Performance is poor for mobile. | react-native-quick-crypto |
+| expo-crypto for HMAC signing | `expo-crypto` does not expose `createHmac`. It provides `digestStringAsync` (one-way hash only). | react-native-quick-crypto |
+| crypto-js in React Native | Pure-JS library, no longer actively maintained. Poor mobile performance. | react-native-quick-crypto |
 | Body parsing middleware order changes | Do not move `app.use(express.json())` to after all routes to "fix" webhook raw body issues — that breaks all other JSON routes. The correct approach is route-specific `express.raw()` registered before the global JSON parser, as already done for Stripe. | Route-specific `express.raw()` for webhook endpoints |
 
 ---
@@ -279,8 +280,15 @@ No new packages needed in `packages/web` for this milestone.
 **PDF generation — institution impact report:**
 - Create a `services/pdf.service.ts` that returns a `PDFDocument` stream
 - In the route handler: `res.setHeader('Content-Type', 'application/pdf')`, `res.setHeader('Content-Disposition', 'attachment; filename="impact-report.pdf"')`, then `doc.pipe(res)`
-- Pipe the PDFKit document directly to the response — do not buffer the full PDF in memory
-- Use `doc.end()` after all content is written; PDFKit flushes the stream to `res` automatically
+- Pipe the pdfkit document directly to the response — do not buffer the full PDF in memory
+- Use `doc.end()` after all content is written; pdfkit flushes the stream to `res` automatically
+- Set `req.setTimeout(30_000)` on the route to handle large datasets
+
+**PDF generation — tables without plugins:**
+- Define column x-positions as constants: `const cols = { label: 50, value: 300, date: 420 }`
+- Use `doc.text(cell, x, y)` with fixed `y` incremented per row: `y += 20`
+- Add a header row with `doc.font('Helvetica-Bold')`, data rows with `doc.font('Helvetica')`
+- Check `if (y > 720) { doc.addPage(); y = 50 }` for multi-page tables
 
 **Webhook receiving — iThink POST to IU:**
 - Register route in `express-app.ts` as: `app.post('/api/webhooks/ithink', express.raw({ type: 'application/json' }), ithinkWebhookHandler)`
@@ -307,7 +315,7 @@ No new packages needed in `packages/web` for this milestone.
 | Package | Compatible With | Notes |
 |---------|-----------------|-------|
 | pdfkit ^0.18.0 | Node.js >=20.0.0, `"type": "module"` | Ships `"module"` field (`js/pdfkit.es.js`) for ESM and `"main"` field (`js/pdfkit.js`) for CJS. Node resolves the ESM entry cleanly in `"type": "module"` projects. `@types/pdfkit` must be installed separately. |
-| @types/pdfkit ^0.13.x | pdfkit ^0.18.0, TypeScript ^5.7 | DefinitelyTyped package tracks pdfkit API. Minor version may lag slightly behind pdfkit releases — verify API surface against official docs when using new 0.18.0 features. |
+| @types/pdfkit ^0.17.5 | pdfkit ^0.18.0, TypeScript ^5.7 | DefinitelyTyped package; v0.17.5 last updated February 2026. Minor version may lag slightly behind pdfkit releases — verify API surface against official docs when using new 0.18.0 features. |
 | react-native-quick-crypto ^1.0.17 | React Native >=0.71, Expo bare workflow | Does not work in Expo Go. Requires `npx expo prebuild` or a bare workflow. Install with `install()` call in the app entry point to polyfill `global.crypto`. |
 | express.raw() | Express ^4.21.0 | Built into Express 4 — no body-parser package needed. Already used for Stripe in this codebase. |
 
@@ -316,19 +324,18 @@ No new packages needed in `packages/web` for this milestone.
 ## Sources
 
 - [foliojs/pdfkit GitHub releases](https://github.com/foliojs/pdfkit/releases) — v0.18.0 confirmed published March 15, 2026 (HIGH)
-- [foliojs/pdfkit package.json](https://github.com/foliojs/pdfkit/blob/master/package.json) — `"module"` and `"main"` fields confirmed; no `"type"` field (CJS default, ESM via module field) (HIGH)
-- [react-pdf.org/node](https://react-pdf.org/node) — renderToStream, renderToFile, renderToString documented (HIGH)
-- [react-pdf GitHub issue #2624](https://github.com/diegomura/react-pdf/issues/2624) — ESM packaging unusable for modern packaging systems (HIGH — open issue)
-- [react-pdf GitHub issue #2907](https://github.com/diegomura/react-pdf/issues/2907) — CJS exports removed, users downgrading to v3.4.5 (HIGH — open issue)
-- [react-pdf GitHub issue #3017](https://github.com/diegomura/react-pdf/issues/3017) — ERR_REQUIRE_ESM in Next.js despite ESM import (HIGH — open issue)
-- [margelo/react-native-quick-crypto GitHub](https://github.com/margelo/react-native-quick-crypto) — v1.0.17 confirmed March 17, 2026 (HIGH)
+- [foliojs/pdfkit package.json](https://github.com/foliojs/pdfkit/blob/master/package.json) — `"module"` and `"main"` fields confirmed; ESM entry point `js/pdfkit.es.js` verified (HIGH)
+- [margelo/react-native-quick-crypto releases](https://github.com/margelo/react-native-quick-crypto/releases) — v1.0.17 published March 17, 2026 (HIGH)
 - [react-native-quick-crypto implementation coverage](https://github.com/margelo/react-native-quick-crypto/blob/main/.docs/implementation-coverage.md) — `createHmac`, `Hmac.digest()`, `Hmac.update()` all confirmed (HIGH)
 - [expo-crypto docs](https://docs.expo.dev/versions/latest/sdk/crypto/) — confirmed no HMAC support, one-way digest only (HIGH)
+- [react-pdf issue #2624](https://github.com/diegomura/react-pdf/issues/2624) — ESM packaging unusable for modern packaging systems (HIGH — open March 2026)
+- [react-pdf issue #2907](https://github.com/diegomura/react-pdf/issues/2907) — CJS exports removed, users downgrading to v3.4.5 (HIGH — open March 2026)
+- [react-pdf issue #3017](https://github.com/diegomura/react-pdf/issues/3017) — ERR_REQUIRE_ESM despite ESM import (HIGH — open March 2026)
+- [@types/pdfkit npm search results](https://www.npmjs.com/package/@types/pdfkit) — v0.17.5 confirmed, last updated February 2026 (HIGH)
+- [pdfkit-table npm](https://www.npmjs.com/package/pdfkit-table) — last published 4 years ago, unmaintained (HIGH — avoidance confirmed)
+- [voilab-pdf-table npm](https://www.npmjs.com/package/voilab-pdf-table) — last published 4 years ago, unmaintained (HIGH — avoidance confirmed)
 - [standard-webhooks specification](https://github.com/standard-webhooks/standard-webhooks/blob/main/spec/standard-webhooks.md) — HMAC-SHA256 standard, timestamp + id replay prevention pattern (HIGH)
-- [hookdeck HMAC SHA256 guide](https://hookdeck.com/webhooks/guides/how-to-implement-sha256-webhook-signature-verification) — Express raw body pattern confirmed (MEDIUM)
-- [stripe-node issue #734](https://github.com/stripe/stripe-node/issues/734) — express.raw() before express.json() pattern confirmed for webhook raw body (HIGH — existing IU codebase already implements this)
-- WebSearch: pdfkit vs @react-pdf/renderer vs puppeteer comparison 2025/2026 — multiple sources confirm pdfkit for programmatic data reports, puppeteer for HTML-to-PDF, react-pdf for React component layouts (MEDIUM)
-- WebSearch: npm-compare pdfkit vs react-pdf 2026 — pdfkit download trends and use case differentiation (MEDIUM)
+- [stripe-node issue #734](https://github.com/stripe/stripe-node/issues/734) — express.raw() before express.json() pattern (HIGH — existing IU codebase already implements this)
 
 ---
 *Stack research for: Indomitable Unity v1.2 — institution management, PDF reports, webhook integration, CM attention views*
