@@ -26,7 +26,7 @@
 - [x] **Phase 7: UX Fixes** (3/3 plans) — completed 2026-03-16
 - [x] **Phase 8: Wellbeing Visualisation** (1/1 plans) — completed 2026-03-16
 - [x] **Phase 9: Server Foundation and VANTAGE** (2/2 plans) — completed 2026-03-16
-- [ ] **Phase 10: Challenger Portal** (0/2 plans) — Organisation accounts, challenge submission, status tracking, resolution rating
+- [x] **Phase 10: Challenger Portal** (2/2 plans) — completed 2026-03-21
 - [ ] **Phase 11: Kiosk Mode and Institutional Pages** — Institutional embedding with auto-logout and per-institution landing pages
 
 ## Phase Details
@@ -95,8 +95,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 10-01-PLAN.md — Schema migration + shared types + challenger server routes
-- [ ] 10-02-PLAN.md — React challenger portal pages, hooks, API client, and routing
+- [x] 10-01-PLAN.md — Schema migration + shared types + challenger server routes
+- [x] 10-02-PLAN.md — React challenger portal pages, hooks, API client, and routing
 
 ### Phase 11: Kiosk Mode and Institutional Pages
 
@@ -109,7 +109,12 @@ Plans:
   3. An "End Session" button is visible in the kiosk navigation at all times
   4. Each institution has a public page at `/i/[slug]` showing its name, description, and local impact stats
   5. Navigating from an institutional landing page auto-activates kiosk mode
-**Plans:** TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — Kiosk mode: KioskContext + idle timer + UI modifications + End Session
+- [ ] 11-02-PLAN.md — Institution backend: schema + migration + public API endpoint
+- [ ] 11-03-PLAN.md — Institution landing page + route wiring + kiosk auto-activation
 
 ## Progress
 
@@ -124,8 +129,8 @@ Plans:
 | 7. UX Fixes | v1.1 | 3/3 | Complete | 2026-03-16 |
 | 8. Wellbeing Visualisation | v1.1 | 1/1 | Complete | 2026-03-16 |
 | 9. Server Foundation and VANTAGE | v1.1 | 2/2 | Complete | 2026-03-16 |
-| 10. Challenger Portal | v1.1 | 0/2 | Not started | - |
-| 11. Kiosk Mode and Institutional Pages | v1.1 | 0/TBD | Not started | - |
+| 10. Challenger Portal | v1.1 | 2/2 | Complete | 2026-03-21 |
+| 11. Kiosk Mode and Institutional Pages | v1.1 | 0/3 | Not started | - |
 
 ---
 *Full v1.0 details archived in milestones/v1.0-ROADMAP.md*
