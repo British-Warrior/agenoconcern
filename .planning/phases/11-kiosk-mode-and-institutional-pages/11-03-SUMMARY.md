@@ -40,7 +40,7 @@ patterns-established:
   - "Parameterised ROUTES: function-shaped constant (slug: string) => /i/${slug} for dynamic paths"
 
 # Metrics
-status: awaiting-checkpoint
+status: complete
 completed: 2026-03-21
 ---
 
@@ -48,9 +48,9 @@ completed: 2026-03-21
 
 **Public /i/:slug React page with useQuery fetch, animated skeleton loader, 3-column impact stats grid, and Get Started CTA linking to /login?kiosk=true for automatic kiosk activation**
 
-## Status: Awaiting Checkpoint (human-verify)
+## Status: Complete
 
-Task 1 is complete and committed. Task 2 is a `checkpoint:human-verify` — human verification of the full kiosk flow is required before this plan can be marked complete.
+All tasks done. Checkpoint approved 2026-03-21.
 
 ## Performance
 
@@ -67,7 +67,7 @@ Task 1 is complete and committed. Task 2 is a `checkpoint:human-verify` — huma
 ## Task Commits
 
 1. **Task 1: InstitutionLanding page, route constant, and App.tsx routing** - `09af2ff` (feat)
-2. **Task 2: checkpoint:human-verify** — pending human verification
+2. **Task 2: checkpoint:human-verify** — Approved (2026-03-21)
 
 ## Files Created/Modified
 - `packages/web/src/pages/institution/InstitutionLanding.tsx` - Public institution landing page with skeleton loader, 404/error states, stat cards, and kiosk CTA

@@ -27,7 +27,7 @@
 - [x] **Phase 8: Wellbeing Visualisation** (1/1 plans) — completed 2026-03-16
 - [x] **Phase 9: Server Foundation and VANTAGE** (2/2 plans) — completed 2026-03-16
 - [x] **Phase 10: Challenger Portal** (2/2 plans) — completed 2026-03-21
-- [ ] **Phase 11: Kiosk Mode and Institutional Pages** — Institutional embedding with auto-logout and per-institution landing pages
+- [x] **Phase 11: Kiosk Mode and Institutional Pages** (3/3 plans) — completed 2026-03-21
 
 ## Phase Details
 
@@ -112,9 +112,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 11-01-PLAN.md — Kiosk mode: KioskContext + idle timer + UI modifications + End Session
-- [ ] 11-02-PLAN.md — Institution backend: schema + migration + public API endpoint
-- [ ] 11-03-PLAN.md — Institution landing page + route wiring + kiosk auto-activation
+- [x] 11-01-PLAN.md — Kiosk mode: KioskContext + idle timer + UI modifications + End Session
+- [x] 11-02-PLAN.md — Institution backend: schema + migration + public API endpoint
+- [x] 11-03-PLAN.md — Institution landing page + route wiring + kiosk auto-activation
 
 ## Progress
 
@@ -130,7 +130,7 @@ Plans:
 | 8. Wellbeing Visualisation | v1.1 | 1/1 | Complete | 2026-03-16 |
 | 9. Server Foundation and VANTAGE | v1.1 | 2/2 | Complete | 2026-03-16 |
 | 10. Challenger Portal | v1.1 | 2/2 | Complete | 2026-03-21 |
-| 11. Kiosk Mode and Institutional Pages | v1.1 | 0/3 | Not started | - |
+| 11. Kiosk Mode and Institutional Pages | v1.1 | 3/3 | Complete | 2026-03-21 |
 
 ---
 *Full v1.0 details archived in milestones/v1.0-ROADMAP.md*
