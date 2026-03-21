@@ -1,307 +1,229 @@
 # Feature Research
 
-**Domain:** Expertise marketplace / professional community platform (social enterprise)
-**Researched:** 2026-03-15
-**Confidence:** HIGH for UX fixes and visualisation (direct codebase audit); MEDIUM for kiosk mode and VANTAGE integration (patterns verified against multiple sources); LOW for challenger portal (limited direct comparators)
+**Domain:** CM-facing operational tooling — institution management, PDF impact reports, webhook wellbeing integration, attention dashboards
+**Researched:** 2026-03-21
+**Confidence:** HIGH (codebase verified, patterns grounded in existing architecture)
 
 ---
 
-## Context: v1.1 Scope
+## Context: What Already Exists
 
-This file supersedes the v1.0 FEATURES.md for milestone planning purposes. The v1.0 MVP is built and pilot-ready. v1.1 adds four capability areas:
+The following are **already built** and must not be re-scoped into this milestone:
 
-1. **UX overhaul** — fix 10 identified walkthrough issues
-2. **Wellbeing data visualisation** — charts and gauges replacing raw score numbers
-3. **Kiosk mode** — institutional embedding for libraries and community centres
-4. **Challenger portal** — self-service challenge submission for organisations
-5. **VANTAGE REST API integration** — typed client modules VANTAGE can call
-
-What is already built and must not be rebuilt: CV upload, profile generation, challenge board, circle formation, collaboration workspace, resolution submission, Stripe Connect, wellbeing check-ins (UCLA/SWEMWBS), push notifications, PWA, OAuth + email/phone auth, CM admin tools.
+- `institutions` table: `id`, `slug`, `name`, `description`, `city`, `statsJson` (JSONB, seeded/static), `isActive`
+- `GET /api/institutions/:slug` — public read endpoint
+- `/i/:slug` — institution landing page (kiosk entry point)
+- `KioskContext` — kiosk mode enforced via URL param, no session persistence
+- `wellbeingCheckins` table with UCLA-3 and SWEMWBS-7 scores, linked to `consentRecords`
+- `GET/POST /api/wellbeing/checkin`, `/due`, `/history` — contributor-facing
+- `apiKeys` table and `apiKeyMiddleware` — HMAC-SHA256, scoped, expiry, rate-limited
+- `vantage` routes — challenge read API for `X-API-Key` clients
+- CM role enforced via `requireRole("community_manager")` middleware
+- No CM-facing dashboard page exists yet — CM currently accesses challenge management via challenge feed
 
 ---
 
 ## Feature Landscape
 
-### Table Stakes (Users Expect These)
+### Table Stakes (CM Expects These)
 
-Features users assume exist. Missing these = product feels incomplete.
+Features a CM will assume exist once this milestone ships. Missing any of these makes the product feel like a prototype.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| **Global navigation (dashboard, challenges, circles, impact, logout)** | Every authenticated web app has persistent nav. Currently /circles and /impact exist in Navbar but /dashboard link is missing; no "Challenges" link. Users cannot return to dashboard without typing the URL | LOW | Navbar already exists. Add /dashboard and /challenges links. Confirm all five primary destinations are always reachable from every page |
-| **Actionable dashboard** | A dashboard that only says "Welcome, [name]" with one link is functionally an error page. Users expect to see their activity, pending actions, and entry points to each section | MEDIUM | Add: active circles count + link, open challenges count + link, wellbeing check-in CTA (already partially done), hours contributed summary. All data is already available from existing API endpoints |
-| **Wellbeing score context (not raw numbers)** | SWEMWBS range is 7-35; UCLA range is 3-12. Raw numbers like "21" and "8" are meaningless without a scale. Every validated wellbeing instrument includes interpretation guidance | MEDIUM | Replace raw numbers with: score/max display (e.g. "21 / 35"), a colour-coded label (low / average / high based on UK population norms), and optionally a simple sparkline chart. SWEMWBS top 15% = 27.5+, bottom 15% = 19.5 and below. UCLA: lower is better (less lonely) |
-| **Wellbeing trajectory chart** | Raw longitudinal tables are unreadable. Users on any health or wellbeing tool expect a chart showing trend over time | MEDIUM | Line chart with two series (UCLA and SWEMWBS) over time. Recharts is the correct library: 3.6M weekly downloads, TypeScript-first, SVG-based, performs well for under 50 data points per user |
-| **Clickable affordances on interactive elements** | Cards and links that look like decorative text get ignored. Challenge cards, circle cards, and navigation links must look interactive (cursor pointer, hover state, visual affordance) | LOW | CSS audit: ensure `cursor-pointer`, hover colour shift, and border/shadow transition on all interactive cards. Existing Card component may need a variant for clickable cards |
-| **CM: access to circles they formed** | A community manager who forms a circle cannot find it. The /circles page uses `useMyCircles` which returns circles the user is a member of, not circles they created. CMs need both | MEDIUM | Server: add a query param or separate endpoint for circles where `createdBy = contributorId` or add CM membership automatically at circle creation. Client: show CM-created circles on /circles |
-| **CM: correct role context on circles page** | CM landing on /circles sees contributor-targeted copy ("Express interest in challenges to get started"). CMs don't express interest — they form circles | LOW | Conditional copy based on role. Already have role from `useAuth()`. Show CM-appropriate empty state and actions |
-| **Wellbeing check-in reachable from UI** | Users who need to complete a check-in cannot find it except via dashboard banner. Check-in route exists (/wellbeing/checkin) but has no nav link | LOW | Add "Wellbeing" to nav (authenticated), or surface it more prominently in the dashboard. Banner approach is acceptable but only shows when due — users may want to access it independently |
-| **Human-readable error messages** | "Failed to form circle: 550e8400-e29b-41d4-a716-446655440000" is not actionable. Raw UUIDs in error messages are a code leak | LOW | Error message normalisation: map server error messages to user-friendly strings before display. The CircleFormationModal already catches errors — sanitise them there |
-| **Edit Resolution button visible and functional** | A disabled-looking "Edit Resolution" button that does nothing destroys trust in the UI. Users cannot resolve challenges | LOW | Audit ResolutionForm / ResolutionCard rendering logic. Check disabled prop conditions and ensure active edit state is visually distinct |
-| **Circle formation shows correct members** | If formation modal shows wrong members, CM cannot verify who they are adding to a circle. This is a data integrity UX issue | MEDIUM | Audit: CircleFormationModal receives `memberIds` and `memberNames` from ChallengeManage. Trace the data flow from ChallengeAccordion through TeamCompositionCard to identify where names mismatch IDs |
+| Institution list view (CM) | CM needs to see all institutions they manage, not just public slugs | LOW | Simple read off `institutions` table; no new schema |
+| Institution create/edit form | Admin/CM must be able to add new venues and edit name/description/city | LOW | POST/PUT endpoints + form page; slug auto-generated from name at creation |
+| Institution activate/deactivate toggle | CM must be able to disable a kiosk page without deleting it | LOW | `isActive` column already exists; PATCH endpoint |
+| Institution-contributor link management | CM maps which contributors are associated with which institution; basis for live stats and iThink cohorts | MEDIUM | Requires new `institution_contributors` join table; FK to both tables |
+| Live stats on institution landing page | `statsJson` is currently seeded/static — landing page shows stale numbers | MEDIUM | Derive counts from `institution_contributors` + `circles`/`contributorHours` at query time, or keep a refresh mechanism; static JSONB is not acceptable post-v1.2 |
+| Contributor list per institution (CM view) | CM must see who belongs to each institution cohort | LOW | Join query on `institution_contributors`; name + status + last check-in date |
+| PDF impact report (institution-level) | Institutions need a printable summary to share with funders or boards | HIGH | Requires `@react-pdf/renderer` server-side; data aggregated from contributor hours, challenges, wellbeing trends |
+| iThink webhook receiver endpoint | iThink app must be able to push "needs attention" signals; no integration currently exists | MEDIUM | New `POST /api/webhooks/ithink` route; HMAC-SHA256 signature verification; idempotency via event log table |
+| Webhook event log / dedup table | Replaying webhooks from iThink must not double-count signals | MEDIUM | `webhook_events` table with `event_id` unique constraint; catch PG error 23505 |
+| CM attention view | CM needs a single view showing which institution cohort members have been flagged by iThink | MEDIUM | Reads from `institution_attention_signals` table populated by webhook receiver; filters by institution |
+| Wellbeing signal storage | iThink pushes institution-level cohort signals, not per-contributor; must store signal metadata with institution FK | LOW | New `institution_attention_signals` table: `id`, `institutionId`, `eventId`, `signalType`, `cohortSize`, `flaggedCount`, `receivedAt`, `rawPayload` |
 
 ### Differentiators (Competitive Advantage)
 
-Features that set the product apart. Not required, but valued.
+Features that distinguish this platform's operational tooling from generic admin panels.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Challenger portal (org challenge submission)** | Self-service intake removes Kirk from the critical path. Organisations (local authorities, NHS, charities, SMEs) can submit a challenge brief directly. No other marketplace in this space has a public-facing, self-service submission portal designed for public sector bodies | HIGH | Requires: org registration or guest submission flow, challenge brief form (title, description, domain, skills needed, type paid/free, deadline, circle size), email confirmation, admin review queue, and publish workflow. Challenge type already in schema. Org profiles exist in DB. New: guest/light auth for challengers, submission status visibility |
-| **Kiosk mode for institutional embedding** | Libraries and community centres can direct digitally literate professionals to Indomitable Unity via a QR code or shared terminal. No session leak between users. Designed for assisted onboarding contexts where a staff member may be helping | HIGH | Requires: URL flag (`?kiosk=true`) sets kiosk context in React context/store; idle session auto-logout after 10 minutes with 60-second countdown warning modal; no "remember me", no persistent auth cookies; post-logout return to landing page; larger touch targets (min 48px); simplified nav (remove install prompt, push notification buttons); QR code generator for institutions to print. Use `react-idle-timer` v5 (well-established, 5.7.x, kiosk use case documented) |
-| **Wellbeing visualisation with benchmark context** | SWEMWBS and UCLA scores shown as: score / max, colour band (low/average/high per UK population norms), sparkline trend, and optional comparison to UK general population average. Makes impact evidence compelling for funders | MEDIUM | Recharts `LineChart` with `ResponsiveContainer`. Two series. Colour bands via reference lines or gradient fills. UK population SWEMWBS average ~26 (score 7-35). Add benchmark line. Tooltip shows date + both scores. Accessible: include data table alternative for screen readers |
-| **VANTAGE typed client modules** | VANTAGE (Kirk's AI agent) can call the platform REST API via typed TypeScript modules rather than raw fetch calls. This means VANTAGE gets autocomplete, type safety, and consistent error handling when operating on behalf of users | MEDIUM | Pattern: thin typed wrappers over the existing `apiClient` function. One module per domain (challenges, circles, wellbeing, impact, profile). Each module exports typed async functions. No code generation needed — the existing `shared` package already defines types. Map existing API endpoints to callable module functions. VANTAGE passes a bearer token or session context |
-| **Institutional landing page (per-institution QR target)** | Each institution (e.g. "Beeston Library") has a unique URL that shows local impact stats and a "Get started" CTA. Used as QR code target on printed materials | HIGH | Requires: institution entity in DB, per-institution aggregate stats endpoint, public-facing landing page at `/i/[slug]`. Kiosk mode activates automatically from institution URL. Deferred from kiosk mode itself — this is Phase 2 within v1.1 |
-| **Challenge submission status tracking (challenger view)** | An organisation that submitted a challenge can see: submitted, under review, published, circles formed, resolved. Gives challengers visibility without needing admin access | MEDIUM | Requires: challenger-authenticated view of their own challenges. Partially exists — `/impact/challenger` route exists but ChallengerView page was not found in the filesystem. Build or complete this page. Endpoint may already exist in challenges route |
+| Privacy-preserving attention signals | iThink does NOT send individual contributor IDs — only institution-level cohort aggregates; CM sees "6 of 18 flagged" not who | LOW (design constraint, not code) | Must be enforced at the webhook schema level; document this contract explicitly; do not add per-contributor FK to `institution_attention_signals` |
+| PDF report styled to platform brand | Funders expect professional output, not a data dump; report includes institution name, date range, challenge count, hours, wellbeing trajectory summary | MEDIUM | Use `@react-pdf/renderer` server-side with consistent Indomitable Unity styling; render via Express route `GET /api/institutions/:id/report.pdf` |
+| Attention signal trend (not just latest) | CM wants to see if the cohort is improving or worsening over time, not just the current snapshot | LOW | Store all signals with timestamps; CM view shows last N signals as a simple list or mini-chart |
+| Institution-scoped wellbeing aggregate | Wellbeing data from contributors linked to an institution can be rolled up anonymously (min 5 contributors to display) for institution-level trend in the PDF | HIGH | Privacy threshold required; must aggregate without revealing individual scores; flag as requires phase-specific research |
+| Webhook secret rotation UI | Allow admin to rotate the shared secret used for iThink HMAC verification without downtime | LOW | Store `webhookSecrets` per institution or globally; admin PATCH endpoint; iThink side supports transition window |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-| Anti-Feature | Why Avoid | Alternative |
-|--------------|-----------|-------------|
-| **Full MDM/kiosk OS lockdown** | Libraries already manage their computers. Building OS-level kiosk lockdown (disabling browser back button, preventing tab switching) is out of scope and would require native app or browser extension | URL-based kiosk flag + idle auto-logout handles the core need. The browser stays normal; the app behaves differently |
-| **Rich text / WYSIWYG for challenge briefs** | Adds a heavy dependency (TipTap, Quill) and creates inconsistent formatting that's hard to render safely. Challenge briefs are read by matching algorithm and displayed as plain text | Plain textarea with character limit. Markdown could be added later if specifically requested |
-| **Organisation SSO (SAML/OIDC for NHS)** | NHS and local authority SSO integration is a 3-6 month enterprise IT engagement. It is not an MVP feature | Email + magic link for challengers. SSO is a future integration if a specific NHS trust partnership is agreed |
-| **Real-time kiosk analytics (occupancy tracking)** | Tracking which institutions are using kiosks, for how long, is surveillance infrastructure that conflicts with the social enterprise values and GDPR | Aggregate usage stats per institution (monthly active users, challenges submitted) is sufficient and GDPR-compliant |
-| **Interactive wellbeing goal-setting** | Asking users to set SWEMWBS improvement targets creates clinical liability and may be legally problematic without a qualified practitioner | Show trend, show benchmark, celebrate improvement. Do not imply therapeutic goals |
-| **Inline chart editors (drag to annotate, add notes to chart points)** | Wellbeing data has special category status under UK GDPR. Annotating it interactively increases data processing complexity and consent surface | Read-only visualisation. Notes go in the Circle workspace or personal notes, not on wellbeing charts |
-| **Challenger portal with payment (challengers pay to post)** | Adds Stripe Connect complexity on the challenger side before the model is proven. Challenges can be paid (contributors are paid) without challengers paying a listing fee | Keep challenger portal free to submit. Revenue comes from platform take on contributor payments, not listing fees |
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Per-contributor iThink flags in CM view | Seems like useful detail for intervention | Destroys the privacy-first contract with contributors; iThink is explicitly privacy-first local processing; exposing individual flags creates GDPR special-category risk and would make contributors distrust the platform | Store only cohort-level signals; CM intervention is at institution cohort level, not individual |
+| Real-time webhook-to-CM dashboard push (WebSockets) | Seems snappy | Complexity far exceeds value; iThink signals are low-frequency (weekly/bi-weekly); CM checks the dashboard on their own schedule; adding WebSockets for this would be premature | Poll on page load; CM refreshes or sees "last updated X min ago" |
+| Automated CM alerts on iThink signal receipt | Proactive feels better | Creates alert fatigue; CM must interpret signal in context; automated emails on each webhook would be noisy | CM sees badge/count in nav or on institution list; pulls detail on demand |
+| Live stats recomputed on every page load for landing page | Always fresh feels right | At scale, per-request aggregate queries on `contributor_hours` + `circles` are expensive and visible to public (unauthenticated); caching or refresh-on-write is the right answer | Recompute `statsJson` on institution update or on a nightly cron; acceptable staleness for a public kiosk page |
+| Full circle resolution text in PDF | "Include everything" request | PDFs with hundreds of resolution bodies become unwieldy for funder reports; defeats the purpose of a summary | Include challenge count, completed count, total hours, wellbeing score band; exclude free-text resolution content |
+| Institution hierarchy / sub-institutions | Some venues have branches | Scope creep; adds tree traversal logic, complicates stats roll-up, and no current use case justifies it | Flat model with `city` field is sufficient; named slugs distinguish branches (e.g., `leeds-central`, `leeds-north`) |
 
 ---
 
 ## Feature Dependencies
 
 ```
-Already Built:
-    Auth --> Dashboard --> Challenges --> Circles --> CircleWorkspace
-    Auth --> Impact Dashboard
-    Auth --> Wellbeing Checkin
-    CM role --> ChallengeManage --> CircleFormationModal
+[Institution-contributor link table]
+    └──enables──> [Live stats on landing page]
+    └──enables──> [Contributor list per institution (CM)]
+    └──enables──> [Institution-scoped wellbeing aggregate in PDF]
+    └──enables──> [CM attention view — cohort membership]
 
-v1.1 UX Fixes (no new deps — all fixes to existing flows):
-    Global Nav fix --> (none — CSS/HTML change to existing Navbar)
-    Dashboard content --> Impact API (already exists)
-    Wellbeing score context --> Wellbeing API (already exists)
-    CM circles fix --> Circles API (minor query change)
-    Error message fix --> (client-side only)
-    Edit Resolution fix --> (client-side only)
-    Circle formation members fix --> (client-side data flow)
+[iThink webhook receiver]
+    └──requires──> [Webhook event log / dedup table]
+    └──requires──> [institution_attention_signals table]
+    └──enables──> [CM attention view — signal data]
 
-v1.1 Wellbeing Visualisation:
-    WellbeingSection (ImpactDashboard)
-        └──requires──> Recharts (new dep)
-        └──requires──> WellbeingTrajectoryPoint[] (already in API response)
-        └──enhances──> Dashboard summary widget (shows last score)
+[institution_attention_signals table]
+    └──requires──> [Institution-contributor link table] (to know which institution the signal belongs to)
+    └──enables──> [CM attention view]
+    └──enables──> [Attention signal trend]
 
-v1.1 VANTAGE Integration:
-    VANTAGE typed modules
-        └──requires──> Existing REST API endpoints (all exist)
-        └──requires──> API auth token strategy for agent calls
-        └──depends on──> shared package types (already exist)
+[PDF impact report]
+    └──requires──> [Institution-contributor link table] (for contributor count)
+    └──requires──> [@react-pdf/renderer added to server deps]
+    └──enhanced-by──> [Institution-scoped wellbeing aggregate]
 
-v1.1 Challenger Portal:
-    Challenger Auth (new role or guest flow)
-        └──requires──> Auth system extension
-        └──enables──> Challenge Submit Form
-                          └──enables──> Admin Review Queue (new)
-                                            └──enables──> Challenge Publish
-                                                              └──enables──> Challenger Status View
+[Live stats on landing page]
+    └──requires──> [Institution-contributor link table]
+    └──conflicts-with──> [Real-time recompute on every public page load] — use refresh-on-write instead
 
-v1.1 Kiosk Mode:
-    KioskContext (new React context)
-        └──requires──> URL param reader (?kiosk=true)
-        └──enables──> IdleTimer (react-idle-timer)
-                          └──enables──> Logout on idle
-        └──enables──> Kiosk Navbar variant (simplified)
-        └──enables──> Touch target CSS overrides
-        └──enhances──> Institutional Landing Page (deferred)
+[Institution CRUD (create/edit/toggle)]
+    └──required-before──> all other institution features
+    └──builds-on──> existing institutions table (no schema changes needed for CRUD itself)
 ```
 
 ### Dependency Notes
 
-- **UX fixes have no new dependencies.** All 10 walkthrough issues can be resolved using existing APIs, existing components, and CSS/logic changes. These are parallelisable and should be treated as a fast-track batch.
-- **Wellbeing visualisation requires Recharts.** No other new library is needed. The data is already returned by the `/api/impact/summary` endpoint in `wellbeingTrajectory`.
-- **Challenger portal requires the most new infrastructure.** A new auth role (`challenger`) or a guest submission flow, a new admin review state machine, and a new UI section. Estimate 3-4x the effort of kiosk mode.
-- **VANTAGE integration requires an API auth strategy.** VANTAGE will call endpoints server-to-server or on-behalf-of a user. The existing `apiClient` uses httpOnly cookies (browser-only). VANTAGE needs a token-based approach (API key or JWT with user context). This is the only genuinely new infrastructure concern.
-- **Kiosk mode is self-contained.** A React context + idle timer hook + CSS variant. Does not require backend changes.
+- **Institution-contributor link table is the central dependency.** Every downstream feature (stats, wellbeing aggregate, attention cohort) depends on knowing which contributors belong to which institution. This must ship first.
+- **Webhook receiver requires the signal table.** The receiver has nowhere to write without `institution_attention_signals`. Schema migration precedes the route.
+- **PDF report can ship without wellbeing aggregate.** The basic version (hours, challenges, headcount) is independent; wellbeing aggregate is an enhancement that can follow.
+- **Institution CRUD does not require new schema.** `institutions` table already has all needed columns for create/edit/toggle; only the link table is new schema.
 
 ---
 
-## MVP Definition
+## MVP Definition for v1.2
 
-### v1.1 — Launch With
+### Launch With (v1.2 core)
 
-This is already a subsequent milestone. "MVP" here means minimum to close the four capability areas.
+Minimum viable set to deliver the milestone's stated value.
 
-**UX Overhaul (all 10 fixes — must ship together):**
-- [ ] Add /dashboard and /challenges links to Navbar — why essential: users are currently stranded on pages they can't leave
-- [ ] Fill Dashboard with activity widgets (circles, challenges, hours, earnings summary) — why essential: empty dashboard destroys first-impression credibility
-- [ ] Replace raw wellbeing numbers with score/max + colour band label — why essential: scores are meaningless without context; this is the minimum viable interpretation
-- [ ] Fix CM: add created circles to /circles view — why essential: CMs cannot find circles they made
-- [ ] Fix CM: correct empty-state copy on /circles — why essential: wrong role context
-- [ ] Add wellbeing check-in to nav (or persistent CTA on dashboard) — why essential: feature is unreachable
-- [ ] Sanitise error messages (no raw UUIDs) — why essential: UUID in error message signals broken software
-- [ ] Fix Edit Resolution button visual state — why essential: editing resolutions is core to the circle workflow
-- [ ] Fix circle formation member display — why essential: data integrity / trust
-- [ ] Audit clickable affordances across challenge cards, circle cards, nav links — why essential: affordance issues cause abandonment
+- [ ] Institution-contributor link table + CM management UI — without this, everything else is blocked
+- [ ] Institution list + create/edit/toggle endpoints and CM page — CM operational control
+- [ ] Live stats refresh (compute on link add/remove, store to statsJson) — fixes the stale kiosk landing page
+- [ ] iThink webhook receiver with HMAC-SHA256 verification + dedup — the iThink integration
+- [ ] `institution_attention_signals` table and CM attention view — the CM operational benefit of the iThink integration
+- [ ] PDF impact report (basic: headcount, challenges, hours, date range) — funder-facing deliverable
 
-**Wellbeing Visualisation:**
-- [ ] Line chart (Recharts) for wellbeing trajectory on ImpactDashboard — why essential: longitudinal data is the key impact evidence for funders
-- [ ] Score interpretation labels (low/average/high) against UK population norms — why essential: makes scores legible to non-clinical users
+### Add After Validation (v1.2.x)
 
-**Kiosk Mode:**
-- [ ] `?kiosk=true` URL param activates KioskContext — why essential: institutions need a way to trigger kiosk behaviour
-- [ ] Idle timer: 10-minute inactivity threshold with 60-second modal countdown — why essential: session privacy on shared computers
-- [ ] Auto-logout on idle timeout + return to landing — why essential: core kiosk security requirement
-- [ ] Simplified Navbar in kiosk mode (remove install/push prompt buttons) — why essential: those buttons cause confusion on shared computers
-
-**VANTAGE API Integration:**
-- [ ] Typed client modules for: challenges, circles, wellbeing, impact, profile — why essential: VANTAGE needs type-safe callable functions, not raw curl
-- [ ] Auth strategy for agent calls (API key header or user-context token) — why essential: existing cookie-auth doesn't work server-to-server
-
-### Add After Validation (v1.x)
-
-- [ ] Challenger portal (full flow) — trigger: a specific organisation requests self-service submission. High effort; only warranted when there is a concrete user
-- [ ] Challenger status tracking page (/impact/challenger completion) — trigger: challengers need visibility
-- [ ] Wellbeing benchmark line on chart (UK population average) — trigger: when funder reporting needs contextual comparisons
-- [ ] Institutional landing page with per-institution stats — trigger: when first library partner is confirmed
+- [ ] Wellbeing aggregate in PDF — requires privacy threshold logic; add once basic PDF is shipping
+- [ ] Attention signal trend view — add once CM is using the attention view and confirms value
+- [ ] Webhook secret rotation UI — add before handing credentials to iThink team for production
 
 ### Future Consideration (v2+)
 
-- [ ] Organisation SSO (NHS / local authority) — why defer: enterprise IT dependency, 3-6 month engagement
-- [ ] VANTAGE conversational UI as primary interface — why defer: requires solid data foundation + usage data to train on; was always Phase 3+
-- [ ] Contribution certificates (PDF export) — why defer: nice-to-have for portfolio purposes; low priority vs core workflow fixes
-- [ ] Multi-institution admin dashboard — why defer: requires multiple live institution partners before data is meaningful
+- [ ] Contributor-level wellbeing aggregate visible to CM (opt-in, GDPR impact assessment required first)
+- [ ] PDF scheduling / auto-delivery to institution contact email
+- [ ] Institution portal login (institutions access their own data without CM mediation)
 
 ---
 
-## Feature Prioritisation Matrix
+## Feature Prioritization Matrix
 
-| Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| Global navigation fix | HIGH | LOW | P1 |
-| Dashboard content widgets | HIGH | LOW-MEDIUM | P1 |
-| Wellbeing score context (label + score/max) | HIGH | LOW | P1 |
-| CM circles fix | HIGH | MEDIUM | P1 |
-| Fix clickable affordances | HIGH | LOW | P1 |
-| Fix Edit Resolution button | HIGH | LOW | P1 |
-| Fix circle formation members | HIGH | MEDIUM | P1 |
-| Fix CM circles copy | MEDIUM | LOW | P1 |
-| Add wellbeing to nav | MEDIUM | LOW | P1 |
-| Sanitise error messages | MEDIUM | LOW | P1 |
-| Wellbeing line chart (Recharts) | HIGH | MEDIUM | P1 |
-| Wellbeing score interpretation labels | HIGH | LOW | P1 |
-| Kiosk mode (idle timer + auto-logout) | HIGH for institutional use | MEDIUM | P1 |
-| Kiosk navbar variant | MEDIUM | LOW | P1 |
-| VANTAGE typed client modules | HIGH for VANTAGE | MEDIUM | P1 |
-| VANTAGE API auth strategy | HIGH for VANTAGE | MEDIUM | P1 |
-| Challenger portal (full) | HIGH for org intake | HIGH | P2 |
-| Challenger status view | MEDIUM | MEDIUM | P2 |
-| Wellbeing benchmark line | MEDIUM | LOW | P2 |
-| Institutional landing page | MEDIUM | HIGH | P3 |
-| Contribution certificates | LOW | MEDIUM | P3 |
+| Feature | CM Value | Implementation Cost | Priority |
+|---------|----------|---------------------|----------|
+| Institution-contributor link table | HIGH | MEDIUM | P1 |
+| Institution CRUD + CM list page | HIGH | LOW | P1 |
+| Live stats refresh | HIGH | LOW | P1 |
+| iThink webhook receiver | HIGH | MEDIUM | P1 |
+| institution_attention_signals table | HIGH | LOW | P1 |
+| CM attention view | HIGH | MEDIUM | P1 |
+| PDF impact report (basic) | HIGH | HIGH | P1 |
+| Attention signal trend | MEDIUM | LOW | P2 |
+| Wellbeing aggregate in PDF | MEDIUM | HIGH | P2 |
+| Webhook secret rotation UI | LOW | LOW | P2 |
+| Per-contributor iThink flags | HIGH (perceived) | LOW (build cost) | DO NOT BUILD |
 
-**Priority key:** P1 = must ship in v1.1 | P2 = should add post-validation | P3 = defer to v2+
+**Priority key:**
+- P1: Must have for v1.2 launch
+- P2: Should have, add when P1 is stable
+- DO NOT BUILD: Anti-feature — conflicts with platform values
 
 ---
 
-## Domain-Specific UX Notes for v1.1
+## Implementation Notes by Feature Area
 
-### Wellbeing Score Display Standards
+### Institution CRUD
 
-SWEMWBS (7-item, range 7-35):
-- Low wellbeing: 7.0 – 19.5 (bottom ~15% UK population)
-- Average wellbeing: 19.5 – 27.5
-- High wellbeing: 27.5 – 35.0 (top ~15% UK population)
-- UK population mean: approximately 26 (adults, non-clinical)
+- Slug: auto-generate from `name` on creation (`slugify(name)`); treat as immutable after first set (changing slug breaks existing kiosk QR codes). Admin can override if auto-generate conflicts.
+- `statsJson` refresh: trigger recompute on institution-contributor link add/remove via a small SQL aggregation, write back to `statsJson`. Not a live query on the public endpoint.
+- CM role can manage institutions. Admin can manage all. Contributors cannot see this UI.
+- Route pattern: `GET/POST /api/admin/institutions`, `PUT /api/admin/institutions/:id`, `PATCH /api/admin/institutions/:id/status`
 
-UCLA Loneliness Scale 3-item (range 3-12):
-- Lower scores = less lonely (good)
-- Scores 3-5: low loneliness
-- Scores 6-9: moderate loneliness
-- Scores 10-12: high loneliness
+### Institution-Contributor Link Table
 
-Source: [Frontiers SWEMWBS Categorisation 2025](https://www.frontiersin.org/journals/psychiatry/articles/10.3389/fpsyt.2025.1674009/full), [WEMWBS User Guide Warwick](https://warwick.ac.uk/fac/sci/med/research/platform/wemwbs/using/howto/)
-
-### Kiosk Mode Implementation Pattern
-
-Recommended approach: URL param + React Context (not MDM or OS-level locking).
-
-1. `?kiosk=true` on any route sets `kioskMode: true` in a `KioskContext` stored in `sessionStorage` (not `localStorage` — clears on tab close).
-2. `KioskProvider` wraps the app and reads the param on mount.
-3. `useKioskIdle` hook uses `react-idle-timer` v5: 10-minute idle threshold, `onIdle` shows modal with 60-second countdown, `onPresenceChange` resets timer.
-4. On countdown expiry: call `logout()`, clear `sessionStorage`, navigate to `/`.
-5. Navbar: `useKiosk()` hides "Install App" and "Enable Notifications" buttons.
-6. QR codes: institutions print `https://app.indomitable-unity.org?kiosk=true` — no backend change needed.
-
-Source: [react-idle-timer npm](https://www.npmjs.com/package/react-idle-timer), [OWASP Session Management](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
-
-### VANTAGE Typed Client Module Pattern
-
-The existing `apiClient` function uses httpOnly cookies (browser context only). VANTAGE calls are server-to-server.
-
-Recommended pattern:
-- Create `packages/vantage-client/` or `packages/web/src/api/vantage/` — a collection of typed async functions that accept an auth token as a parameter.
-- Each function signature mirrors an existing REST endpoint, using types from `@indomitable-unity/shared`.
-- Auth: add `Authorization: Bearer <token>` header support to `apiClient` (currently only supports cookie auth). Alternatively, create a separate `apiClientWithToken(path, token, options)` variant.
-- No code generation needed — shared types already exist in `packages/shared/src/types/`.
-
-Example pattern (confirmed against existing codebase):
-```typescript
-// packages/web/src/api/vantage/challenges.ts
-import type { ChallengeFeedResponse } from "@indomitable-unity/shared";
-
-export async function listChallenges(token: string, filters?: { domain?: string; type?: string }): Promise<ChallengeFeedResponse> {
-  // calls apiClientWithToken('/api/challenges', token, { method: 'GET', ... })
-}
+```sql
+institution_contributors (
+  id              uuid primary key,
+  institution_id  uuid FK institutions.id ON DELETE CASCADE,
+  contributor_id  uuid FK contributors.id ON DELETE CASCADE,
+  linked_at       timestamptz DEFAULT now(),
+  UNIQUE (institution_id, contributor_id)
+)
 ```
 
-Source: [Type-Safe API Clients TypeScript 2026](https://oneuptime.com/blog/post/2026-01-30-typescript-type-safe-api-clients/view), [Patterns for Consuming REST APIs TypeScript](https://codewithstyle.info/typescript-dto/)
+No extra fields needed at this stage. A contributor can belong to multiple institutions (e.g., referred by two different libraries). CM adds/removes links via UI.
 
-### Challenger Portal Architecture Note
+### iThink Webhook Receiver
 
-The challenger portal requires the most new backend work. Existing challenge creation is CM-only (requires `cm` role). Challengers need a separate flow:
+- Endpoint: `POST /api/webhooks/ithink`
+- Auth: HMAC-SHA256 on raw request body; shared secret stored in env var `ITHINK_WEBHOOK_SECRET`
+- Timestamp header required; reject if > 5 minutes old (replay protection)
+- Dedup: INSERT into `webhook_events(event_id, source, received_at, payload)` with unique constraint on `event_id`; catch PG 23505 unique violation and return HTTP 200 (idempotent acknowledgement)
+- Payload shape (iThink contract): `{ event_id, institution_id, signal_type, cohort_size, flagged_count, timestamp }` — validated with Zod; any per-contributor field causes schema rejection
+- After successful dedup check: INSERT into `institution_attention_signals`
+- Return 200 immediately after dedup insert; process signal write asynchronously if needed
 
-Option A: New `challenger` role with restricted permissions (can only see/edit own challenges, cannot access contributor data).
-Option B: Guest submission form — no auth required, challenge goes to draft state, CM reviews and publishes.
+### PDF Impact Report
 
-Option B is simpler to build and reduces org onboarding friction. Option A enables better tracking and follow-up. Decision should be made based on whether Kirk wants challengers to have accounts.
+- Library: `@react-pdf/renderer` v4 server-side (supports Node.js 18+; fits existing stack; lighter than Puppeteer/headless Chrome; no extra infra needed)
+- Route: `GET /api/admin/institutions/:id/report.pdf` — CM/admin JWT auth required
+- Query params: `from` and `to` date range (default: past 90 days)
+- Content: institution name, city, date range, total linked contributors, active contributors (logged hours in period), total hours, total challenges participated in, wellbeing band (if >= 5 contributors have check-ins in period, show aggregate band; otherwise omit with note)
+- Streaming response: `res.setHeader('Content-Type', 'application/pdf')`, pipe `renderToStream(doc)` directly — do not buffer in memory
+- Do not store PDFs — generate on demand; no S3 needed for this feature
 
-The `/impact/challenger` route and `ChallengerView` page already exist as stubs or partial implementations — this should be audited before building new pages.
+### CM Attention View
 
----
-
-## Competitor / Comparator Feature Analysis
-
-| Feature | Catalant | Expert360 | Toptal | Indomitable Unity v1.1 Target |
-|---------|----------|-----------|--------|-------------------------------|
-| Org challenge/project submission | Self-service | Self-service | Vetting-gated | Self-service (challenger portal, P2) |
-| Wellbeing / impact measurement | None | None | None | SWEMWBS + UCLA with charts (differentiator) |
-| Kiosk / institutional embedding | None | None | None | Kiosk mode with QR codes (unique) |
-| AI agent integration | None | None | None | VANTAGE typed modules (unique) |
-| Dashboard on login | Rich (projects, activity, earnings) | Rich | Rich | Currently empty — fixing in v1.1 |
-| Navigation | Persistent top nav | Persistent top nav | Persistent top nav | Currently incomplete — fixing in v1.1 |
-
-No comparator platforms have wellbeing measurement, kiosk mode, or AI agent integration. These remain genuine differentiators. The UX gaps (nav, dashboard, affordances) are table stakes that all comparators have — closing these is urgent for credibility.
+- Route: `/cm/institutions/:id/attention` (new protected React route, CM role only)
+- Data source: `institution_attention_signals` ordered by `receivedAt DESC`, limited to last 30 signals
+- Display per signal: timestamp, `flaggedCount / cohortSize`, `signalType` label, age ("3 days ago")
+- No individual contributor names anywhere in this view — cohort aggregate only
+- Badge count on institution list: count of signals received in last 30 days per institution
 
 ---
 
 ## Sources
 
-- [WEMWBS Score Interpretation and Cut Points — Warwick](https://warwick.ac.uk/fac/sci/med/research/platform/wemwbs/using/howto/)
-- [Frontiers Psychiatry: SWEMWBS Score Categorisation 2025](https://www.frontiersin.org/journals/psychiatry/articles/10.3389/fpsyt.2025.1674009/full)
-- [WEMWBS User Guide (Warwick/Edinburgh)](http://www.mentalhealthpromotion.net/resources/user-guide.pdf)
-- [Recharts npm — 3.6M weekly downloads, TypeScript-first](https://recharts.org)
-- [LogRocket: Best React Chart Libraries 2025](https://blog.logrocket.com/best-react-chart-libraries-2025/)
-- [react-idle-timer npm v5.7.x](https://www.npmjs.com/package/react-idle-timer)
-- [OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
-- [Kiosk Marketplace: UX Rules for Kiosk Interfaces](https://www.kioskmarketplace.com/blogs/critical-user-experience-rules-for-designing-kiosk-interfaces/)
-- [Hexnode: Kiosk Management Guide 2026](https://www.hexnode.com/blogs/the-definitive-guide-to-kiosk-management-and-strategy-2026-edition/)
-- [Type-Safe API Clients in TypeScript (OneUptime 2026)](https://oneuptime.com/blog/post/2026-01-30-typescript-type-safe-api-clients/view)
-- [Patterns for Consuming REST APIs in TypeScript (codewithstyle)](https://codewithstyle.info/typescript-dto/)
-- [Empty State UX Best Practices (Pencil & Paper)](https://www.pencilandpaper.io/articles/empty-states)
-- [Descope: Session Timeout Best Practices](https://www.descope.com/learn/post/session-timeout-best-practices)
-- Direct codebase audit: `packages/web/src/` (Navbar, Dashboard, ImpactDashboard, MyCircles, CircleFormationModal, WellbeingForm, App.tsx routing)
+- Codebase audit: `packages/server/src/db/schema.ts`, `routes/institutions.ts`, `routes/wellbeing.ts`, `routes/vantage.ts`, `middleware/api-key-auth.ts`
+- [@react-pdf/renderer npm](https://www.npmjs.com/package/@react-pdf/renderer) — v4.3.2, 860k weekly downloads, Node 18/20/21 tested (HIGH confidence)
+- [react-pdf.org compatibility](https://react-pdf.org/compatibility) — server-side confirmed (HIGH confidence)
+- [Prototyp Digital: Generating PDFs with React on the server](https://prototyp.digital/blog/generating-pdfs-with-react-on-the-server)
+- [Hookdeck: Implement Webhook Idempotency](https://hookdeck.com/webhooks/guides/implement-webhook-idempotency)
+- [Hookdeck: Deduplication Guide](https://hookdeck.com/docs/guides/deduplication-guide)
+- [Webhook Signature Verification patterns](https://apidog.com/blog/webhook-signature-verification/)
+- [Authgear: HMAC Signatures in Node.js](https://www.authgear.com/post/generate-verify-hmac-signatures)
+- [PDF generation libraries comparison 2025](https://www.nutrient.io/blog/javascript-pdf-libraries/)
 
 ---
-
-*Feature research for: Indomitable Unity v1.1 — UX overhaul, wellbeing visualisation, kiosk mode, challenger portal, VANTAGE integration*
-*Researched: 2026-03-15*
+*Feature research for: Indomitable Unity v1.2 — Institution Management & iThink Integration*
+*Researched: 2026-03-21*

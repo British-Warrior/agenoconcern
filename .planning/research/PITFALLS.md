@@ -1,9 +1,11 @@
 # Pitfalls Research
 
-**Domain:** Adding kiosk mode, challenger portal, API key auth, nav overhaul, and AI agent integration to existing Node.js/React social enterprise platform (v1.1)
+**Domain:** Adding institution management, PDF reports, webhook integration, and CM attention views to existing Node.js/PostgreSQL platform (v1.2)
 **Project:** Indomitable Unity
-**Researched:** 2026-03-15
-**Confidence:** HIGH — all pitfalls grounded in the actual v1.0 codebase (`packages/server/src/`, `packages/web/src/`); research verified against official sources and current security reports.
+**Researched:** 2026-03-21
+**Confidence:** HIGH — all pitfalls grounded in the actual v1.1 codebase (`packages/server/src/`, `packages/web/src/`); research verified against official PostgreSQL documentation, official Node.js `crypto` module, and current security guidance.
+
+> **Scope note:** This file covers v1.2 pitfalls only. v1.1 pitfalls (kiosk cache leaks, enum migration strategy, MCP auth scope, dual auth path divergence, challenger PII exposure) are in the previous version of this file. Phase references use v1.2 phase naming.
 
 ---
 
@@ -11,127 +13,300 @@
 
 ---
 
-### Pitfall 1: React Query Cache Leaks Personal Data Between Kiosk Users
+### Pitfall 1: Adding `institution_id` FK to `contributors` While Live Data Exists
 
 **What goes wrong:**
-When user A logs out at a library terminal and user B logs in, TanStack Query's in-memory `QueryClient` still holds user A's data. Keys like `["me"]`, `["impact", "summary"]`, `["wellbeing", "due"]`, `["circles"]`, and `["challenges"]` all survive a logout if only `queryClient.invalidateQueries()` is called. The current `logoutMutation.onSuccess` in `useAuth.ts` calls `queryClient.setQueryData(["me"], null)` and `queryClient.invalidateQueries({ queryKey: ["me"] })` — but it does NOT clear the rest of the cache. User B may briefly see user A's name, dashboard state, or wellbeing data during the re-render cycle before their own data loads.
+The `contributors` table already contains active data (pilot contributors). Adding a `FOREIGN KEY (institution_id) REFERENCES institutions(id)` constraint in a single `ALTER TABLE` statement will perform a full table scan to validate every existing row. During that scan, Postgres holds an `AccessShareLock` that blocks writes to `contributors`. More critically, existing rows all have `NULL` for `institution_id` — if the FK column is added as `NOT NULL` without a default, the migration fails immediately on a non-empty table. If added as nullable, the FK is satisfied (nulls are always valid for FKs), but the migration still locks the table during validation.
+
+For the `institutions` table, `statsJson` is currently seeded JSONB (`{ contributors: 0, challenges: 0, hours: 0 }`). When live aggregation replaces it, any code path that still reads `statsJson` will return stale zeros for institutions with real contributors assigned. Both the public landing page (`GET /api/institutions/:slug`) and any CM dashboard will silently serve stale data during the migration window.
 
 **Why it happens:**
-Developers treat logout as an auth-state change and only invalidate the identity query. In a personal-device context this is acceptable — all other queries will re-fetch and replace. In a kiosk (shared-device) context, the previous user's data in any cached key is a data leakage event, even if it appears for only a second.
+Developers write the Drizzle schema change, run `drizzle-kit generate`, and apply the migration without reading the generated SQL. The generated SQL will contain `ALTER TABLE contributors ADD COLUMN institution_id UUID REFERENCES institutions(id)` — a single statement that validates immediately on the full table. The stale JSONB problem happens because the code switch (from `statsJson` read to SQL aggregate) and the schema change (adding the FK column) are deployed separately without a data-consistency contract between them.
 
 **How to avoid:**
-In the `logoutMutation.onSuccess` callback (or in a dedicated kiosk logout handler), call `queryClient.clear()` instead of `queryClient.invalidateQueries()`. This removes all cached query data, not just the `["me"]` key. For kiosk mode, also set `gcTime: 0` on any query whose data is user-specific, so nothing is retained after the component unmounts.
+Use the two-step `NOT VALID` / `VALIDATE CONSTRAINT` pattern for the FK:
+
+```sql
+-- Step 1: Add column and constraint WITHOUT validating existing rows (no table scan)
+ALTER TABLE contributors ADD COLUMN institution_id UUID;
+ALTER TABLE contributors
+  ADD CONSTRAINT contributors_institution_id_fkey
+  FOREIGN KEY (institution_id) REFERENCES institutions(id)
+  NOT VALID;
+
+-- Step 2: Validate existing rows separately (uses SHARE UPDATE EXCLUSIVE lock — allows reads and writes)
+ALTER TABLE contributors VALIDATE CONSTRAINT contributors_institution_id_fkey;
+```
+
+Write this as a named manual SQL migration script (following the established pattern in `packages/server/scripts/`), not via `drizzle-kit push`. The `NOT VALID` step completes in milliseconds. The `VALIDATE CONSTRAINT` step acquires a weaker lock — concurrent reads and writes to `contributors` continue while it runs.
+
+For the JSONB-to-live-aggregation transition: keep `statsJson` populated and readable throughout v1.2. Do not remove the `statsJson` column. Add the live aggregation query as an alternative code path, behind a feature flag or a new endpoint (`GET /api/institutions/:slug/stats/live`). Switch the public landing page to the live query only after verifying correctness against known seed values. Remove `statsJson` in v1.3 or later.
 
 **Warning signs:**
-- After logout and re-login as a different user, the old user's name briefly appears in the welcome heading
-- `["wellbeing", "due"]` returns `true` for a brand-new user who has never checked in (stale from previous user)
-- Any query keyed to a contributor ID (circles, impact) returns data for the wrong person on the first render
+- Migration file contains `ALTER TABLE contributors ADD COLUMN institution_id UUID REFERENCES institutions(id)` as a single statement (no `NOT VALID`)
+- Migration script adds the FK column as `NOT NULL` without a `DEFAULT` or backfill step
+- The `GET /api/institutions/:slug` route reads `institution.statsJson` after live aggregation has been deployed
+- No integration test asserts that institution stats match the count of assigned contributors
 
-**Phase to address:** Kiosk Mode phase
+**Phase to address:** Institution Management phase — FK migration must be the first task, reviewed as SQL before execution
 
 ---
 
-### Pitfall 2: Kiosk Auto-Logout Navigates Without Clearing HttpOnly Cookies
+### Pitfall 2: iThink Webhook Receiver Using String `===` for Signature Comparison
 
 **What goes wrong:**
-An idle-timeout auto-logout fires JavaScript that navigates to `/login` or calls `window.location.assign('/login')`, but the `access_token` and `refresh_token` HttpOnly cookies set by the Express server persist in the browser. The next user who arrives at the terminal can silently re-authenticate as the previous user by refreshing the page, because the client code in `client.ts` will call `POST /api/auth/refresh` and get a new access token if the refresh cookie is still valid.
+The HMAC-SHA256 signature verification for incoming iThink webhooks compares the expected and received signatures using JavaScript string equality (`===`). This is vulnerable to a timing attack: an adversary who can send many requests can measure the microsecond difference between "first byte mismatch" (fast return) and "all bytes match" (slow return) to incrementally reconstruct the expected signature. The attack requires many thousands of requests but is feasible against a predictable endpoint.
+
+The existing `api-key-auth.ts` middleware already uses `crypto.timingSafeEqual` correctly for API key validation. The webhook receiver must follow the same pattern — but it will likely be written as new code by a different developer without awareness of this pattern being established elsewhere.
 
 **Why it happens:**
-JavaScript cannot read or delete HttpOnly cookies — they are by design inaccessible to script. Developers implement the idle timer entirely in the browser, navigate to `/login`, and assume the user is logged out. The cookie lifecycle is only managed by the server via `Set-Cookie` headers with `Max-Age=0`.
+Developers write `if (computedSig === receivedSig) { ... }` because it reads naturally. The timing vulnerability is not visible in normal testing and does not appear in any TypeScript type error or runtime warning.
 
 **How to avoid:**
-The kiosk idle-timeout MUST call `POST /api/auth/logout` via the existing `authApi.logout()` before any navigation. This endpoint must set `Set-Cookie: access_token=; Max-Age=0` and `Set-Cookie: refresh_token=; Max-Age=0` in its response. Never implement kiosk logout as a client-only navigation. After the server call succeeds, then navigate. Also ensure the `access_token` cookie has a short `Max-Age` (15 minutes) as defence-in-depth for cases where the server call fails.
+Use `crypto.timingSafeEqual` from Node.js's built-in `crypto` module — the same approach already used in `api-key-auth.ts`:
+
+```typescript
+import { createHmac, timingSafeEqual } from "node:crypto";
+
+function verifyWebhookSignature(
+  payload: Buffer,      // raw request body as Buffer — do NOT use parsed JSON
+  receivedSig: string,  // from X-IThink-Signature header
+  secret: string,
+): boolean {
+  const expected = createHmac("sha256", secret)
+    .update(payload)
+    .digest("hex");
+
+  const expectedBuf = Buffer.from(expected, "hex");
+  const receivedBuf = Buffer.from(receivedSig, "hex");
+
+  if (expectedBuf.length !== receivedBuf.length) return false;
+  return timingSafeEqual(expectedBuf, receivedBuf);
+}
+```
+
+Critical: compute the HMAC over the **raw request body bytes**, not the JSON-parsed object. Use `express.raw({ type: 'application/json' })` on the webhook route — not `express.json()`. Parsing JSON before signature verification corrupts the byte sequence (key ordering, whitespace) and makes the signature check fail even for valid requests.
 
 **Warning signs:**
-- Idle timer callback calls `navigate('/login')` or `window.location.assign(...)` without first awaiting a `POST /api/auth/logout`
-- After kiosk timeout, pressing Back takes the next user directly into the previous session
-- An automated test that calls `GET /api/auth/me` after client-side-only logout still receives 200
+- Webhook route uses `express.json()` middleware upstream of the signature check
+- Signature comparison uses `===`, `.equals()`, or any string comparison method
+- No test that intentionally sends a wrong-signature webhook and asserts 401
 
-**Phase to address:** Kiosk Mode phase
+**Phase to address:** Webhook Receiver phase — signature verification written as first function, tested before any flag-processing logic is added
 
 ---
 
-### Pitfall 3: Adding "challenger" Enum Value Without an Explicit Migration Strategy
+### Pitfall 3: Webhook Replay Attacks — No Timestamp Window or Idempotency Check
 
 **What goes wrong:**
-Adding `"challenger"` to the `contributorRoleEnum` in `schema.ts` and running `drizzle-kit push` alters the Postgres `contributor_role` enum type. In Postgres, `ALTER TYPE ... ADD VALUE` executes outside a transaction — it cannot be rolled back. If the deployment fails after the migration but before the new code is deployed, the database has a value (`"challenger"`) that no running server process knows how to handle. The existing `requireRole` middleware does strict equality (`req.contributor.role !== role && req.contributor.role !== "admin"`) — an unknown role will pass or fail silently depending on context, with no `default: throw` branch.
+An attacker (or a misconfigured iThink retry mechanism) replays a previously captured valid webhook. If the IU server has no timestamp check and no idempotency check, the same "needs attention" flag fires repeatedly, creating duplicate entries in the `attention_flags` table, sending duplicate CM notifications, and — if the CM has already cleared the flag — re-surfacing it as unresolved.
+
+This is distinct from signature verification: a replayed webhook has a valid signature because it was a real request. Signature verification alone does not prevent replay.
 
 **Why it happens:**
-Adding an enum value feels trivial. In development, `drizzle-kit push` handles it silently. In production the irreversibility of `ADD VALUE` is not obvious until you need to roll back.
+Webhook replay protection is a second-order concern. Developers build the happy path (receive webhook, verify signature, store flag, notify CM), verify it works once, and move on. Replay protection requires an additional DB lookup or cache check that slows down the happy path.
 
 **How to avoid:**
-Write a named Drizzle migration file (do not use `push` for production schema changes). Review the generated SQL — confirm it contains `ALTER TYPE contributor_role ADD VALUE 'challenger'`. Plan for irreversibility: once deployed, you cannot remove the value. Update `requireRole` to explicitly handle `"challenger"` and add a `default` branch that returns 403 for any unrecognised role string. Gate every challenger-only endpoint with `requireRole("challenger")` — not an absence-of-role check or inline string comparison. JWT tokens issued before the migration will contain `"contributor"` — challengers who log in after the server deploys but with old tokens will need to re-authenticate (tokens expire naturally, but force re-login for the challenger account type at first access).
+Implement both layers:
+
+1. **Timestamp window:** Require a `X-IThink-Timestamp` header (Unix epoch seconds). Reject any request where `|server_time - webhook_timestamp| > 300` (5 minutes). This alone covers the vast majority of replay scenarios without any DB lookup.
+
+2. **Idempotency key:** Require a `X-IThink-Delivery-Id` (UUID or opaque string) header. Store processed delivery IDs in the database with a `processed_at` timestamp. Before processing, check: `SELECT 1 FROM webhook_deliveries WHERE delivery_id = $1`. If found, return 200 immediately without side effects. This covers the edge case where iThink legitimately retries a delivery that timed out (the response never reached iThink, but IU processed it).
+
+The `webhook_deliveries` table needs only: `delivery_id (varchar PK)`, `processed_at (timestamptz)`, `source (varchar)`. A scheduled cleanup job can delete rows older than 30 days.
 
 **Warning signs:**
-- `drizzle-kit push` used for production migrations
-- No migration file — schema diff applied directly
-- `requireRole` has no `default` branch for unknown roles
-- Challenger-only routes use inline `req.contributor.role === "challenger"` checks scattered across route handlers
+- Webhook handler has no timestamp header validation
+- No `webhook_deliveries` or equivalent idempotency table in the migration plan
+- Calling the same webhook endpoint twice with the same payload produces two rows in `attention_flags`
 
-**Phase to address:** Challenger Portal phase — must be the first task before any challenger-specific routes are written
+**Phase to address:** Webhook Receiver phase — idempotency table added in the same migration as the webhook handler is deployed
 
 ---
 
-### Pitfall 4: MCP Tool Handlers Have No Auth Scope — VANTAGE Can Act as Any Contributor
+### Pitfall 4: Parsing iThink Webhook Payload Without Schema Validation
 
 **What goes wrong:**
-The current MCP tool stubs in `packages/server/src/tools/` accept a `contributor_id` UUID as a direct parameter (e.g., `get_contributor_profile({ contributor_id })`). When VANTAGE calls these tools, it passes whatever contributor ID it has in context. If the MCP server does not verify that the API key used to authenticate VANTAGE is scoped to that specific `contributor_id`, any VANTAGE instance (or a compromised key) can read or write data for any contributor by supplying an arbitrary UUID.
+The IU server receives a JSON body from iThink, destructures it with `const { contributorId, institutionId, severity, screeningType } = req.body`, and stores the values directly in `attention_flags`. If iThink changes their payload shape (adds fields, renames a field, changes a type), the IU server silently stores `undefined` for required fields, or crashes on type errors, or — if `contributorId` is absent — creates an unlinked attention flag with a null FK that violates the constraint.
+
+The same pattern caused problems with VANTAGE response parsing in v1.1 (flagged in v1.1 pitfalls). Cross-app integration is the highest-risk surface for contract drift because iThink and IU are maintained independently.
 
 **Why it happens:**
-MCP tool schemas are designed for convenience — parameters make it easy to pass any ID. The existing REST routes are protected by `authMiddleware` which reads `req.cookies.access_token`, but MCP tools call `getDb()` directly and have no equivalent auth check. The MCP server (`mcp-server.ts`) currently has no authentication layer at all.
+Developers trust the sender — iThink is Kirk's own app. Because the contract is "known", no validation is added. When iThink evolves, the IU webhook handler breaks silently.
 
 **How to avoid:**
-When implementing MCP tools for VANTAGE, enforce at the tool handler level that the `contributor_id` parameter matches the contributor scope stored against the API key in the database. The key lookup is: `SELECT scoped_contributor_id FROM api_keys WHERE key_hash = hash(presented_key)`. If `contributor_id != scoped_contributor_id`, return `isError: true` with code `FORBIDDEN`. Never accept the agent's claimed ID as the authorization signal — always verify against the server-side key record.
+Parse every incoming iThink webhook payload through a Zod schema before touching any field:
+
+```typescript
+import { z } from "zod";
+
+const iThinkWebhookSchema = z.object({
+  contributorId: z.string().uuid(),
+  institutionId: z.string().uuid(),
+  severity: z.enum(["low", "medium", "high"]),
+  screeningType: z.string().min(1),
+  triggeredAt: z.string().datetime(),
+});
+
+const parseResult = iThinkWebhookSchema.safeParse(req.body);
+if (!parseResult.success) {
+  // Log the parse error with full detail — this surfaces contract drift immediately
+  console.error("[webhook] iThink payload schema mismatch:", parseResult.error);
+  res.status(400).json({ error: "Invalid webhook payload" });
+  return;
+}
+```
+
+On parse failure, return 400 so iThink retries. Log the Zod error in full — schema mismatches caught early prevent silent data corruption.
 
 **Warning signs:**
-- MCP tool handlers call `getDb()` without first resolving an auth context from the call's credentials
-- The only `contributor_id` check is the one passed by the agent as a parameter
-- An API key is issued with no `scoped_contributor_id` or with a wildcard scope
-- No key expiry date stored in the database
+- Webhook handler destructures `req.body` without Zod validation
+- No test sends a malformed/incomplete iThink payload and asserts 400
+- `contributorId` or `institutionId` is written to the DB without being validated as a UUID
 
-**Phase to address:** VANTAGE Integration phase — auth scope enforcement must be built before any tool returns real data
+**Phase to address:** Webhook Receiver phase — Zod schema defined and tested before handler logic
 
 ---
 
-### Pitfall 5: Dual Auth Paths (Cookie JWT + API Key) Create Divergent Permission Checks
+### Pitfall 5: Contributor-Institution Matching in Webhook Handler Using Unverified Caller-Supplied IDs
 
 **What goes wrong:**
-Adding `X-API-Key` authentication alongside the existing cookie-based `authMiddleware` creates two paths that must both correctly populate `req.contributor` in the same shape. If one path is added as an `if/else` branch inside the existing middleware, the role checks, rate limits, and audit logging diverge. A request that fails the cookie path may silently succeed via the API key path without going through role guards. Audit logs become ambiguous — you cannot distinguish a human contributor action from a VANTAGE agent action.
+The iThink webhook payload contains `contributorId` and `institutionId` as supplied by iThink. The IU webhook handler takes these at face value and creates an attention flag for that contributor at that institution. An adversary who can craft a valid webhook (by obtaining the shared secret, or before the secret is rotated after a breach) can flag any contributor at any institution — including contributors who have no relationship with that institution.
+
+This creates false positives in the CM attention view and — more seriously — could expose a contributor's "needs attention" status to a CM at an institution they are not enrolled in.
 
 **Why it happens:**
-Developers add API key support by modifying `authMiddleware` inline: `if (req.headers['x-api-key']) { ... } else { // original cookie path }`. This feels like the simplest change but conflates two separate concerns.
+After signature verification passes, developers consider the payload trusted. But a signed payload only proves it came from a system that holds the secret — it does not prove the claimed IDs are valid or that the relationships are legitimate.
 
 **How to avoid:**
-Create a standalone `apiKeyMiddleware` that independently resolves `req.contributor` in exactly the same shape as `authMiddleware` does (same `{ id, role }` interface). Apply this middleware only to the VANTAGE-facing routes (`/api/vantage/*` or a dedicated route group). Do not modify `authMiddleware`. Apply express-rate-limit to API key routes with a separate, lower ceiling than the user-facing routes. Log API key requests with the key ID (not the raw key, and not just the contributor ID) so agent calls can be distinguished from human calls in audit logs.
+After signature verification, verify the relationship before storing the flag:
+
+```typescript
+// Check that the contributor is actually enrolled at the claimed institution
+const enrollment = await db
+  .select({ id: contributors.id })
+  .from(contributors)
+  .where(
+    and(
+      eq(contributors.id, payload.contributorId),
+      eq(contributors.institutionId, payload.institutionId),
+    )
+  )
+  .limit(1);
+
+if (!enrollment.length) {
+  // Log as suspicious — signed but relationship invalid
+  console.warn("[webhook] iThink: contributor-institution mismatch", payload);
+  res.status(400).json({ error: "Contributor not enrolled at institution" });
+  return;
+}
+```
+
+This check costs one indexed DB lookup per webhook and prevents cross-institution data leakage even if the shared secret is compromised.
 
 **Warning signs:**
-- A single middleware function contains both `req.cookies.access_token` and `req.headers['x-api-key']` conditions
-- No rate limiting on API key endpoints separate from user-facing rate limiting
-- API keys stored as plain text in the database
-- Audit logs contain contributor ID but no `key_id` or `auth_method` field
+- Webhook handler stores `attention_flags` rows without verifying the contributor-institution FK exists
+- No test sends a valid-signature webhook with a mismatched contributor/institution pair
 
-**Phase to address:** VANTAGE Integration phase (API key auth sub-task, completed before any VANTAGE endpoint goes live)
+**Phase to address:** Webhook Receiver phase — relationship check added before any DB write in the handler
 
 ---
 
-### Pitfall 6: Challenger Portal Returns Contributor PII or Wellbeing Data to Organisations
+### Pitfall 6: PDF Generation Blocking the Express Event Loop
 
 **What goes wrong:**
-When building the challenger portal, a developer adds "useful context" to challenge outcome responses — contributor names, contact details, or wellbeing scores. The current `GET /api/impact/challenger` is safe (returns only `problemSummary`, `recommendations`, `rating`). But the challenger portal is likely to be extended with "who worked on my challenge?" or "how is the circle doing?" queries. Circles are small (3–4 members). Even aggregate wellbeing scores for a group that small are not k-anonymous — an organisation can identify individuals from contextual signals.
+PDF generation for institution impact reports is synchronous-heavy work (data aggregation + layout computation + font rendering). Implementing it as a direct Express route handler (`res.json(await generatePdf(institutionId))`) blocks the Node.js event loop for the duration of generation. While PDF generation is in progress, every other request to the server queues. For a report covering 12 months of contributor activity across 50 contributors, generation may take 2–10 seconds. Server-observed latency for all other endpoints spikes during this window.
+
+At pilot scale (1 CM, 3–5 institutions), this is infrequent but noticeable. The problem is architectural — fixing it after the fact requires extracting PDF generation into a worker or queue.
 
 **Why it happens:**
-Developers think from the challenger's perspective and include "helpful" data. The data exists in the database; it is easy to join. The risk to contributors is not visible to the person writing the query.
+PDFKit and pdfmake are synchronous/stream-based and do not yield to the event loop. Developers test with tiny datasets (1 contributor, 1 challenge) where generation takes <100ms, and the blocking behaviour is invisible. Production data volumes reveal it.
 
 **How to avoid:**
-Define a strict data boundary enforced at the API level: challengers can see aggregated metrics (resolution status, average rating, circle count) but never individual contributor identities, contact details, or any wellbeing-derived data. The existing `ChallengerImpact` shared type must not contain any PII fields. Write a backend integration test that asserts every challenger-scoped endpoint returns a response that passes a schema check for absence of `email`, `name`, `phoneNumber`, `uclaScore`, `wemwbsScore` fields.
+Use Node.js `worker_threads` to offload PDF generation off the main event loop. The worker receives serialised report data (plain JSON), generates the PDF buffer, and posts it back. The Express handler awaits the worker result without blocking other requests. Alternatively, stream the PDF directly to the response using PDFKit's streaming API — this does not eliminate CPU blocking but reduces the time-to-first-byte and avoids holding large buffers in memory.
+
+For v1.2 at pilot scale, streaming to response is acceptable. Do not use Puppeteer/headless Chrome for this use case — it adds 300–500MB memory per concurrent render, requires Chromium system dependencies, and inflates Docker image size by 1–1.5 GB for what is a simple structured data report. PDFKit is the correct tool.
+
+Set an explicit timeout on the PDF route (`req.setTimeout(30_000)`) so a runaway generation does not hold the connection open indefinitely.
 
 **Warning signs:**
-- Any challenger endpoint JOINs the `contributors` table without explicitly excluding PII columns
-- Response types for challenger-facing endpoints extend or reuse the general `Contributor` type
-- VANTAGE tools that serve challenger context accept an `includeContributorDetails` flag
-- Wellbeing trajectory data is included in any challenger dashboard
+- PDF route handler is `async (req, res) => { const buf = await generatePdf(...); res.send(buf); }` — no worker or streaming
+- Puppeteer/Playwright is in `package.json` for PDF generation
+- No timeout set on the PDF route
+- Test uses a dataset of 1–2 contributors (masks the blocking problem)
 
-**Phase to address:** Challenger Portal phase — data boundary test written before any endpoint ships
+**Phase to address:** PDF Reports phase — architecture decision (streaming vs worker) made before writing any PDF generation code
+
+---
+
+### Pitfall 7: CM Attention View Has No Access Scope — Any CM Sees All Flagged Contributors
+
+**What goes wrong:**
+The CM attention view lists contributors flagged as needing attention. If the query is `SELECT * FROM attention_flags WHERE cleared_at IS NULL ORDER BY flagged_at DESC`, any authenticated CM sees flags for all institutions. In a multi-institution deployment (even at pilot scale with 3–5 institutions), a CM at one institution should not see contributor attention flags for a different institution.
+
+This is a repeat of the challenger PII boundary problem from v1.1 — the data exists, the query is easy to write, and the access boundary is easy to omit.
+
+**Why it happens:**
+Single-institution pilot testing means "all flags" is always "my institution's flags" during development. The boundary is not visible until a second institution is added.
+
+**How to avoid:**
+The CM's institution assignment must be resolved at authentication time and scoped in every attention-flag query:
+
+```typescript
+// Resolve CM's institution from the DB on every request (not from the JWT)
+const cmInstitution = await db
+  .select({ institutionId: contributors.institutionId })
+  .from(contributors)
+  .where(eq(contributors.id, req.contributor!.id))
+  .limit(1);
+
+if (!cmInstitution[0]?.institutionId) {
+  res.status(403).json({ error: "CM is not assigned to an institution" });
+  return;
+}
+
+const flags = await db
+  .select()
+  .from(attentionFlags)
+  .where(
+    and(
+      eq(attentionFlags.institutionId, cmInstitution[0].institutionId),
+      isNull(attentionFlags.clearedAt),
+    )
+  );
+```
+
+Do not store the institution ID in the JWT — it can become stale if the CM is reassigned. Always resolve from the database at request time.
+
+**Warning signs:**
+- Attention flag query has no `institutionId` filter
+- CM's institution scope comes from a JWT claim rather than a live DB lookup
+- No integration test that creates two institutions, assigns a CM to one, and asserts the CM cannot see flags from the other
+
+**Phase to address:** CM Attention View phase — institution scope filter written as the first line of the query before any UI is built
+
+---
+
+### Pitfall 8: Shared iThink Webhook Secret Stored in Source Code or Committed to Git
+
+**What goes wrong:**
+The HMAC secret used to verify iThink webhook signatures is a symmetric pre-shared key. If it is stored in `packages/server/src/config/env.ts` as a fallback default, or checked into `.env` files committed to the repository, the secret is permanently exposed in git history. Rotating the key requires both sides (IU and iThink) to update simultaneously — if they drift, webhooks fail silently.
+
+**Why it happens:**
+Developers add `ITHINK_WEBHOOK_SECRET=dev-secret-here` to the `.env.example` and accidentally commit the actual `.env` file, or hard-code a fallback value for local development.
+
+**How to avoid:**
+- Add `ITHINK_WEBHOOK_SECRET` to `getEnv()` with no fallback — the server must not start if the variable is absent
+- Verify `.gitignore` covers `.env` and `.env.local` before the webhook phase begins
+- Store the production secret in the deployment environment variables only (not in any file that could be committed)
+- Document the key rotation procedure: iThink updates their outbound signing secret, IU updates the environment variable and redeploys — both changes must be coordinated and deployed within the same maintenance window to avoid a gap where webhooks fail
+
+**Warning signs:**
+- `ITHINK_WEBHOOK_SECRET` has a fallback value in `getEnv()` (e.g., `process.env.ITHINK_WEBHOOK_SECRET || "dev-secret"`)
+- `.env` file is not in `.gitignore` (run `git check-ignore -v .env` to verify)
+- The secret appears in any script, seed file, or migration file
+
+**Phase to address:** Webhook Receiver phase — environment variable added to `getEnv()` with no fallback before any webhook code is written
 
 ---
 
@@ -139,13 +314,13 @@ Define a strict data boundary enforced at the API level: challengers can see agg
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Reuse `ProtectedRoute` for kiosk routes, add kiosk props | Avoids a new component | Kiosk logic bleeds into general auth flow; hard to strip out later | Never — kiosk needs its own route wrapper |
-| Store API keys unhashed in the database | Simple SELECT to validate | Single DB dump exposes all VANTAGE integrations permanently | Never |
-| Add API key check as a branch inside `authMiddleware` | One file to change | Audit trail merges human and agent traffic; role checks diverge silently | Never for production; acceptable for a one-day spike |
-| Use `drizzle-kit push` to add challenger enum value in production | Faster than writing a migration | Postgres enum ADD VALUE is irreversible; cannot be rolled back on bad deploy | Never in production |
-| `queryClient.invalidateQueries()` on kiosk logout instead of `.clear()` | Less disruptive render | Previous user's cached data survives until GC; PII data leakage window | Never for kiosk; fine for personal-device use |
-| Return contributor names in challenger portal for "team context" | Better UX for challengers | GDPR data minimisation violation; potential ICO complaint | Never — use anonymous team references if needed |
-| Hard-code VANTAGE REST base URL in environment variable with no health check | Simple | When VANTAGE changes their endpoint, silent failures; no early-warning system | Acceptable for MVP phase only; add `/vantage/health` probe before phase ends |
+| Add FK constraint without `NOT VALID` | Simpler migration file | Full table lock on `contributors` during migration; downtime if table is large | Never in production with live data |
+| Keep `statsJson` JSONB after live aggregation is deployed | No backfill needed | Landing page and CM dashboard serve stale zeros for real institutions | Acceptable for one release cycle (v1.2); must be removed in v1.3 |
+| PDF generation inline in route handler (no worker) | Simple code | Blocks event loop for all concurrent requests during generation; fixes require architectural refactor | Acceptable at pilot scale (1 CM, infrequent reports) if streaming is used; must be revisited at scale |
+| Use Puppeteer for PDF reports | Pixel-perfect HTML rendering | 300–500MB per concurrent render, 1–1.5 GB Docker image bloat, orphaned Chrome processes under failure | Never — PDFKit or pdfmake is the correct choice for structured data reports |
+| Store iThink webhook secret with a hardcoded fallback | Works in local dev without `.env` | Secret permanently in git history; cannot rotate without code change | Never |
+| CM attention view with no institution scope filter | Works for single-institution pilot | Second institution added → all CMs see all flags; requires emergency hotfix | Never — scope filter costs one indexed DB lookup and must be there from day one |
+| Webhook handler without idempotency check | Simpler handler | Duplicate flags on retry; CM sees resolved issues resurface | Never — `webhook_deliveries` table is small and the check is cheap |
 
 ---
 
@@ -153,14 +328,13 @@ Define a strict data boundary enforced at the API level: challengers can see agg
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| VANTAGE REST API | Calling VANTAGE endpoints directly from route handlers with no timeout | Wrap all outbound calls in a service class with `AbortController` timeout (5 s default); return a structured fallback on timeout |
-| VANTAGE REST API | Trusting VANTAGE response shape without validation | Parse every VANTAGE response through a Zod schema before using any field; surface parse failures as 502 with a structured error log |
-| VANTAGE REST API | Issuing a long-lived API key with no expiry | Store keys with `expiresAt` in the database; VANTAGE must re-authenticate when a key expires; alert operations 7 days before expiry |
-| MCP tools | `NOT_IMPLEMENTED` stubs have `isError: true` — forgetting to remove this flag when implementing | Add a CI lint rule: grep for `NOT_IMPLEMENTED` in `packages/server/src/tools/`; fail the build if found after the VANTAGE phase begins |
-| Kiosk idle timer | `useEffect` idle timer fires twice in React Strict Mode (dev), masking bugs | Use a single `useRef` to hold the `setTimeout` handle; cancel in cleanup; always test in a production build |
-| Nav overhaul and `ProtectedRoute` | Adding new routes (kiosk, challenger) without updating the onboarding redirect | `ProtectedRoute` currently redirects any `contributor.status === "onboarding"` user to `/onboarding/upload` unless path `startsWith("/onboarding")`. New `/kiosk/*` and `/challenger/*` paths must be added to the exclusion list. |
-| Recharts / wellbeing charts | Mapping raw UCLA score (3–12) and WEMWBS score (7–35) directly to chart axes | Users aged 50–75 cannot interpret psychometric scale numbers; always label axes with human meaning ("Feeling connected" ↔ "Feeling isolated"), not raw integers |
-| Recharts | Rendering a line chart with exactly one data point | Recharts renders a single invisible dot with no line; handle `data.length === 1` explicitly with a fallback card component |
+| iThink webhook inbound | Parsing `req.body` as JSON before HMAC verification | Use `express.raw({ type: 'application/json' })` on the webhook route; pass raw Buffer to HMAC; parse JSON only after signature is verified |
+| iThink webhook inbound | Computing HMAC over `JSON.stringify(req.body)` instead of raw bytes | The stringified JSON may differ in key order and whitespace from what iThink sent; always HMAC the raw request body Buffer |
+| iThink webhook inbound | Using `===` for signature comparison | Use `crypto.timingSafeEqual` — the pattern is already established in `api-key-auth.ts`; copy it |
+| iThink → IU contributor matching | Trusting `contributorId` in webhook payload without DB verification | After signature passes, verify `contributors.institutionId = payload.institutionId` before writing any flag |
+| Institution stats migration | Switching `GET /api/institutions/:slug` to live aggregation in one deploy | Deploy live aggregation as a new field alongside `statsJson`; verify parity; then switch the field the response uses; never remove `statsJson` in the same deploy that adds live aggregation |
+| PDF report streaming | Setting `Content-Type: application/pdf` without `Content-Disposition` | Without `Content-Disposition: attachment; filename="report.pdf"`, browsers render the PDF inline, which breaks on mobile; always set both headers |
+| PDF report | Generating report with no data guard | An institution with zero contributors produces an empty PDF or a division-by-zero in percentage calculations; add explicit empty-state handling before PDF generation begins |
 
 ---
 
@@ -168,10 +342,10 @@ Define a strict data boundary enforced at the API level: challengers can see agg
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| N+1 query in `GET /api/impact/challenger` | Each challenge triggers 3 sequential DB calls (circle → resolution → rating) inside `Promise.all`; parallelised per challenge but still O(n) round trips | Rewrite as a single JOIN query before challenger traffic grows | ~20 active challengers each with 5+ challenges; currently acceptable for pilot scale |
-| `queryClient.clear()` on every kiosk logout | Next user sees simultaneous loading spinners on every dashboard widget | Accept the correctness; optimise with skeleton UIs and `staleTime: 0` so re-fetches are fast | Not a scale concern; a UX concern on slow library connections |
-| Charting entire wellbeing history with no pagination | `GET /wellbeing/history` returns all check-ins for a contributor | Safe to ignore for v1.1 (56-day intervals = ~6 points/year); add limit only if trajectory exceeds 100 points | ~16 years of continuous use per contributor |
-| `staleTime: 0` in kiosk QueryClient triggers refetch on every window focus | Kiosk terminal with screen saver regaining focus hammers the API repeatedly | Set `refetchOnWindowFocus: false` on the kiosk QueryClient instance | Any terminal with frequent focus-blur cycles |
+| Live institution stats aggregation runs on every `GET /api/institutions/:slug` request | Public landing page becomes slow when called from kiosk home screen on institution load | Compute stats with `COUNT(DISTINCT contributor_id)` + indexed `institution_id` column; add `institution_id` index before deploying live aggregation | At ~500 page loads/day per institution; not a pilot concern but index is cheap to add now |
+| PDF generation blocks event loop (no worker/streaming) | All API calls to the server stall for 2–10 seconds when a CM generates a report | Stream PDF to response using PDFKit's `doc.pipe(res)` pattern; set `res.setTimeout(30_000)` | Every concurrent report generation; visible at single-CM pilot scale on slow report datasets |
+| N+1 query in CM attention view (fetching contributor details per flag row) | CM attention view is slow with 10+ flagged contributors | JOIN `attention_flags` with `contributors` in a single query; do not loop over flags fetching contributor data individually | ~10 flagged contributors; visible in pilot |
+| Attention flag cleared/uncleared polling on CM dashboard | CM dashboard refetches attention flags every 30 seconds (polling) and hits the server repeatedly | Acceptable at pilot scale; mark as known tech debt; add WebSocket or SSE in v1.3 if near-real-time is required | ~5 concurrent CMs polling; not a pilot concern |
 
 ---
 
@@ -179,12 +353,13 @@ Define a strict data boundary enforced at the API level: challengers can see agg
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| API keys stored as plain text in database | Single DB dump exposes every VANTAGE integration permanently | Hash keys with SHA-256 (or bcrypt for slow comparison); store only the hash; show the raw key once at creation, then never again |
-| No rate limiting on API key endpoints | Misconfigured or runaway VANTAGE agent exhausts the DB connection pool | Apply `express-rate-limit` to `/api/vantage/*` with a ceiling lower than user-facing routes; add per-key rate tracking |
-| Kiosk mode activating on the standard `/login` URL | A library computer bookmarked to `/login` gets kiosk behaviour unexpectedly; or vice versa, kiosk computer misses kiosk protections | Kiosk mode must only activate when the user navigates to an explicit `/kiosk/login` path; standard `/login` must never enter kiosk mode |
-| Challenger sees wellbeing aggregates for small circles | Circle membership of 3–4 people is below k-anonymity threshold; aggregate scores identify individuals | Never expose any wellbeing-derived data to challengers, even aggregated — remove from all challenger-facing endpoints and types |
-| GDPR consent record on kiosk machine lacks session context | Consent records for special-category wellbeing data submitted at a library terminal cannot be reliably linked to the correct device context for future audits | Add a `sessionContext: "kiosk"` flag to consent records created in kiosk mode; log terminal identifier if available |
-| MCP tool descriptions are mutable and not version-pinned | If VANTAGE connects to a compromised or updated MCP server, altered tool descriptions could instruct it to exfiltrate data (tool poisoning — documented CVE pattern as of 2025) | Pin and version all tool schemas; validate tool descriptions at server startup against a known-good manifest; do not allow dynamic tool registration at runtime |
+| String `===` comparison for HMAC webhook signatures | Timing attack allows adversary to reconstruct signing secret incrementally | Always use `crypto.timingSafeEqual` with Buffer comparison; never compare HMAC strings with `===` |
+| No timestamp window on incoming webhooks | Replayed webhooks fire flags indefinitely | Reject webhooks where `Math.abs(Date.now()/1000 - webhookTimestamp) > 300` |
+| No idempotency check on webhook delivery | Duplicate flags on iThink retry; cleared flags resurface | Store processed `delivery_id` values in `webhook_deliveries` table; check before processing |
+| CM sees attention flags outside their institution | Contributor "needs attention" status exposed to wrong organisation | Always filter `attention_flags` by CM's institution ID resolved from DB — never from JWT |
+| `institution_id` stored in JWT claim | If CM is reassigned, stale JWT grants access to wrong institution's data until token expiry | Resolve CM's `institution_id` from DB on every request; do not embed in JWT |
+| iThink webhook secret in `.env` committed to git | Secret permanently exposed; webhooks can be forged by anyone with repo access | Add `ITHINK_WEBHOOK_SECRET` to `getEnv()` with no fallback; verify `.gitignore` before writing webhook code |
+| PDF report endpoint accessible to contributors | Contributors generate impact reports for institutions they are not assigned to | PDF report route must require `community_manager` role via `requireRole("community_manager")` |
 
 ---
 
@@ -192,27 +367,28 @@ Define a strict data boundary enforced at the API level: challengers can see agg
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Kiosk idle timeout shown as a small corner notification | Users aged 50–75 miss it; they lose unsaved work without warning | Show a large central modal countdown (60 seconds), with a high-contrast "I'm still here" button and explicit "Logging you out to keep your information secure" explanation |
-| Navigation overhaul uses icon-only sidebar | Professionals in this demographic are not familiar with icon-only navigation conventions | Use text labels alongside every nav icon; never rely on icon recognition alone for primary navigation in this audience |
-| Challenger portal shows any wellbeing-related metrics | Organisations may misinterpret psychometric data as team performance indicators; contributors lose trust when they learn their health data reached their employer | Remove all wellbeing data from challenger-facing views entirely — not just labelled differently, but absent from responses |
-| Dashboard empty states show blank panels with no prompt | New contributors see an empty page and do not understand what the platform does | Every empty state needs a primary action: "Browse open challenges", "Post your first challenge", "Complete your profile" |
-| Wellbeing chart renders with a single data point | Recharts draws a single invisible dot — looks like a broken chart to all users | Detect `data.length === 1` and render a styled single-point callout card with the date and a message: "Your first check-in — return in 8 weeks to see your progress" |
-| Kiosk session-end screen displays the previous user's name | Data leakage; could embarrass the previous user in a semi-public space | Kiosk session-end screen shows only: "Session ended. Your information has been cleared. Please log in to start a new session." — no personal data of any kind |
+| CM attention view shows raw flag severity codes (`"high"`, `"medium"`) without explanation | CM does not know what action to take | Show human-readable flag descriptions: "Screening suggests this contributor may benefit from a wellbeing check-in" — not raw severity strings |
+| CM "clear flag" action gives no confirmation | CM accidentally clears a flag that was not followed up | Require a confirmation step: "Mark as followed up — this cannot be undone without iThink raising a new flag" |
+| CM dashboard shows "0 contributors" for an institution during the JSONB-to-live-aggregation transition | CM loses confidence in the data | Keep `statsJson` populated and readable until live aggregation is verified; show a "Live" badge only after parity is confirmed |
+| PDF report takes 5–10 seconds with no progress indicator | CM thinks the button did nothing and clicks again (triggering duplicate generation) | Show a loading spinner with "Generating report..." immediately on click; disable the button while in progress |
+| Institution management page allows CM to assign contributors without confirming | Accidental assignment of wrong contributor to institution | Require a review step: "Assign [Name] to [Institution]?" with confirm/cancel before writing to DB |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Kiosk logout:** Verify `queryClient.clear()` is called (not `invalidateQueries`) AND `POST /api/auth/logout` completes before navigation — check the network tab
-- [ ] **Cookie clearing on logout:** After `POST /api/auth/logout`, confirm the response `Set-Cookie` header contains `Max-Age=0` for both `access_token` and `refresh_token`
-- [ ] **Kiosk idle timer:** Verify the timer resets on mouse move, keyboard events, AND touch events — not mouse only (keyboard-only navigation is common for this demographic)
-- [ ] **API key hashing:** Query the `api_keys` table directly and confirm stored values are not reversible to raw key strings
-- [ ] **Challenger role gate:** Write a test that calls every challenger-only endpoint with a `contributor` role JWT and asserts 403 — not a 200 with empty data
-- [ ] **MCP tool stubs:** Grep `packages/server/src/tools/` for `NOT_IMPLEMENTED` — assert zero results before VANTAGE integration ships
-- [ ] **VANTAGE response parsing:** Confirm all VANTAGE API responses pass through a Zod schema — grep for `.json()` calls in VANTAGE service code without a `.parse()` chain
-- [ ] **Challenger data isolation:** Write an integration test that calls `GET /api/impact/challenger` and `GET /api/vantage/challenger/*` with a challenger JWT and asserts the response body contains no `email`, `phoneNumber`, `uclaScore`, or `wemwbsScore` fields
-- [ ] **ProtectedRoute new route exclusion:** Test with an `onboarding`-status contributor navigating to `/kiosk/login` and `/challenger/*` — confirm they are NOT redirected to `/onboarding/upload`
-- [ ] **Wellbeing chart single point:** Render `WellbeingChart` with `data.length === 1` in development — confirm no empty/broken chart renders; fallback card appears
+- [ ] **FK migration:** Confirm the generated SQL contains `NOT VALID` — run `psql -c "\d contributors"` after migration and verify the FK constraint exists
+- [ ] **FK validation step:** Confirm a separate `VALIDATE CONSTRAINT` migration exists and has been run — the constraint marked `NOT VALID` is not enforcing historical rows until this runs
+- [ ] **Webhook signature:** Send a test webhook with a wrong signature to the IU endpoint and assert HTTP 401 — a wrong-signature request must never reach the handler body
+- [ ] **Webhook raw body:** Confirm the webhook route uses `express.raw()` not `express.json()` — send a webhook where JSON key order differs from the iThink canonical format and assert signature still passes
+- [ ] **Replay protection:** Send the same webhook payload twice with the same `X-IThink-Delivery-Id` — assert the second call returns 200 but creates no new `attention_flags` row
+- [ ] **Timestamp window:** Send a webhook with a timestamp 10 minutes in the past — assert HTTP 401
+- [ ] **Contributor-institution relationship check:** Send a valid-signature webhook with a `contributorId` not enrolled at the claimed `institutionId` — assert HTTP 400
+- [ ] **CM scope:** Log in as CM for Institution A; call `GET /api/cm/attention-flags`; assert no flags from Institution B appear in the response
+- [ ] **PDF route auth:** Call `GET /api/institutions/:id/report` with a contributor (non-CM) JWT — assert HTTP 403
+- [ ] **PDF empty state:** Generate a PDF report for an institution with zero contributors — assert no crash, a "No contributors assigned" empty state renders cleanly
+- [ ] **iThink payload validation:** Send a webhook with a missing `contributorId` field — assert HTTP 400 with a Zod-derived error, not a 500 crash
+- [ ] **Stats parity:** After deploying live aggregation, call both the old `statsJson` field and the new live query for a seeded institution — assert the counts match
 
 ---
 
@@ -220,12 +396,12 @@ Define a strict data boundary enforced at the API level: challengers can see agg
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Kiosk cache leak discovered in production | LOW | Deploy `queryClient.clear()` fix; no data migration needed; document the specific session window in an incident report for GDPR accountability |
-| HttpOnly cookie persists after kiosk timeout | MEDIUM | Shorten `access_token` `Max-Age` to 15 minutes server-side as immediate mitigation; deploy proper logout fix; audit access logs for anomalous same-IP / same-user-agent dual-session requests |
-| Challenger enum deployed without reversible migration | HIGH | `ALTER TYPE ADD VALUE` cannot be undone; forward-migrate by deploying new code that handles the value; force re-login for all challenger accounts (token refresh on next request will issue correct role claim); update all role guards before re-opening the routes |
-| API key stored in plaintext — discovered post-breach | HIGH | Rotate all keys immediately; re-issue to all VANTAGE integrations; conduct a log audit for key usage since issuance; assess GDPR breach notification obligation (72-hour ICO window) |
-| Challenger endpoint returned contributor PII | HIGH | Take the endpoint offline; audit all previous responses via server logs; notify affected contributors under GDPR Article 33; fix data boundary; redeploy with integration test coverage |
-| VANTAGE contract drift — endpoint returns unexpected shape | MEDIUM | Zod parse failure surfaces as a server-side 502; add a monitoring alert on VANTAGE parse error rate; maintain a VANTAGE integration test suite that runs weekly against the VANTAGE sandbox; pin to a named API version if VANTAGE offers versioned endpoints |
+| FK added without `NOT VALID` — table lock caused downtime | MEDIUM | `ALTER TABLE contributors DROP CONSTRAINT ...`; re-add with `NOT VALID`; schedule `VALIDATE CONSTRAINT` in a low-traffic window; document the downtime in incident log |
+| `statsJson` removed before live aggregation verified — landing pages return null stats | HIGH | Restore from backup or re-seed `statsJson` from a manual DB query; re-deploy the old code path while live aggregation is debugged; never remove a JSONB column in the same deploy as adding its live replacement |
+| Webhook secret committed to git | HIGH | Rotate the secret immediately (coordinate with iThink); run `git filter-repo` to purge the secret from history; treat all webhooks received between commit and rotation as potentially forged; audit `attention_flags` for suspicious entries |
+| Duplicate attention flags from webhook replay | LOW | Delete duplicates with `DELETE FROM attention_flags WHERE id NOT IN (SELECT MIN(id) FROM attention_flags GROUP BY contributor_id, institution_id, screening_type)`; add idempotency check before re-opening the endpoint |
+| CM saw another institution's attention flags | HIGH | Assess GDPR breach notification obligation (contributor wellbeing-adjacent data shared without authorisation); fix scope filter; audit access logs to determine what data was visible and to whom; notify affected contributors if exposure was meaningful |
+| PDF generation blocking the server — runaway report hold | MEDIUM | Add `req.setTimeout(30_000)` as immediate mitigation; restart server to clear held connections; refactor to streaming or worker in next sprint |
 
 ---
 
@@ -233,30 +409,32 @@ Define a strict data boundary enforced at the API level: challengers can see agg
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| React Query cache leaks between kiosk users | Kiosk Mode | Integration test: log out user A, log in user B, assert no user A data survives in any query cache key |
-| Kiosk auto-logout not clearing cookies | Kiosk Mode | After idle timeout, call `GET /api/auth/me` with the previous cookies — assert 401 |
-| Challenger enum without rollback-safe migration | Challenger Portal — first task | CI: drizzle-kit generate produces explicit SQL reviewed before merge; staging deploy verified before production |
-| MCP tools accepting any contributor_id without scope check | VANTAGE Integration | Unit test: call MCP tool with a `contributor_id` that does not match the API key's scope — assert `isError: true` |
-| Cookie JWT and API key paths diverging silently | VANTAGE Integration | Integration test: send a request with both a valid cookie and a valid API key — verify only one auth path executes and the audit log records `auth_method` |
-| Challenger seeing contributor PII or wellbeing data | Challenger Portal | Integration test: challenger JWT calls every challenger endpoint — response schema check asserts no PII fields present |
-| ProtectedRoute trapping new routes in onboarding redirect | UX Overhaul / Navigation | E2E test: onboarding-status contributor navigating to `/kiosk/login` and `/challenger/*` is not redirected to `/onboarding/upload` |
-| Kiosk idle timer missing touch and keyboard events | Kiosk Mode | Manual test on a touch-capable device; keyboard-only navigation test with no mouse |
-| Wellbeing chart broken with single data point | UX Overhaul / Dashboard | Storybook story: `WellbeingChart` with `data.length === 1` renders fallback card, not empty chart |
-| VANTAGE contract drift breaking response parsing | VANTAGE Integration | Scheduled integration test against VANTAGE sandbox (weekly); alert fires on any Zod parse failure in VANTAGE service |
+| FK migration without `NOT VALID` — table lock | Institution Management — first migration task | Run migration on a copy of production data; confirm no downtime; verify constraint in `\d contributors` |
+| JSONB stats stale after live aggregation deployed | Institution Management — stats transition | Integration test: seeded institution stats match live aggregate count |
+| String `===` for webhook signature comparison | Webhook Receiver — first function written | Unit test: wrong signature returns 401; inspect code for absence of `===` on signature strings |
+| No raw body on webhook route | Webhook Receiver | Send webhook with canonical vs. non-canonical JSON; both must pass |
+| No timestamp window | Webhook Receiver | Send webhook with timestamp 10 min in past; assert 401 |
+| No idempotency check | Webhook Receiver | Send same delivery ID twice; assert second creates no DB row |
+| Caller-supplied IDs not verified against relationship | Webhook Receiver | Send valid-signature webhook with mismatched IDs; assert 400 |
+| CM scope not filtered by institution | CM Attention View — first query written | Two-institution integration test; CM A cannot see CM B's flags |
+| iThink payload schema drift — no Zod validation | Webhook Receiver | Send malformed payload; assert 400 not 500 |
+| PDF blocking event loop | PDF Reports — architecture decision | Generate PDF while load test sends concurrent requests; assert median latency < 500ms for non-PDF endpoints |
+| Webhook secret in git | Webhook Receiver — environment variable setup | `git log --all -p | grep ITHINK_WEBHOOK_SECRET`; assert zero results |
+| PDF endpoint missing role guard | PDF Reports | Call PDF endpoint with contributor JWT; assert 403 |
 
 ---
 
 ## Sources
 
-- Codebase direct inspection (v1.0): `packages/server/src/middleware/auth.ts`, `packages/server/src/tools/index.ts`, `packages/web/src/hooks/useAuth.ts`, `packages/server/src/db/schema.ts`, `packages/server/src/routes/impact.ts`, `packages/server/src/routes/wellbeing.ts`, `packages/web/src/App.tsx`, `packages/web/src/components/layout/ProtectedRoute.tsx`
-- MCP security: [MCP Security Vulnerabilities — Practical DevSecOps](https://www.practical-devsecops.com/mcp-security-vulnerabilities/) (2026); [State of MCP Server Security 2025 — Astrix](https://astrix.security/learn/blog/state-of-mcp-server-security-2025/); [Top 6 MCP Vulnerabilities — Descope](https://www.descope.com/blog/post/mcp-vulnerabilities)
-- Kiosk session security: [Kiosk Mode — Ensuring Security for Public Computers](https://kioskindustry.org/kiosk-mode-2023/); [How to Secure Public-Facing Devices — Limaxlock](https://limaxlock.com/blog/how-to-secure-public-devices-kiosk-browser/)
-- TanStack Query cache management: [Persisting your React Query cache — New Orbit](https://www.neworbit.co.uk/blog/post/persisted-react-query-cache/); [TanStack Query persistQueryClient docs](https://tanstack.com/query/v4/docs/framework/react/plugins/persistQueryClient)
-- RBAC and broken access control: [A01 Broken Access Control — OWASP Top 10:2025](https://owasp.org/Top10/A01_2021-Broken_Access_Control/); [Authorization Cheat Sheet — OWASP](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
-- AI agent integration pitfalls: [Overcoming Challenges in AI Agent Integration — Knit](https://www.getknit.dev/blog/overcoming-the-hurdles-common-challenges-in-ai-agent-integration-solutions); [Versioning AI Agents — CIO](https://www.cio.com/article/4056453/why-versioning-ai-agents-is-the-cios-next-big-challenge.html)
-- API key security: [API Security in the AI Era — CSA](https://cloudsecurityalliance.org/blog/2025/09/09/api-security-in-the-ai-era); [Node.js API Security Best Practices — StackHawk](https://www.stackhawk.com/blog/nodejs-api-security-best-practices/)
-- Charting libraries: [tremor/react vs recharts npm trends](https://npmtrends.com/@tremor/react-vs-chart.js-vs-d3-vs-echarts-vs-plotly.js-vs-recharts)
+- Codebase direct inspection (v1.1): `packages/server/src/db/schema.ts`, `packages/server/src/middleware/api-key-auth.ts`, `packages/server/src/middleware/auth.ts`, `packages/server/src/routes/institutions.ts`, `packages/server/src/routes/impact.ts`, `packages/server/scripts/create-institutions-table.mjs`
+- PostgreSQL FK `NOT VALID`: [Migrating Foreign Keys in PostgreSQL — Thomas Skowron](https://thomas.skowron.eu/blog/migrating-foreign-keys-in-postgresql/); [Postgres: Adding Foreign Keys With Zero Downtime — Travis North](https://travisofthenorth.com/blog/2017/2/2/postgres-adding-foreign-keys-with-zero-downtime); [PostgreSQL ALTER TABLE official docs](https://www.postgresql.org/docs/current/sql-altertable.html)
+- Drizzle ORM migration patterns: [8 Drizzle ORM Patterns for Clean, Fast Migrations — Medium](https://medium.com/@bhagyarana80/8-drizzle-orm-patterns-for-clean-fast-migrations-456c4c35b9d8)
+- HMAC webhook security: [Webhook Signature Verification — Hookdeck](https://hookdeck.com/webhooks/guides/how-to-implement-sha256-webhook-signature-verification); [Validating Webhook Deliveries — GitHub Docs](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries); [Webhook Security Best Practices — Svix](https://www.svix.com/resources/webhook-best-practices/security/)
+- Replay attack prevention: [Preventing Replay Attacks: Timestamps and Nonces — DoHost](https://dohost.us/index.php/2026/02/15/preventing-replay-attacks-implementing-timestamps-and-nonces-in-webhook-handlers/); [Replay Prevention — webhooks.fyi](https://webhooks.fyi/security/replay-prevention)
+- Webhook idempotency: [Handling Payment Webhooks Reliably — Medium](https://medium.com/@sohail_saifii/handling-payment-webhooks-reliably-idempotency-retries-validation-69b762720bf5); [Webhook Reliability Tricks — Medium](https://medium.com/@kaushalsinh73/top-7-webhook-reliability-tricks-for-idempotency-a098f3ef5809)
+- Node.js PDF generation: [Generating PDFs from HTML in Node.js — DEV Community](https://dev.to/digital_trubador/generating-pdfs-from-html-in-nodejs-and-why-i-stopped-using-puppeteer-4b3e); [The Hidden Cost of Headless Browsers — Medium](https://medium.com/@matveev.dina/the-hidden-cost-of-headless-browsers-a-puppeteer-memory-leak-journey-027e41291367); [Integrating PDF Generation into Node.js — Joyfill](https://joyfill.io/blog/integrating-pdf-generation-into-node-js-backends-tips-gotchas)
+- Denormalization migration: [Denormalization: Solution or Long-Term Trap? — Medium](https://rafaelrampineli.medium.com/denormalization-a-solution-for-performance-or-a-long-term-trap-6b9af5b5b831)
 
 ---
-*Pitfalls research for: Indomitable Unity v1.1 — kiosk mode, challenger portal, API key auth, navigation overhaul, VANTAGE agent integration*
-*Researched: 2026-03-15*
+*Pitfalls research for: Indomitable Unity v1.2 — institution management, iThink webhook integration, PDF reports, CM attention view*
+*Researched: 2026-03-21*

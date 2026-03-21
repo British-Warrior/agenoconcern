@@ -1,246 +1,238 @@
 # Project Research Summary
 
-**Project:** Indomitable Unity v1.1
-**Domain:** Social enterprise platform — expertise marketplace with wellbeing measurement, institutional embedding, and AI agent integration
-**Researched:** 2026-03-15
-**Confidence:** HIGH (stack additions and architecture grounded in direct codebase inspection; features HIGH for UX/visualisation, MEDIUM for kiosk/VANTAGE, LOW for challenger portal comparators)
+**Project:** Indomitable Unity v1.2
+**Domain:** Social enterprise platform — CM-facing operational tooling (institution management, PDF impact reports, iThink webhook integration, CM attention dashboard)
+**Researched:** 2026-03-21
+**Confidence:** HIGH
 
 ## Executive Summary
 
-Indomitable Unity v1.1 is an incremental milestone on top of a fully validated v1.0 MVP. The existing stack (Node.js/TypeScript, Express 4, React 19/Vite 6, PostgreSQL/Drizzle, TanStack Query, React Router 7, Stripe, jose, Tailwind v4) is locked and must not be replaced. Three lightweight additions cover all new capability requirements: `recharts ^3.8.0` for wellbeing visualisation, `react-idle-timer ^5.7.2` for kiosk session management, and `express-rate-limit ^8.3.1` for VANTAGE API protection. All other new capabilities — kiosk render mode, challenger portal, RBAC — are built using existing primitives already in the codebase.
+Indomitable Unity v1.2 adds a CM operational layer on top of a mature v1.1 platform. The core work is four interconnected feature clusters: institution management (CRUD and contributor-institution linkage), an iThink webhook integration (signed inbound webhooks that surface cohort-level wellbeing attention signals), a CM attention dashboard (actionable view of those signals), and an on-demand PDF impact report for funders. The codebase already has the institutions table, HMAC-SHA256 API key infrastructure, a Stripe webhook receiver pattern, and CM role middleware — v1.2 builds on all of these rather than introducing new architectural patterns.
 
-The recommended build order follows hard dependency chains: shared type and schema additions first (challenger role enum, new tables), then VANTAGE API key infrastructure (self-contained server addition), then the challenger portal (server routes before UI), then UX navigation (depends on all roles being defined), then kiosk mode (purely frontend, builds on cleaned-up AppShell). Crucially, 10 UX walkthrough fixes have no new dependencies and can be batched as a fast-track parallel track — they are P1 table-stakes that determine whether the product appears functional to new users.
+The recommended approach is to add a single nullable FK (`institution_id`) on the `contributors` table and build upward from there. All other v1.2 features depend on knowing which contributor belongs to which institution: the live stats replace static seeded JSONB, the webhook receiver resolves contributors by email against their institution, the attention dashboard scopes flags by the CM's institution, and the PDF report aggregates contributors linked to a given institution. Stack additions are minimal: `pdfkit ^0.18.0` for server-side PDF streaming, and `react-native-quick-crypto ^1.0.17` in iThink for HMAC signing of outbound webhooks. No new architectural patterns are required.
 
-The primary risks in v1.1 are security and data governance, not technical complexity. Four "never" patterns emerged consistently across all research files: API keys must never be stored in plaintext; cookie and API key auth paths must never be merged into a single middleware; kiosk logout must never be a client-side navigation without a server-side cookie-clearing POST; and challengers must never receive any wellbeing-derived data, even aggregated. Each of these has an irreversible recovery cost if shipped incorrectly. The challenger portal also carries the highest effort at roughly 3–4x the complexity of any other v1.1 feature, and should be deferred to its own phase, triggered only when a concrete organisational user is confirmed.
+The key risks are concentrated in the webhook integration and the FK migration. The FK must use PostgreSQL's `NOT VALID` / `VALIDATE CONSTRAINT` two-step pattern to avoid a write-blocking table scan on a live `contributors` table. The webhook receiver must use `crypto.timingSafeEqual` (not `===`) for HMAC comparison, verify timestamps to prevent replay, store idempotency keys, validate all payloads with Zod, and confirm the contributor-institution relationship before writing any flag — skipping any of these is either exploitable or causes silent data corruption. The CM attention view must always filter flags by the CM's institution ID resolved from the database at request time, never from a JWT claim, to prevent cross-institution data leakage.
+
+---
 
 ## Key Findings
 
 ### Recommended Stack
 
-The v1.0 stack is validated and stable. For v1.1, only three npm packages are added. `recharts ^3.8.0` is the correct React-native SVG charting library — 3.6M weekly downloads, React 19 and Tailwind v4 OKLCH-compatible, with `RadialBarChart` (gauge) and `AreaChart` (trend line) covering all wellbeing visualisation requirements. `react-idle-timer ^5.7.2` handles kiosk idle detection with hook-based API, cross-tab coordination, and touch/keyboard events built in. `express-rate-limit ^8.3.1` provides ESM-native, TypeScript-typed rate limiting for VANTAGE endpoints.
+The v1.0/v1.1 stack (Node.js/TypeScript, Express 4, React 19/Vite 6, PostgreSQL/Drizzle ORM, Tailwind v4, TanStack Query, React Router 7, jose) is validated and unchanged. v1.2 adds two packages and leverages existing built-ins.
 
-The shadcn/ui chart component is copy-pasted as source (no npm dependency) and API keys are generated using Node.js's built-in `crypto` module — zero new dependencies for either concern. All RBAC is handled by extending the existing `jose` JWT payload with `org_id` and `org_role` claims, with thin Express middleware guards — no policy engine required at 3-role scale.
+**Core additions:**
 
-**Core technologies (new for v1.1):**
-- `recharts ^3.8.0`: wellbeing gauges and trend charts — SVG reads Tailwind v4 CSS variables natively, React 19 confirmed compatible
-- `react-idle-timer ^5.7.2`: kiosk idle detection — hook-based, handles touch/keyboard/mouse, cross-tab coordination
-- `express-rate-limit ^8.3.1`: VANTAGE endpoint rate limiting — ESM-native, TypeScript included, no `@types/` package needed
-- `shadcn/ui chart primitives` (copy-paste, no npm): ChartContainer/ChartTooltip wrappers eliminating hand-rolled tooltip/legend styling
-- Node.js built-in `crypto`: API key generation and SHA-256 hashing — no new dependency
+- **pdfkit ^0.18.0** — server-side PDF generation — pure Node.js, ships ESM entry point (`js/pdfkit.es.js`), streams directly to Express response via `doc.pipe(res)`, no headless browser required. Recommended over `@react-pdf/renderer` (active ESM/`__dirname` breakage in ESM-first Node setups: open issues #2624, #2907, #3017 as of March 2026) and Puppeteer (300MB Chromium binary, 2–5s cold start per render, unacceptable for synchronous downloads).
+- **@types/pdfkit ^0.13.x** — TypeScript definitions for pdfkit (not bundled with the main package).
+- **react-native-quick-crypto ^1.0.17** (iThink only) — HMAC-SHA256 signing for outbound iThink webhooks — Margelo's JSI-based `node:crypto` drop-in; required because `expo-crypto` does not expose `createHmac`. Requires bare Expo workflow (`expo prebuild`), does not work in Expo Go.
+- **Node.js built-in `crypto`** — HMAC verification for incoming webhooks — already used for API key hashing; no new dependency.
+- **`express.raw()`** — already in `express-app.ts` for Stripe; the exact same pattern applies to the iThink webhook route.
 
-See `.planning/research/STACK.md` for full alternatives considered and version compatibility matrix.
+No new frontend libraries are needed in `packages/web`. The CM attention view and institution management UI use existing recharts, TanStack Query, and Tailwind v4.
+
+See `.planning/research/STACK.md` for full alternatives analysis and version compatibility matrix.
 
 ### Expected Features
 
-v1.1 adds five capability areas to the live v1.0 product. The 10 UX fixes are table stakes — they determine whether the platform appears functional to new users. No comparator platforms (Catalant, Expert360, Toptal) have wellbeing measurement, kiosk mode, or AI agent integration; these are genuine differentiators. The critical gap between comparators and v1.0 is that all comparators have persistent navigation and a functional dashboard — v1.0 currently has neither, making the UX overhaul the highest urgency work.
+**Must have (table stakes for v1.2 launch):**
 
-**Must have — v1.1 table stakes:**
-- Global navigation fix (dashboard + challenges links absent from Navbar) — users are stranded without it
-- Actionable dashboard (activity widgets) — empty dashboard destroys first-impression credibility
-- Wellbeing score context (score/max + colour band label) — raw numbers are meaningless without scale
-- Wellbeing trajectory line chart (Recharts) — longitudinal trend is the key impact evidence for funders
-- CM circles fix (created circles not visible to CM) — CMs cannot find circles they made
-- CM empty-state copy fix — wrong role context on the circles page
-- Clickable affordance audit (cursor, hover states) — affordance failures cause abandonment
-- Error message sanitisation (no raw UUIDs) — UUID in error message signals broken software
-- Edit Resolution button visual fix — broken resolution editing destroys core workflow trust
-- Circle formation member display fix — data integrity and trust issue
-- Wellbeing check-in nav link — feature is currently unreachable except via dashboard banner
-- Kiosk mode (idle timer + auto-logout + simplified nav) — required for institutional embedding
-- VANTAGE typed client modules + API auth strategy — VANTAGE cannot call cookie-auth endpoints
+- Institution-contributor link table (`institution_id` FK on `contributors`) — central dependency; every other feature is blocked without it
+- Institution list + create/edit/activate/deactivate (CM page and API endpoints) — CM operational control
+- Live stats on institution landing page (replace static `statsJson` JSONB with aggregated live queries) — stale zeros are unacceptable once real contributors are assigned
+- iThink webhook receiver with HMAC-SHA256 verification, timestamp window (5 min), idempotency dedup, Zod payload validation, and contributor-institution relationship check
+- `ithink_attention_flags` table and `webhook_deliveries` idempotency table — schema must exist before webhook receiver is deployed
+- CM attention view filtered to the CM's institution — actionable dashboard showing cohort-level signals from iThink
+- PDF impact report (headcount, challenges, hours, date range) — funder-facing deliverable, generated on demand and streamed, never stored in S3
 
-**Should have — competitive differentiators (post-validation):**
-- Challenger portal full flow — self-service org challenge submission; defer until first concrete org user confirmed
-- Challenger status tracking page — challenger visibility into challenge progress
-- Wellbeing benchmark line on chart (UK population average) — funder reporting context
+**Should have (v1.2.x after initial validation):**
 
-**Defer to v2+:**
-- Organisation SSO (NHS/local authority SAML/OIDC) — 3–6 month enterprise IT engagement
-- VANTAGE conversational UI as primary interface — needs usage data foundation
-- Contribution certificates (PDF export) — low priority vs core workflow fixes
-- Multi-institution admin dashboard — needs multiple live institution partners
+- Wellbeing aggregate in PDF (privacy threshold: min 5 contributors with check-ins in period; omit band otherwise)
+- Attention signal trend view (last N signals as list or mini-chart per institution)
+- Webhook secret rotation UI (allow admin to rotate `ITHINK_WEBHOOK_SECRET` without downtime via a transition window)
 
-See `.planning/research/FEATURES.md` for full prioritisation matrix and domain-specific UX notes (SWEMWBS/UCLA score thresholds).
+**Defer (v2+):**
+
+- Contributor-level wellbeing data visible to CM (GDPR impact assessment required first)
+- PDF scheduling and auto-delivery to institution contact email
+- Institution portal login (institutions access their own data without CM mediation)
+- Institution hierarchy / sub-institutions (scope creep; flat model with `city` field is sufficient)
+
+**Anti-features (do not build):**
+
+- Per-contributor iThink flags in the CM view — destroys the privacy-first contract; iThink sends cohort aggregates only; exposing individual flags creates GDPR special-category risk
+- Real-time webhook-to-CM dashboard push via WebSockets — signals are low-frequency; polling on page load is correct; WebSockets are premature optimisation here
+- Automated CM alerts on each webhook receipt — alert fatigue; CM should pull on demand with a badge count in nav
+
+See `.planning/research/FEATURES.md` for full feature dependency graph and prioritisation matrix.
 
 ### Architecture Approach
 
-v1.1 follows four architectural patterns determined by direct codebase inspection. Kiosk mode is a render-mode switch, not a separate build — URL path prefix `/kiosk/*` activates `KioskShell` instead of `AppShell`, same bundle, same API. VANTAGE API key auth is a standalone middleware applied to a separate `/api/v1/` route group, never merged with the existing cookie-based `authMiddleware`. The challenger role is added via a named Drizzle migration to the `contributor_role` PostgreSQL enum, and challenger routes sit under a dedicated `/api/challenger/` prefix with `requireRole("challenger")` guards. UX navigation overhaul adds a role-aware `Sidebar.tsx` and `MobileNavDrawer.tsx` without restructuring the existing AppShell contract.
+v1.2 follows the established server/web monorepo architecture with targeted, additive changes. The Express middleware chain already handles the critical webhook pattern: routes registered with `express.raw()` before `app.use(express.json())`, following the existing Stripe webhook mount. All new CM routes use `authMiddleware + requireRole("community_manager")` — no new middleware needed. The PDF component lives in `packages/server/src/pdf/` as a server-only concern, never imported into the web bundle. iThink remains a separate system that gains outbound webhook capability via a new `webhook.service.ts` with fire-and-forget dispatch semantics.
 
 **Major components:**
-1. `middleware/api-key-auth.ts` (NEW) — validates `X-API-Key` header for VANTAGE, completely separate from `authMiddleware`
-2. `routes/challenger.ts` (NEW) — challenger portal endpoints with atomic org+account registration
-3. `KioskShell.tsx` + `KioskContext.tsx` + `useInactivityLogout.ts` (NEW) — kiosk render mode and session management
-4. `Sidebar.tsx` + `MobileNavDrawer.tsx` + `NavLink.tsx` (NEW) — role-aware navigation
-5. `db/schema.ts` (MODIFIED) — challenger role enum value, `challenger_organisations` table, FK on `challenges`
-6. `shared/types/auth.ts` + `shared/schemas/challenger.ts` (MODIFIED/NEW) — type system extended for challenger role
 
-Recommended build order per ARCHITECTURE.md: shared types + DB migration → VANTAGE API → challenger portal → UX navigation → kiosk mode.
+1. **DB migrations** — `institution_id` FK on `contributors` (NOT VALID / VALIDATE pattern); `ithink_attention_flags` table with partial index on unresolved rows; `webhook_deliveries` idempotency table
+2. **Institution management** (`routes/institutions.ts` extended) — CM CRUD, contributor assignment, live stats aggregation replacing `statsJson` reads in `GET /api/institutions/:slug`
+3. **Webhook receiver** (`routes/webhooks.ts` new) — HMAC verification, timestamp window, idempotency check, Zod validation, relationship verification, flag insertion; mounted before `express.json()` in `express-app.ts`
+4. **PDF report route** (`routes/institutions.ts` extended) — aggregates 4 Drizzle queries, renders via pdfkit `doc.pipe(res)`, both `Content-Type` and `Content-Disposition` headers set
+5. **Attention routes** (`routes/attention.ts` new) — lists unresolved flags scoped to the CM's institution (DB-resolved, not JWT); marks flags resolved
+6. **CM attention dashboard** (`pages/attention/AttentionDashboard.tsx` new) — TanStack Query hooks, institution filter, confirm-before-resolve action
+7. **iThink webhook dispatch** (`src/services/webhook.service.ts` in iThink repo) — HMAC signing via react-native-quick-crypto, fire-and-forget from screening handler
 
-See `.planning/research/ARCHITECTURE.md` for full integration map, data flow diagrams, and anti-pattern documentation.
+**Recommended build order:** DB migrations → live stats aggregation → CM institution management → webhook receiver (IU) → webhook dispatch (iThink) → CM attention view → PDF report.
+
+See `.planning/research/ARCHITECTURE.md` for complete data flow diagrams, file-level change inventory, SQL schemas, and code patterns.
 
 ### Critical Pitfalls
 
-1. **React Query cache leaks personal data between kiosk users** — call `queryClient.clear()` (not `invalidateQueries()`) in kiosk logout handler. Recovery cost is HIGH if a leakage event is reported post-launch.
+1. **FK migration without `NOT VALID`** — plain `ALTER TABLE contributors ADD COLUMN institution_id UUID REFERENCES institutions(id)` performs a full table scan with write-blocking lock on a live table. Use the two-step `ADD CONSTRAINT ... NOT VALID` then `VALIDATE CONSTRAINT` pattern. Write the migration as a named manual SQL script; do not rely on drizzle-kit generated output.
 
-2. **Kiosk auto-logout not clearing HttpOnly cookies** — the idle timer MUST call `POST /api/auth/logout` server-side before any client navigation. JavaScript cannot delete HttpOnly cookies. A client-only navigate leaves the refresh token cookie intact, allowing the next user to silently re-authenticate as the previous person.
+2. **String `===` for HMAC webhook signature comparison** — timing attack allows incremental secret reconstruction. Use `crypto.timingSafeEqual` with Buffer comparison — the pattern is already in `api-key-auth.ts`; copy it exactly. Never compare HMAC hex strings with `===`.
 
-3. **Challenger enum added without a rollback-safe migration** — `ALTER TYPE ADD VALUE` in PostgreSQL executes outside a transaction and cannot be rolled back. Always use a named Drizzle migration file; never use `drizzle-kit push` for production. Plan for irreversibility before deploying.
+3. **No timestamp window or idempotency check on webhook receiver** — a valid replayed webhook creates duplicate attention flags or resurfaces resolved ones. Reject requests where `|server_time - webhook_timestamp| > 300s`; store processed `delivery_id` values in `webhook_deliveries` with a unique constraint before inserting any flag.
 
-4. **MCP tool handlers accept any `contributor_id` without scope check** — VANTAGE can act as any contributor if tool handlers do not verify the `contributor_id` parameter matches the API key's `scoped_contributor_id`. Enforce scope at tool handler level before any tool returns real data.
+4. **CM attention view without institution scope filter** — a query without `WHERE institution_id = cmInstitution` exposes contributor attention status to CMs at unrelated institutions. Resolve the CM's institution from the DB on every request (not from JWT). This is a GDPR-adjacent data leakage risk — recovery cost is HIGH (breach assessment, contributor notification).
 
-5. **Challenger portal returning contributor PII or wellbeing data** — circles have 3–4 members; aggregate wellbeing scores at that size are not k-anonymous and identify individuals. Never expose any wellbeing-derived data to challengers, even as aggregates. Write an integration test asserting absence of PII fields on every challenger-facing endpoint before it ships.
+5. **PDF generation blocking the Express event loop** — synchronous pdfkit layout blocks all concurrent requests for 2–10s on realistic datasets. Stream to response via `doc.pipe(res)` rather than buffering. Set `req.setTimeout(30_000)`. Test with a realistic dataset (50+ contributors), not a toy fixture of 1–2 records.
 
-See `.planning/research/PITFALLS.md` for full security mistake catalogue, technical debt patterns, and the "looks done but isn't" verification checklist.
+6. **iThink webhook secret in git** — add `ITHINK_WEBHOOK_SECRET` to `getEnv()` with no fallback; server must not start without it. Verify `.gitignore` before writing any webhook code.
+
+7. **Caller-supplied contributor/institution IDs not verified** — a signed payload only proves it came from a system holding the secret; it does not prove the claimed IDs represent a real relationship. After signature passes, query the DB to confirm `contributors.institution_id = payload.institutionId` before writing any flag.
+
+See `.planning/research/PITFALLS.md` for full prevention patterns, warning signs, the "Looks Done But Isn't" test checklist, and recovery strategies.
+
+---
 
 ## Implications for Roadmap
 
-Based on combined research, the following phase structure is recommended. The architecture's Phase A–E build order from ARCHITECTURE.md maps directly to phases, with UX fixes split into their own early phase because they have zero new dependencies and must ship to establish baseline product credibility.
+The feature dependency graph is unambiguous: the `institution_id` FK is the anchor for everything. The webhook integration has four distinct security layers that must all be present before go-live. The PDF report is self-contained and can be last. This suggests four phases with a clear build order.
 
-### Phase 1: UX Overhaul (10 Fixes)
+### Phase 1: Institution Data Foundation
 
-**Rationale:** Zero new dependencies — all 10 fixes use existing APIs, existing components, and CSS/logic changes only. They are parallelisable and fast. They fix table-stakes problems (missing nav, empty dashboard, broken affordances) that make the product appear non-functional to new users. Must ship before any institutional demos or external stakeholder access.
+**Rationale:** Every v1.2 feature depends on knowing which contributor belongs to which institution. This is a hard data dependency, not a preferred ordering. The FK migration must run and be verified before any route, UI, or downstream feature touches institution-contributor relationships. Live stats migration is included here because it uses the same FK column and must be deployed before the institution landing page can serve accurate data.
 
-**Delivers:** Functional navigation, actionable dashboard, readable wellbeing scores, correct CM experience, sanitised error messages, working resolution editing, correct circle formation data.
+**Delivers:** `institution_id` FK on `contributors` (NOT VALID + VALIDATE migrations); Drizzle schema updated; live aggregate stats replacing `statsJson` reads in `GET /api/institutions/:slug`; CM institution list, create, edit, activate/deactivate endpoints; institution-contributor assignment and removal endpoints and UI; CM institution management page.
 
-**Addresses:** All 10 P1 UX fix features from FEATURES.md.
+**Addresses:** Institution list view, create/edit form, activate/deactivate toggle, contributor-institution link management, live stats (all P1 table-stakes features from FEATURES.md).
 
-**Avoids:** ProtectedRoute new route exclusion pitfall (update exclusion list for `/kiosk/*` and `/challenger/*` before those phases ship).
+**Avoids:** FK table lock pitfall (NOT VALID migration reviewed as SQL before execution); stale JSONB stats pitfall (deploy live aggregation alongside `statsJson` field, verify parity against known seed values, cut over, never remove `statsJson` in the same deploy).
 
-**Research flag:** Skip — well-documented fixes with confirmed root causes from codebase audit.
+**Research flag:** Standard patterns — no phase-specific research needed. Migration pattern, route structure, and TanStack Query hooks all follow established v1.1 conventions.
 
-### Phase 2: Wellbeing Visualisation
+---
 
-**Rationale:** Adds `recharts` (the one non-trivial new dependency) against data already present in the API response. Self-contained — no backend changes. Ships quickly after Phase 1 and provides the key funder-facing impact evidence.
+### Phase 2: iThink Webhook Integration
 
-**Delivers:** Wellbeing trajectory line chart on ImpactDashboard, score interpretation labels (low/average/high per UK population norms), single-point fallback card.
+**Rationale:** The webhook receiver has five distinct security requirements that must all be in place before the endpoint is exposed. Making this a dedicated phase keeps the security checklist reviewable independently and allows the IU receiver to be tested with curl before iThink is modified. iThink dispatch changes are included here because they are useless without an IU receiver to accept them — the two sides must be co-developed and integration-tested together.
 
-**Uses:** `recharts ^3.8.0`, shadcn/ui chart primitives (copy-paste).
+**Delivers:** `ithink_attention_flags` table; `webhook_deliveries` idempotency table; `ITHINK_WEBHOOK_SECRET` in `getEnv()` with no fallback; `POST /api/webhooks/ithink` receiver with full security stack (raw body, timingSafeEqual, timestamp window, idempotency, Zod, relationship check); iThink-side `webhook_configs` SQLite table; CM config routes in iThink; `webhook.service.ts` with HMAC signing via react-native-quick-crypto; fire-and-forget dispatch from iThink screening handler.
 
-**Avoids:** Single-point Recharts pitfall (invisible dot — explicit fallback required); raw UCLA/SWEMWBS axis labels (always use human-readable labels for the 50-75 target demographic).
+**Addresses:** iThink webhook receiver endpoint, webhook event log/dedup, wellbeing signal storage (all P1 features from FEATURES.md).
 
-**Research flag:** Skip — recharts patterns are well-documented; shadcn chart examples map directly to requirements.
+**Avoids:** Timing attack (timingSafeEqual), replay attack (timestamp window + idempotency), schema drift (Zod validation on every payload), cross-institution spoofing (relationship check before any DB write), secret in git (no-fallback env var, gitignore verified before coding), raw-body mis-ordering (register before `express.json()`).
 
-### Phase 3: Shared Foundation (Types + DB Migration)
+**Research flag:** Patterns are well-documented (Stripe, GitHub, Svix all use HMAC-SHA256 + timestamp). The implementation has multiple layers that are individually simple and collectively easy to get partially wrong. The "Looks Done But Isn't" checklist from PITFALLS.md should be explicit acceptance criteria for phase sign-off — all 12 checklist items must pass before this phase closes.
 
-**Rationale:** Mandatory pre-requisite for both the challenger portal and UX navigation overhaul. Adds `"challenger"` to the `ContributorRole` TypeScript union and PostgreSQL enum via a named migration. Also adds ROUTES constants needed by the nav overhaul in Phase 6.
+---
 
-**Delivers:** `challenger_organisations` table, FK on `challenges`, updated shared types and Zod schemas, named Drizzle migration file.
+### Phase 3: CM Attention Dashboard
 
-**Avoids:** Challenger enum without rollback-safe migration pitfall — staging deploy verification protocol must be explicit before any production push of this migration.
+**Rationale:** This phase consumes flags written by Phase 2. It cannot be built meaningfully before the webhook receiver exists and has written test data. It is also the phase with the highest data-privacy risk (cross-institution leakage) — placing it in its own phase keeps the institution-scope filter review focused and independent.
 
-**Research flag:** Flag — Postgres enum irreversibility requires explicit staging verification before production push.
+**Delivers:** `GET /api/attention` and `POST /api/attention/:flagId/resolve` routes; `AttentionDashboard.tsx` React page; `useAttention.ts` TanStack Query hooks; `/attention` protected route in `App.tsx`; institution filter UI; confirm-before-resolve action with human-readable flag descriptions; badge count on institution list showing signals in last 30 days.
 
-### Phase 4: VANTAGE API Integration
+**Addresses:** CM attention view (P1), attention signal trend as a list of last 30 signals ordered by recency (P2 from FEATURES.md).
 
-**Rationale:** Pure server addition — no DB changes, no UI changes. Unblocks VANTAGE development in parallel with the remaining phases. Depends on Phase 3 for env configuration conventions; otherwise fully independent.
+**Avoids:** Cross-institution data leakage (DB-resolved institution scope on every query, never from JWT); N+1 query (single JOIN across `attention_flags`, `contributors`, `institutions`); raw severity codes in UI (human-readable labels); no-confirmation clear action (confirm step required).
 
-**Delivers:** `middleware/api-key-auth.ts`, `VANTAGE_API_KEY` env config, versioned `/api/v1/` route mounts, `VANTAGE-CONTRACT.md` listing every consumed endpoint with request/response shapes.
+**Research flag:** Standard patterns — no additional research needed. TanStack Query invalidation on resolve, institution filter as a query param, and protected route with `requireRole("community_manager")` all follow existing v1.1 conventions exactly.
 
-**Uses:** `express-rate-limit ^8.3.1`, Node.js built-in `crypto`.
+---
 
-**Avoids:** Dual auth path divergence pitfall (separate middleware, separate route group, never mixed); API keys stored in plaintext (SHA-256 hash only, show raw key once at creation); MCP tools accepting arbitrary `contributor_id` without scope check.
+### Phase 4: PDF Impact Report
 
-**Research flag:** Flag — MCP tool scope enforcement is a non-obvious security requirement; the current tool stubs have no auth layer and this must be designed explicitly before any tool returns real data.
+**Rationale:** The PDF report depends on Phase 1 institution-contributor data but is independent of the webhook integration and attention dashboard. Placing it last keeps it self-contained, avoids coupling its scope to the more complex webhook work, and lets the Phase 1 aggregate queries be proven correct before the PDF reuses them. It is also the highest implementation-effort single feature and benefits from the rest of the platform being stable.
 
-### Phase 5: Challenger Portal
+**Delivers:** `pdfkit ^0.18.0` and `@types/pdfkit` added to server dependencies; `packages/server/src/pdf/institution-report.ts` pdfkit document component (server-only isolation); `GET /api/institutions/:slug/report.pdf` route (CM auth, streaming via `doc.pipe(res)`, both `Content-Type: application/pdf` and `Content-Disposition: attachment` headers); empty-state handling for zero-contributor institutions; `req.setTimeout(30_000)` on the route; "Generating report..." loading state and disabled button in the CM UI.
 
-**Rationale:** Highest effort feature (3–4x complexity of any other v1.1 item). Requires shared types from Phase 3. Server routes must be built before web pages. Defer this phase entirely until a concrete organisational user is confirmed — do not build speculative infrastructure.
+**Addresses:** PDF impact report — basic version (headcount, challenges, hours, date range) as P1. Wellbeing aggregate in PDF deferred to v1.2.x — privacy threshold logic adds scope; basic report ships first.
 
-**Delivers:** Challenger registration and org profile, challenge brief submission (draft flow), CM review queue, challenge status visibility, `routes/challenger.ts`, 4 web pages (`ChallengerRegister`, `ChallengerDashboard`, `ChallengerChallengeForm`, `ChallengerProgress`).
+**Avoids:** PDF blocking event loop (streaming, not buffering; tested with realistic dataset); PDF component in wrong package (server-only in `packages/server/src/pdf/`, never imported by web bundle); missing `Content-Disposition` header (set alongside `Content-Type`; without it, mobile browsers render inline and break); PDF endpoint accessible to contributors (`requireRole("community_manager")` guard verified with a 403 integration test); PDF for zero-contributor institution crashing (explicit empty-state guard before generation begins).
 
-**Avoids:** Challenger portal returning contributor PII (integration test required before any endpoint ships); challengers accessing contributor routes (strict `/challenger/*` route isolation in `ProtectedRoute`).
+**Research flag:** The `@react-pdf/renderer` vs `pdfkit` decision is resolved — use pdfkit. FEATURES.md references `@react-pdf/renderer` but STACK.md explicitly rejects it for this ESM-first monorepo due to active open issues. If the roadmapper or implementer sees `@react-pdf/renderer` in FEATURES.md, defer to STACK.md. No additional research needed.
 
-**Research flag:** Flag — challenger registration flow decision (dedicated endpoint vs extending existing register; Option A full account vs Option B guest submission) needs explicit product decision from Kirk at phase kickoff.
-
-### Phase 6: UX Navigation Overhaul
-
-**Rationale:** Depends on all roles being defined (Phase 3) and challenger portal pages existing (Phase 5) so the sidebar can link to them. Adds role-aware sidebar, mobile nav drawer, and active-state nav link wrapper.
-
-**Delivers:** `Sidebar.tsx`, `MobileNavDrawer.tsx`, `NavLink.tsx`, role-based post-login redirects, updated `Navbar.tsx` and `AppShell.tsx`.
-
-**Avoids:** Icon-only sidebar pitfall (always use text labels for the 50-75 target demographic); ProtectedRoute not excluding new routes from onboarding redirect.
-
-**Research flag:** Skip — role-aware navigation is a standard React pattern; component structure is fully defined in ARCHITECTURE.md.
-
-### Phase 7: Kiosk Mode
-
-**Rationale:** Entirely frontend, no backend changes required. Builds on the cleaned-up AppShell from Phase 6. The existing `POST /api/auth/logout` is the only server dependency (already live). Self-contained.
-
-**Delivers:** `KioskContext.tsx`, `useInactivityLogout.ts`, `KioskShell.tsx`, `KioskLanding.tsx`, `KioskChallenges.tsx`, kiosk routing in `App.tsx`, simplified kiosk Navbar variant.
-
-**Uses:** `react-idle-timer ^5.7.2`.
-
-**Avoids:** React Query cache leak between kiosk users (`queryClient.clear()` not `invalidateQueries()`); HttpOnly cookie persistence after timeout (server logout must complete before navigate); idle timer missing touch/keyboard events; kiosk mode activating on standard `/login` URL; session-end screen displaying previous user's name.
-
-**Research flag:** Flag — kiosk session security requires end-to-end verification (network tab check for `Set-Cookie: Max-Age=0`, manual touch-device test for event coverage) as a gate condition before any institutional deployment.
+---
 
 ### Phase Ordering Rationale
 
-- Phases 1–2 ship without any new infrastructure risk and immediately improve product credibility for demos and funder access.
-- Phase 3 is a prerequisite gate — nothing challenger-related can be written before it completes; keep it narrow and focused on types and migration only.
-- Phase 4 (VANTAGE) is independent of the UI work and can unblock VANTAGE development while phases 5–7 proceed.
-- Phase 5 (challenger portal) precedes Phase 6 (nav overhaul) so the sidebar can link to real challenger pages rather than placeholder routes.
-- Phase 7 (kiosk) is last because it builds on the stable AppShell produced by Phase 6 and has no other blockers once the logout endpoint exists.
-- The UX fixes (Phase 1) are deliberately separated from the nav overhaul (Phase 6) — the fixes are zero-dependency hot patches; the nav overhaul requires all role definitions to exist first.
+- **Phase 1 before all others** — the `institution_id` FK is a hard data dependency; all downstream features require it.
+- **Phase 2 before Phase 3** — the attention dashboard is useless without flags to display; building the receiver first allows end-to-end testing with curl before the UI exists.
+- **Phase 4 last** — PDF depends only on Phase 1 data; deferring it keeps each phase scope clean and allows Phase 1 aggregate queries to be proven before reuse.
+- **iThink work co-located in Phase 2** — both sides of the integration must be coordinated for end-to-end testing; placing them in the same phase makes the integration test the phase gate.
+- **No phase restructuring** — this is an additive milestone; none of the four phases touch each other's code surfaces, making parallel sub-tracks possible within a phase but not required.
 
 ### Research Flags
 
-Phases needing deeper research or careful review during planning:
+Phases needing careful review during planning (not additional research, but explicit acceptance criteria):
 
-- **Phase 3** (Shared Foundation): Postgres enum irreversibility — staging deploy verification protocol needs to be explicit in the phase plan before any production push.
-- **Phase 4** (VANTAGE Integration): MCP tool scope enforcement — non-obvious security requirement; existing stubs have no auth layer. Needs design session at phase start.
-- **Phase 5** (Challenger Portal): Challenger registration flow decision (Option A vs B) requires a product decision before implementation begins; no direct public-sector comparators were found.
-- **Phase 7** (Kiosk Mode): Session security end-to-end verification must be a named gate condition before institutional deployment.
+- **Phase 2 (Webhook Integration):** Security-critical implementation. The "Looks Done But Isn't" checklist from PITFALLS.md (12 items covering signature, raw body, replay, idempotency, relationship check, CM scope, PDF auth, PDF empty state, payload validation, stats parity) should be copied verbatim into the phase plan as acceptance criteria. All 12 must pass before phase closes.
 
-Phases with standard patterns (skip research-phase):
+Phases with standard patterns (skip `/gsd:research-phase`):
 
-- **Phase 1** (UX Overhaul): All root causes confirmed from codebase audit; fixes are straightforward implementation work.
-- **Phase 2** (Wellbeing Visualisation): recharts and shadcn chart patterns are well-documented with direct examples.
-- **Phase 6** (UX Navigation): Role-aware navigation is a standard React pattern; component structure fully defined in ARCHITECTURE.md.
+- **Phase 1 (Institution Foundation):** Migration pattern (NOT VALID), route extension, TanStack Query hooks — all established v1.1 conventions.
+- **Phase 3 (CM Attention Dashboard):** Protected route, TanStack Query invalidation on mutation, institution-scoped query — identical to existing CM route patterns.
+- **Phase 4 (PDF Report):** pdfkit streaming pattern is well-documented; stack decision is already made in STACK.md.
+
+---
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All additions confirmed from npm/official docs; recharts React 19 + Tailwind v4 compatibility explicitly verified via shadcn/ui docs |
-| Features | HIGH (UX/visualisation), MEDIUM (kiosk/VANTAGE), LOW (challenger portal) | UX fixes from direct codebase audit; kiosk patterns from multiple sources; challenger portal has limited direct public-sector comparators |
-| Architecture | HIGH | All claims derived from reading actual v1.0 code — routes, middleware, schema, hooks; no training-data assumptions |
-| Pitfalls | HIGH | All critical pitfalls grounded in v1.0 codebase inspection and verified against OWASP, MCP security reports, and TanStack Query docs |
+| Stack | HIGH | v1.0/v1.1 stack validated. pdfkit v0.18.0 verified against official GitHub release (March 15, 2026). react-native-quick-crypto v1.0.17 verified against margelo GitHub release (March 17, 2026) and implementation coverage doc. @react-pdf/renderer rejection backed by 3 open GitHub issues confirmed open March 2026. |
+| Features | HIGH | Grounded in direct codebase audit of `packages/server/src/db/schema.ts`, all existing route files, and `.planning/PROJECT.md`. Feature dependencies derived from actual schema relationships, not inference. |
+| Architecture | HIGH (IU), MEDIUM (iThink) | IU architecture: direct codebase inspection of all server and web source files. Build order and file-change inventory are concrete. iThink architecture: described from project context, not directly inspectable — exact file paths in iThink repo are estimates. |
+| Pitfalls | HIGH | All 8 critical pitfalls grounded in the actual codebase (existing `api-key-auth.ts` timingSafeEqual pattern, Stripe webhook mount in `express-app.ts`, `statsJson` JSONB in institutions table). PostgreSQL FK NOT VALID pattern backed by official docs and multiple independent sources. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Challenger registration flow decision:** Option A (new `challenger` role with full account, login, and session) vs Option B (guest submission form, no account required, CM reviews). Research documents both but does not prescribe — this is a product decision requiring input from Kirk about whether challengers need accounts. Address at Phase 5 kickoff.
-- **VANTAGE MCP tool scope binding:** The current MCP stubs have `isError: true` and no auth layer. The pattern for binding a `contributor_id` scope to an API key at tool handler level is documented in PITFALLS.md but the implementation is non-trivial. Needs explicit design review at Phase 4 start.
-- **Kiosk GDPR consent session context:** PITFALLS.md flags that consent records for special-category wellbeing data submitted on a kiosk terminal lack session context. A `sessionContext: "kiosk"` flag on consent records is recommended but not yet in the schema — gap to address during Phase 7 planning.
-- **Institutional landing page:** Deferred from kiosk scope (`/i/[slug]` per-institution public pages, P3 in FEATURES.md). Not blocking v1.1 but should be tracked for when a first library partner is confirmed.
+- **iThink exact file paths:** ARCHITECTURE.md specifies iThink file changes from project description, not direct inspection. Confirm actual file structure in the iThink repo before Phase 2 planning begins.
+- **iThink webhook payload contract:** The payload shape (`contributorEmail`, `institutionSlug`, `signalType`, `cohortSize`, `flaggedCount`) is defined in FEATURES.md based on the privacy-first design constraint (cohort-level only, no per-contributor IDs). This must be agreed and documented as a formal contract with the iThink side before Phase 2 begins. Any deviation in field names or types will cause the Zod schema to reject valid webhooks.
+- **Wellbeing aggregate privacy threshold:** FEATURES.md specifies "min 5 contributors with check-ins in period" as the display threshold for the PDF wellbeing band. This is a design decision, not a researched standard — validate with stakeholders before implementing in Phase 4 or v1.2.x.
+- **`@types/pdfkit` version alignment:** At install time, confirm `@types/pdfkit` version tracks pdfkit 0.18.0 API surface. DefinitelyTyped may lag slightly behind the latest pdfkit release for newer features.
+
+---
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Direct codebase inspection (`packages/server/src/`, `packages/web/src/`, `packages/shared/src/`) — all architecture, pitfall, and feature gap findings
-- [shadcn/ui Tailwind v4 docs](https://ui.shadcn.com/docs/tailwind-v4) — React 19 + Tailwind v4 chart support confirmed
-- [recharts GitHub releases](https://github.com/recharts/recharts/releases) — v3.8.0 published March 2025
-- [express-rate-limit npm](https://www.npmjs.com/package/express-rate-limit) — v8.3.1, ESM-native, TypeScript included
-- [Node.js crypto documentation](https://nodejs.org/api/crypto.html) — `randomBytes` and `createHash` built-in
-- [OWASP Top 10:2025 A01 Broken Access Control](https://owasp.org/Top10/A01_2021-Broken_Access_Control/)
-- [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
-- [WEMWBS Score Interpretation — Warwick](https://warwick.ac.uk/fac/sci/med/research/platform/wemwbs/using/howto/)
-- [Frontiers Psychiatry: SWEMWBS Score Categorisation 2025](https://www.frontiersin.org/journals/psychiatry/articles/10.3389/fpsyt.2025.1674009/full)
+
+- Codebase direct inspection — `packages/server/src/db/schema.ts`, `routes/institutions.ts`, `routes/payments.ts`, `middleware/api-key-auth.ts`, `config/env.ts`, `express-app.ts`, `scripts/`
+- [foliojs/pdfkit releases](https://github.com/foliojs/pdfkit/releases) — v0.18.0 published March 15, 2026; ESM entry point confirmed
+- [margelo/react-native-quick-crypto](https://github.com/margelo/react-native-quick-crypto) — v1.0.17 published March 17, 2026; `createHmac` + `Hmac.digest()` confirmed in implementation coverage doc
+- [expo-crypto docs](https://docs.expo.dev/versions/latest/sdk/crypto/) — no HMAC support confirmed
+- [react-pdf issue #2624](https://github.com/diegomura/react-pdf/issues/2624), [#2907](https://github.com/diegomura/react-pdf/issues/2907), [#3017](https://github.com/diegomura/react-pdf/issues/3017) — ESM breakage in modern Node.js confirmed open March 2026
+- [PostgreSQL ALTER TABLE docs](https://www.postgresql.org/docs/current/sql-altertable.html) — NOT VALID / VALIDATE CONSTRAINT pattern
+- [standard-webhooks spec](https://github.com/standard-webhooks/standard-webhooks/blob/main/spec/standard-webhooks.md) — HMAC-SHA256 + timestamp replay prevention standard
+- [GitHub: Validating Webhook Deliveries](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries) — timingSafeEqual pattern
+- [Hookdeck: Webhook Idempotency](https://hookdeck.com/docs/guides/deduplication-guide) — dedup table pattern
+- [stripe-node issue #734](https://github.com/stripe/stripe-node/issues/734) — express.raw() before express.json() pattern (already in IU codebase for Stripe)
 
 ### Secondary (MEDIUM confidence)
-- [react-idle-timer npm](https://www.npmjs.com/package/react-idle-timer) — v5.7.2 latest; search result verified (npm page 403'd during research)
-- [MCP Security Vulnerabilities — Practical DevSecOps 2026](https://www.practical-devsecops.com/mcp-security-vulnerabilities/) — tool poisoning CVE pattern
-- [State of MCP Server Security 2025 — Astrix](https://astrix.security/learn/blog/state-of-mcp-server-security-2025/) — scope enforcement requirements
-- [TanStack Query persistQueryClient docs](https://tanstack.com/query/v4/docs/framework/react/plugins/persistQueryClient) — cache management on logout
-- [OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html) — HttpOnly cookie lifecycle
-- Multi-tenant Drizzle ORM patterns — row-based `organisation_id` approach confirmed across multiple sources for small tenant counts
-- Express.js RBAC + JWT role claims — consistent recommendation to embed roles in JWT for 2–5 role systems
+
+- WebSearch: pdfkit vs @react-pdf/renderer vs puppeteer comparison 2025/2026 — multiple sources confirm pdfkit for programmatic data reports, puppeteer for HTML-to-PDF, react-pdf for React component layouts
+- WebSearch: multi-tenant Drizzle ORM patterns — row-based `institution_id` approach confirmed for small tenant counts
+- [Hookdeck HMAC SHA256 guide](https://hookdeck.com/webhooks/guides/how-to-implement-sha256-webhook-signature-verification) — Express raw body pattern
+- [Webhook Signature Verification patterns — Svix](https://www.svix.com/resources/webhook-best-practices/security/)
 
 ### Tertiary (LOW confidence)
-- Challenger portal comparator analysis — no direct public-sector self-service challenge submission portal comparators found; model inferred from Catalant/Expert360 commercial patterns
+
+- iThink architecture file paths — specced from project description; not directly inspectable. Validate against actual iThink repo before Phase 2 planning.
 
 ---
-*Research completed: 2026-03-15*
+
+*Research completed: 2026-03-21*
 *Ready for roadmap: yes*
