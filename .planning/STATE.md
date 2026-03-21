@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 ## Current Position
 
-Phase: 10 of 11 (Challenger Portal)
-Plan: 2 of 2 (awaiting checkpoint verification)
-Status: In progress — checkpoint:human-verify pending
-Last activity: 2026-03-16 — Tasks 1-2 of 10-02-PLAN.md complete, dev server running at http://localhost:5173
+Phase: 11 of 11 (Kiosk Mode and Institutional Pages) — In progress
+Plan: 2 of 3 — completed 2026-03-21
+Status: Phase 11 Plan 02 complete. Plan 03 (institution landing page React component) next.
+Last activity: 2026-03-21 — Completed 11-02-PLAN.md (institutions table + public API endpoint)
 
-Progress: [███████░░░░░░░░░] v1.1 ~50% (8/16 plans, v1.0 complete)
+Progress: [████████████░░░░] v1.1 ~68% (12/~16 plans, v1.0 complete)
 
 ## Performance Metrics
 
@@ -64,6 +64,9 @@ Recent decisions for v1.1:
 - Phase 10 Plan 02: ChallengerRoute redirects unauthenticated to /challenger/register (not /login) — challengers have their own registration path
 - Phase 10 Plan 02: SubmitChallenge uses comma-separated text inputs for domain/skillsNeeded arrays — consistent with existing UX patterns
 - Phase 10 Plan 02: useRateResolution from useCircles.ts reused in ChallengeDetail — endpoint already existed, no duplication needed
+- Phase 11 Plan 02: statsJson JSONB MVP approach — no live aggregation, stats updated manually or via batch job
+- Phase 11 Plan 02: Public institution endpoint has no authMiddleware — kiosk landing pages must be accessible without login
+- Phase 11 Plan 02: req.params.slug cast to string — Express types params as string | string[], Drizzle eq() requires string; cast is safe for named route params
 
 ### Pending Todos
 
@@ -79,6 +82,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16
-Stopped at: Phase 10 Plan 2, Task 3 checkpoint:human-verify — dev server running at http://localhost:5173
-Resume file: .planning/phases/10-challenger-portal/10-02-PLAN.md (Task 3, resume after approval)
+Last session: 2026-03-21
+Stopped at: Phase 11 Plan 02 complete. Ready for Plan 03 (institution landing page React component).
+Resume file: .planning/phases/11-kiosk-mode-and-institutional-pages/11-03-PLAN.md
