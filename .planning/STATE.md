@@ -64,6 +64,10 @@ Recent decisions for v1.1:
 - Phase 10 Plan 02: ChallengerRoute redirects unauthenticated to /challenger/register (not /login) — challengers have their own registration path
 - Phase 10 Plan 02: SubmitChallenge uses comma-separated text inputs for domain/skillsNeeded arrays — consistent with existing UX patterns
 - Phase 10 Plan 02: useRateResolution from useCircles.ts reused in ChallengeDetail — endpoint already existed, no duplication needed
+- Phase 11 Plan 01: Module-level _kioskActivated flag used for kiosk state persistence — useSearchParams alone resets on SPA navigation
+- Phase 11 Plan 01: KioskProvider inside BrowserRouter > AuthProvider so useSearchParams has Router ancestor
+- Phase 11 Plan 01: performLogout uses window.location.href (not navigate()) — hard navigation ensures full in-memory state clear
+- Phase 11 Plan 01: queryClient.clear() over invalidateQueries — kiosk requires complete data wipe, not stale refresh
 - Phase 11 Plan 02: statsJson JSONB MVP approach — no live aggregation, stats updated manually or via batch job
 - Phase 11 Plan 02: Public institution endpoint has no authMiddleware — kiosk landing pages must be accessible without login
 - Phase 11 Plan 02: req.params.slug cast to string — Express types params as string | string[], Drizzle eq() requires string; cast is safe for named route params
