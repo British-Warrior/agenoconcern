@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 11 of 11 (Kiosk Mode and Institutional Pages) — In progress
-Plan: 2 of 3 — completed 2026-03-21
-Status: Phase 11 Plan 02 complete. Plan 03 (institution landing page React component) next.
-Last activity: 2026-03-21 — Completed 11-02-PLAN.md (institutions table + public API endpoint)
+Plan: 3 of 3 — Task 1 complete, awaiting checkpoint:human-verify
+Status: Phase 11 Plan 03 Task 1 committed. Stopped at checkpoint:human-verify (Task 2).
+Last activity: 2026-03-21 — Completed Task 1 of 11-03-PLAN.md (InstitutionLanding component + routing)
 
 Progress: [████████████░░░░] v1.1 ~68% (12/~16 plans, v1.0 complete)
 
@@ -71,6 +71,9 @@ Recent decisions for v1.1:
 - Phase 11 Plan 02: statsJson JSONB MVP approach — no live aggregation, stats updated manually or via batch job
 - Phase 11 Plan 02: Public institution endpoint has no authMiddleware — kiosk landing pages must be accessible without login
 - Phase 11 Plan 02: req.params.slug cast to string — Express types params as string | string[], Drizzle eq() requires string; cast is safe for named route params
+- Phase 11 Plan 03: InstitutionLanding does not import useKiosk — links to ?kiosk=true, KioskProvider detects param (clean decoupling)
+- Phase 11 Plan 03: ROUTES.INSTITUTION is a function (slug: string) => string — parameterised route constant pattern
+- Phase 11 Plan 03: NotFoundError subclass used in useQuery retry callback to skip retries on 404
 
 ### Pending Todos
 
@@ -87,5 +90,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-21
-Stopped at: Phase 11 Plan 02 complete. Ready for Plan 03 (institution landing page React component).
-Resume file: .planning/phases/11-kiosk-mode-and-institutional-pages/11-03-PLAN.md
+Stopped at: Phase 11 Plan 03 Task 1 committed. Awaiting checkpoint:human-verify (Task 2).
+Resume file: .planning/phases/11-kiosk-mode-and-institutional-pages/11-03-PLAN.md (resume from Task 2 after human verification)
