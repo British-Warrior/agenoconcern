@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router";
 import { AuthProvider } from "./hooks/useAuth.js";
+import { KioskProvider } from "./contexts/KioskContext.js";
 import { AppShell } from "./components/layout/AppShell.js";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute.js";
 import { ChallengerRoute } from "./components/layout/ChallengerRoute.js";
@@ -36,7 +37,8 @@ export function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
+        <KioskProvider>
+          <Routes>
           <Route element={<AppShell />}>
             {/* Challenger public route */}
             <Route path="/challenger/register" element={<ChallengerRegister />} />
@@ -91,7 +93,8 @@ export function App() {
               <Route path="/impact/challenger" element={<ChallengerView />} />
             </Route>
           </Route>
-        </Routes>
+          </Routes>
+        </KioskProvider>
       </AuthProvider>
     </BrowserRouter>
   );
