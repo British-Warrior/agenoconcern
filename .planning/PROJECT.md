@@ -43,6 +43,16 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 
 ### Active
 
+## Current Milestone: v1.2 Institution Management & iThink Integration
+
+**Goal:** Give the CM operational tools to manage institution-contributor relationships with live impact data and PDF reports, and integrate iThink (Kirk's neurodivergence assessment app) so the platform can proactively support contributors flagged as needing attention.
+
+**Target features:**
+- Institution management (contributor-institution FK, CM assigns contributors, live aggregate stats, PDF impact reports)
+- iThink webhook dispatch (iThink sends signed webhooks when screenings flag concern)
+- IU webhook receiver (verify signature, match to institution, store "needs attention" flag)
+- CM attention view (flagged contributors list, filter by institution, clear after follow-up)
+
 ### Out of Scope
 
 - Admin dashboard — community manager uses spreadsheet exports + monthly reports

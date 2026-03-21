@@ -5,15 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income -- bridging the pension gap while contributing to communities.
-**Current focus:** Planning next milestone
+**Current focus:** v1.2 Institution Management & iThink Integration
 
 ## Current Position
 
-Milestone: v1.1 Pilot-Ready — SHIPPED 2026-03-21
-Status: Ready to plan next milestone
-Last activity: 2026-03-21 — v1.1 milestone archived
+Milestone: v1.2 — defining requirements
+Phase: Not started
+Status: Research phase
+Last activity: 2026-03-21 — Milestone v1.2 started
 
-Progress: v1.0 + v1.1 complete (11 phases, 30 plans shipped)
+Progress: v1.0 + v1.1 shipped. v1.2 in research.
 
 ## Performance Metrics
 
@@ -81,8 +82,6 @@ None.
 ### Blockers/Concerns
 
 - Employment Agencies Act 1973 classification needs legal advice before payments go live
-- WEMWBS licensing — APPROVED by user (2026-03-15), registration pending
-- DPIA and Appropriate Policy Document — APPROVED by user (2026-03-15), documents pending
 - Phase 9: Postgres enum migration is irreversible — must test on staging before production
 - Phase 11: Kiosk session security requires end-to-end verification (network tab + touch device) before any institutional deployment
 
