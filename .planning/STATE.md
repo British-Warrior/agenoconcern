@@ -5,75 +5,47 @@
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income -- bridging the pension gap while contributing to communities.
-**Current focus:** v1.2 Institution Management & iThink Integration
+**Current focus:** v1.2 Phase 12 — Institution Data Foundation
 
 ## Current Position
 
-Milestone: v1.2 — defining requirements
-Phase: Not started
-Status: Research phase
-Last activity: 2026-03-21 — Milestone v1.2 started
+Milestone: v1.2 — Institution Management & iThink Integration
+Phase: 12 of 15 (Institution Data Foundation)
+Plan: 0 of 3 in current phase
+Status: Ready to plan
+Last activity: 2026-03-21 — v1.2 roadmap created (phases 12-15, 24 requirements mapped)
 
-Progress: v1.0 + v1.1 shipped. v1.2 in research.
+Progress: [██████████░░░░░░░░░░] 55% (11/20 phases complete across all milestones)
 
 ## Performance Metrics
 
-**Velocity (v1.0 baseline):**
-- Total plans completed: 19
+**Velocity (v1.0 + v1.1 baseline):**
+- Total plans completed: 30
 - Average duration: ~15 min
-- Total execution time: ~290 min
+- Total execution time: ~450 min
 
-**By Phase (v1.0):**
+**By Phase (v1.1):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-foundation-and-auth | 4/4 | 31 min | 8 min |
-| 02-onboarding-and-profiles | 3/3 | 14 min | 5 min |
-| 03-challenges-and-matching | 3/3 | ~115 min | ~38 min |
-| 04-circles-and-collaboration | 3/3 | ~38 min | ~13 min |
-| 05-payments-and-impact | 3/3 | ~30 min | ~10 min |
-| 06-wellbeing-notifications-pwa | 3/3 | ~45 min | ~15 min |
+| 07-ux-fixes | 3/3 | ~45 min | ~15 min |
+| 08-wellbeing-visualisation | 1/1 | ~20 min | ~20 min |
+| 09-server-foundation-vantage | 2/2 | ~30 min | ~15 min |
+| 10-challenger-portal | 2/2 | ~35 min | ~18 min |
+| 11-kiosk-institutional | 3/3 | ~45 min | ~15 min |
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table (updated at v1.0 milestone).
+Decisions are logged in PROJECT.md Key Decisions table.
 
-Recent decisions for v1.1:
-- Phase 7 Plan 01: All navigation paths defined in ROUTES constants — no hardcoded strings in components
-- Phase 7 Plan 01: cursor-pointer applied to raw `<button>` elements only — Button component already includes it
-- Phase 7 Plan 02: Combined isLoading from 3 queries into one boolean — single skeleton prevents multiple spinners
-- Phase 7 Plan 02: wellbeing-norms.ts is single source of truth for UK norm thresholds (reusable in Phase 8 charts)
-- Phase 7 Plan 02: UCLA trend arrows inverted vs SWEMWBS (down=green for UCLA because lower=less lonely)
-- Phase 7 Plan 03: UUID_PATTERN defined at module scope across all files — prevents recreation on render
-- Phase 7 Plan 03: CircleWorkspace is403 branch keeps hardcoded string; UUID guard only applies to generic fallback path
-- Phase 7 Plan 03: "Unknown contributor" fallback for member names (not empty string) — avatar initial uses charAt(0) and needs non-empty value
-- Phase 8 Plan 01: recharts 3.x uses TooltipContentProps (not TooltipProps) for custom tooltip content — payload/active/label are omitted from TooltipProps via PropertiesReadFromContext
-- Phase 8 Plan 01: Tooltip content prop requires a render function, not a JSX element, to satisfy recharts 3.x type checker
-- Phase 9: Postgres enum `ALTER TYPE ADD VALUE` is irreversible — staging deploy verification required before production push
-- Phase 9 Plan 01: Migration applied manually (targeted SQL) because Drizzle journal was empty while DB had all prior tables — drizzle-kit migrate would have re-created existing tables. Applied only ALTER TYPE + CREATE TABLEs + FKs, marked 0002 as applied in drizzle.__drizzle_migrations.
-- Phase 9 Plan 02: Rate limiter applied before apiKeyMiddleware — throttles unauthenticated flooding without DB hit
-- Phase 9 Plan 02: timingSafeEqual secondary check after DB hash lookup — prevents timing attacks on comparison
-- Phase 9 Plan 02: last_used_at update is fire-and-forget — non-blocking, failure logged but not surfaced to caller
-- Phase 9 Plan 02: Key creation uses cookie/JWT admin auth, not API key auth — bootstrapping concern (admin creates the first key)
-- Phase 10: Challenger registration flow decision (Option A: full account vs Option B: guest submission) — defer to Phase 10 kickoff
-- Phase 10 Plan 01: ChallengerPortalChallenge (not ChallengerChallenge) — avoids conflict with existing ChallengerChallenge in types/impact.ts
-- Phase 10 Plan 01: challenge_type enum extended with community/premium/knowledge_transition — challenger portal uses different type taxonomy than CM-created challenges
-- Phase 10 Plan 01: Migration applied manually (targeted SQL) — same Drizzle journal issue as Phase 9
-- Phase 10 Plan 02: ChallengerRoute redirects unauthenticated to /challenger/register (not /login) — challengers have their own registration path
-- Phase 10 Plan 02: SubmitChallenge uses comma-separated text inputs for domain/skillsNeeded arrays — consistent with existing UX patterns
-- Phase 10 Plan 02: useRateResolution from useCircles.ts reused in ChallengeDetail — endpoint already existed, no duplication needed
-- Phase 11 Plan 01: Module-level _kioskActivated flag used for kiosk state persistence — useSearchParams alone resets on SPA navigation
-- Phase 11 Plan 01: KioskProvider inside BrowserRouter > AuthProvider so useSearchParams has Router ancestor
-- Phase 11 Plan 01: performLogout uses window.location.href (not navigate()) — hard navigation ensures full in-memory state clear
-- Phase 11 Plan 01: queryClient.clear() over invalidateQueries — kiosk requires complete data wipe, not stale refresh
-- Phase 11 Plan 02: statsJson JSONB MVP approach — no live aggregation, stats updated manually or via batch job
-- Phase 11 Plan 02: Public institution endpoint has no authMiddleware — kiosk landing pages must be accessible without login
-- Phase 11 Plan 02: req.params.slug cast to string — Express types params as string | string[], Drizzle eq() requires string; cast is safe for named route params
-- Phase 11 Plan 03: InstitutionLanding does not import useKiosk — links to ?kiosk=true, KioskProvider detects param (clean decoupling)
-- Phase 11 Plan 03: ROUTES.INSTITUTION is a function (slug: string) => string — parameterised route constant pattern
-- Phase 11 Plan 03: NotFoundError subclass used in useQuery retry callback to skip retries on 404
+Recent decisions relevant to v1.2:
+- Phase 11 Plan 02: statsJson JSONB MVP approach — Phase 12 replaces this with live aggregation
+- Phase 9 Plan 02: timingSafeEqual pattern in api-key-auth.ts — Phase 13 copies this exact pattern for HMAC webhook verification
+- Phase 9 Plan 01: Drizzle migration applied as targeted SQL (not drizzle-kit) — same approach required for Phase 12 FK migration
+- v1.2 research: pdfkit ^0.18.0 chosen over @react-pdf/renderer (3 open ESM breakage issues) and Puppeteer (300MB binary, 2-5s cold start)
+- v1.2 research: institution_id FK uses NOT VALID + VALIDATE CONSTRAINT two-step to avoid write-blocking table scan
 
 ### Pending Todos
 
@@ -81,12 +53,12 @@ None.
 
 ### Blockers/Concerns
 
-- Employment Agencies Act 1973 classification needs legal advice before payments go live
-- Phase 9: Postgres enum migration is irreversible — must test on staging before production
-- Phase 11: Kiosk session security requires end-to-end verification (network tab + touch device) before any institutional deployment
+- Phase 13 prerequisite: iThink webhook payload contract (contributorEmail, institutionSlug, signalType, cohortSize, flaggedCount) must be agreed before Phase 13 planning begins — any field name deviation breaks Zod schema
+- Phase 13 prerequisite: Confirm actual iThink repo file structure before Phase 13 — architecture estimates file paths from project description, not direct inspection
+- Employment Agencies Act 1973 classification needs legal advice before payments go live (carried from v1.1)
 
 ## Session Continuity
 
 Last session: 2026-03-21
-Stopped at: v1.1 milestone archived. Ready for next milestone.
-Resume file: N/A — run /gsd:new-milestone to start next milestone
+Stopped at: v1.2 roadmap created. Ready to plan Phase 12.
+Resume file: None — run /gsd:plan-phase 12 to begin

@@ -73,36 +73,36 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INST-01 | — | Pending |
-| INST-02 | — | Pending |
-| INST-03 | — | Pending |
-| INST-04 | — | Pending |
-| INST-05 | — | Pending |
-| INST-06 | — | Pending |
-| INST-07 | — | Pending |
-| INST-08 | — | Pending |
-| WHOOK-01 | — | Pending |
-| WHOOK-02 | — | Pending |
-| WHOOK-03 | — | Pending |
-| WHOOK-04 | — | Pending |
-| WHOOK-05 | — | Pending |
-| WHOOK-06 | — | Pending |
-| WHOOK-07 | — | Pending |
-| WHOOK-08 | — | Pending |
-| ATTN-01 | — | Pending |
-| ATTN-02 | — | Pending |
-| ATTN-03 | — | Pending |
-| ATTN-04 | — | Pending |
-| PDF-01 | — | Pending |
-| PDF-02 | — | Pending |
-| PDF-03 | — | Pending |
-| PDF-04 | — | Pending |
+| INST-01 | Phase 12 | Pending |
+| INST-02 | Phase 12 | Pending |
+| INST-03 | Phase 12 | Pending |
+| INST-04 | Phase 12 | Pending |
+| INST-05 | Phase 12 | Pending |
+| INST-06 | Phase 12 | Pending |
+| INST-07 | Phase 12 | Pending |
+| INST-08 | Phase 12 | Pending |
+| WHOOK-01 | Phase 13 | Pending |
+| WHOOK-02 | Phase 13 | Pending |
+| WHOOK-03 | Phase 13 | Pending |
+| WHOOK-04 | Phase 13 | Pending |
+| WHOOK-05 | Phase 13 | Pending |
+| WHOOK-06 | Phase 13 | Pending |
+| WHOOK-07 | Phase 13 | Pending |
+| WHOOK-08 | Phase 13 | Pending |
+| ATTN-01 | Phase 13 | Pending |
+| ATTN-02 | Phase 14 | Pending |
+| ATTN-03 | Phase 14 | Pending |
+| ATTN-04 | Phase 14 | Pending |
+| PDF-01 | Phase 15 | Pending |
+| PDF-02 | Phase 15 | Pending |
+| PDF-03 | Phase 15 | Pending |
+| PDF-04 | Phase 15 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 24 total
-- Mapped to phases: 0
-- Unmapped: 24 ⚠️
+- Mapped to phases: 24
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-21*
-*Last updated: 2026-03-21 after initial definition*
+*Last updated: 2026-03-21 — traceability complete after roadmap creation*
