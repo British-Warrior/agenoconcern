@@ -55,14 +55,14 @@
 2. CM can create, edit, activate, and deactivate an institution through the CM admin interface without touching the database directly
 3. CM can assign a contributor to an institution and remove that assignment, and the change is reflected immediately in the contributor list for that institution
 4. Institution landing page (/i/:slug) displays contributor count, active challenge count, and total hours derived from live queries — not from a manually-seeded JSON field
-5. The institution_id FK migration completes without a write-blocking table lock on the contributors table (NOT VALID + VALIDATE CONSTRAINT pattern verified)
+5. The contributor_institutions junction table migration completes successfully (many-to-many model per user decision, replacing the single FK approach)
 
-**Plans:** TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 12-01: DB migration (institution_id FK on contributors, NOT VALID + VALIDATE pattern) and Drizzle schema update
-- [ ] 12-02: Institution CRUD API endpoints and CM institution management page
-- [ ] 12-03: Contributor-institution assignment endpoints, CM assignment UI, and live stats aggregation replacing statsJson
+- [ ] 12-01: Junction table migration (contributor_institutions many-to-many), Drizzle schema, shared Zod schemas
+- [ ] 12-02: Institution CRUD API endpoints, CM route guard, and CM institution management page with inline editing
+- [ ] 12-03: Contributor-institution assignment endpoints, CM assignment UI, live stats aggregation, and landing page update
 
 ---
 
