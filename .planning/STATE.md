@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income -- bridging the pension gap while contributing to communities.
-**Current focus:** v1.2 Phase 12 — Institution Data Foundation
+**Current focus:** v1.2 Phase 13 — iThink Webhook Integration
 
 ## Current Position
 
 Milestone: v1.2 — Institution Management & iThink Integration
-Phase: 12 of 15 (Institution Data Foundation) — COMPLETE
-Plan: 3 of 3 complete
-Status: Phase complete — ready for Phase 13 (iThink Integration)
-Last activity: 2026-03-23 — Completed 12-03-PLAN.md (contributor assignment + live stats; checkpoint approved)
+Phase: 13 of 15 (iThink Webhook Integration) — In progress
+Plan: 1 of 3 complete
+Status: In progress
+Last activity: 2026-03-23 — Completed 13-01-PLAN.md (webhook tables, Drizzle schema, env secret, shared Zod schema)
 
-Progress: [███████████░░░░░░░░░] 58% (12/20 phases complete across all milestones)
+Progress: [████████████░░░░░░░░] 61% (13/20 phases complete across all milestones)
 
 ## Performance Metrics
 
@@ -55,6 +55,9 @@ Recent decisions relevant to v1.2:
 - Phase 12 Plan 03: Live stats return null when no contributors assigned — frontend hides stats section entirely (no zeros)
 - Phase 12 Plan 03: statsJson preserved in DB as cache/fallback, not returned to client — live stats replace it
 - Phase 12 Plan 03: Assignment direction from contributor profile (/admin/contributors/:id) — CM selects institutions via checkbox picker
+- Phase 13 Plan 01: ithink_signal_type enum created via DO $$ IF NOT EXISTS block — CREATE TYPE IF NOT EXISTS is invalid PostgreSQL syntax
+- Phase 13 Plan 01: ITHINK_WEBHOOK_SECRET has no .default() in Zod env schema — server refuses to start without it (min 32 chars)
+- Phase 13 Plan 01: ITHINK_WEBHOOK_SECRET_PREV is .optional() — supports zero-downtime dual-secret rotation in Plan 13-02
 
 ### Pending Todos
 
@@ -62,12 +65,10 @@ None.
 
 ### Blockers/Concerns
 
-- Phase 13 prerequisite: iThink webhook payload contract (contributorEmail, institutionSlug, signalType, cohortSize, flaggedCount) must be agreed before Phase 13 planning begins — any field name deviation breaks Zod schema
-- Phase 13 prerequisite: Confirm actual iThink repo file structure before Phase 13 — architecture estimates file paths from project description, not direct inspection
 - Employment Agencies Act 1973 classification needs legal advice before payments go live (carried from v1.1)
 
 ## Session Continuity
 
 Last session: 2026-03-23
-Stopped at: Phase 12 complete — all 3 plans done
-Resume file: .planning/phases/13-ithink-integration/ (Phase 13 planning — confirm iThink payload contract first)
+Stopped at: Phase 13 Plan 1 complete — webhook tables, env secret, shared Zod schema done
+Resume file: .planning/phases/13-ithink-webhook-integration/13-02-PLAN.md
