@@ -73,14 +73,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INST-01 | Phase 12 | Pending |
-| INST-02 | Phase 12 | Pending |
-| INST-03 | Phase 12 | Pending |
-| INST-04 | Phase 12 | Pending |
-| INST-05 | Phase 12 | Pending |
-| INST-06 | Phase 12 | Pending |
-| INST-07 | Phase 12 | Pending |
-| INST-08 | Phase 12 | Pending |
+| INST-01 | Phase 12 | Complete |
+| INST-02 | Phase 12 | Complete |
+| INST-03 | Phase 12 | Complete |
+| INST-04 | Phase 12 | Complete |
+| INST-05 | Phase 12 | Complete |
+| INST-06 | Phase 12 | Complete |
+| INST-07 | Phase 12 | Complete |
+| INST-08 | Phase 12 | Complete |
 | WHOOK-01 | Phase 13 | Pending |
 | WHOOK-02 | Phase 13 | Pending |
 | WHOOK-03 | Phase 13 | Pending |
