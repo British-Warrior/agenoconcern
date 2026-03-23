@@ -7,6 +7,7 @@ import { ChallengerRoute } from "./components/layout/ChallengerRoute.js";
 import { CMRoute } from "./components/layout/CMRoute.js";
 import { InstitutionManagement } from "./pages/admin/InstitutionManagement.js";
 import { ContributorDetail } from "./pages/admin/ContributorDetail.js";
+import { AttentionDashboard } from "./pages/admin/AttentionDashboard.js";
 import { ChallengerRegister } from "./pages/challenger/ChallengerRegister.js";
 import { ChallengerDashboard } from "./pages/challenger/ChallengerDashboard.js";
 import { SubmitChallenge } from "./pages/challenger/SubmitChallenge.js";
@@ -36,6 +37,7 @@ import { CircleWorkspace } from "./pages/circles/CircleWorkspace.js";
 import { ImpactDashboard } from "./pages/impact/ImpactDashboard.js";
 import { ChallengerView } from "./pages/impact/ChallengerView.js";
 import { InstitutionLanding } from "./pages/institution/InstitutionLanding.js";
+import { DevNav } from "./pages/DevNav.js";
 
 export function App() {
   return (
@@ -61,7 +63,11 @@ export function App() {
             <Route element={<CMRoute />}>
               <Route path="/admin/institutions" element={<InstitutionManagement />} />
               <Route path="/admin/contributors/:id" element={<ContributorDetail />} />
+              <Route path="/admin/attention" element={<AttentionDashboard />} />
             </Route>
+
+            {/* Dev navigation — local only */}
+            <Route path="/dev" element={<DevNav />} />
 
             {/* Public routes */}
             <Route path="/" element={<Landing />} />
