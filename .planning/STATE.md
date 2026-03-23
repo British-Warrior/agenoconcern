@@ -11,9 +11,9 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 
 Milestone: v1.2 — Institution Management & iThink Integration
 Phase: 12 of 15 (Institution Data Foundation)
-Plan: 0 of 3 in current phase
-Status: Ready to plan
-Last activity: 2026-03-21 — v1.2 roadmap created (phases 12-15, 24 requirements mapped)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-03-23 — Completed 12-01-PLAN.md (junction table, Drizzle schema, shared Zod schemas)
 
 Progress: [██████████░░░░░░░░░░] 55% (11/20 phases complete across all milestones)
 
@@ -46,6 +46,9 @@ Recent decisions relevant to v1.2:
 - Phase 9 Plan 01: Drizzle migration applied as targeted SQL (not drizzle-kit) — same approach required for Phase 12 FK migration
 - v1.2 research: pdfkit ^0.18.0 chosen over @react-pdf/renderer (3 open ESM breakage issues) and Puppeteer (300MB binary, 2-5s cold start)
 - v1.2 research: institution_id FK uses NOT VALID + VALIDATE CONSTRAINT two-step to avoid write-blocking table scan
+- Phase 12 Plan 01: Many-to-many junction table (not single FK on contributors) — CONTEXT.md overrides roadmap; enables future multi-institution assignments
+- Phase 12 Plan 01: Slug excluded from institution create/update schemas — immutable after creation (kiosk QR code dependency)
+- Phase 12 Plan 01: Drizzle FK onDelete uses spaced "set null" not camelCase "setNull"
 
 ### Pending Todos
 
@@ -59,6 +62,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-21
-Stopped at: v1.2 roadmap created. Ready to plan Phase 12.
-Resume file: None — run /gsd:plan-phase 12 to begin
+Last session: 2026-03-23
+Stopped at: Phase 12 Plan 01 complete — junction table + Drizzle schema + shared Zod schemas
+Resume file: .planning/phases/12-institution-data-foundation/12-02-PLAN.md
