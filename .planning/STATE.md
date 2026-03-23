@@ -11,9 +11,9 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 
 Milestone: v1.2 — Institution Management & iThink Integration
 Phase: 12 of 15 (Institution Data Foundation)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase — awaiting checkpoint:human-verify
 Status: In progress
-Last activity: 2026-03-23 — Completed 12-01-PLAN.md (junction table, Drizzle schema, shared Zod schemas)
+Last activity: 2026-03-23 — Completed 12-02-PLAN.md (admin API routes + CM institution management UI)
 
 Progress: [██████████░░░░░░░░░░] 55% (11/20 phases complete across all milestones)
 
@@ -49,6 +49,9 @@ Recent decisions relevant to v1.2:
 - Phase 12 Plan 01: Many-to-many junction table (not single FK on contributors) — CONTEXT.md overrides roadmap; enables future multi-institution assignments
 - Phase 12 Plan 01: Slug excluded from institution create/update schemas — immutable after creation (kiosk QR code dependency)
 - Phase 12 Plan 01: Drizzle FK onDelete uses spaced "set null" not camelCase "setNull"
+- Phase 12 Plan 02: CMRoute guard pattern — check role community_manager OR admin, redirect to /dashboard otherwise
+- Phase 12 Plan 02: adminRouter uses router.use(authMiddleware, requireRole) at top — all routes automatically protected
+- Phase 12 Plan 02: Contributor count in InstitutionManagement card is 0 placeholder — Plan 12-03 adds live aggregation
 
 ### Pending Todos
 
@@ -63,5 +66,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-23
-Stopped at: Phase 12 Plan 01 complete — junction table + Drizzle schema + shared Zod schemas
-Resume file: .planning/phases/12-institution-data-foundation/12-02-PLAN.md
+Stopped at: Phase 12 Plan 02 — 2 auto tasks complete, awaiting checkpoint:human-verify (Task 3)
+Resume file: .planning/phases/12-institution-data-foundation/12-03-PLAN.md (after checkpoint approved)
