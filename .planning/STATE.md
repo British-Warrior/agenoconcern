@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 ## Current Position
 
 Milestone: v1.2 — Institution Management & iThink Integration
-Phase: 13 of 15 (iThink Webhook Integration) — In progress
-Plan: 2 of 3 complete
-Status: In progress
-Last activity: 2026-03-23 — Completed 13-02-PLAN.md (webhook handler, route registration, curl verified)
+Phase: 13 of 15 (iThink Webhook Integration) — COMPLETE
+Plan: 3 of 3 complete
+Status: Phase complete — ready for Phase 14 (CM Attention Dashboard)
+Last activity: 2026-03-23 — Phase 13 verified (6/6 must-haves passed)
 
-Progress: [████████████░░░░░░░░] 61% (13/20 phases complete across all milestones)
+Progress: [█████████████░░░░░░░] 65% (13/20 phases complete across all milestones)
 
 ## Performance Metrics
 
@@ -61,6 +61,8 @@ Recent decisions relevant to v1.2:
 - Phase 13 Plan 02: Sign over `timestamp.rawBody` (UTF-8) not rawBody alone — matches iThink actual signing format
 - Phase 13 Plan 02: Timestamp window check placed AFTER signature verification — prevents timing oracle on expired-but-signed requests
 - Phase 13 Plan 02: Contributor/institution lookup uses same 422 for both missing cases — avoids enumeration
+- Phase 13 Plan 03: iThink dispatch built externally by Kirk — separate repo, not monorepo
+- Phase 13 Plan 03: Retry policy: 3 attempts with 1s/3s/9s exponential backoff (exceeds plan's fire-and-forget spec)
 
 ### Pending Todos
 
@@ -73,5 +75,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-23
-Stopped at: Phase 13 Plan 2 complete — webhook handler, route registration, curl verified
-Resume file: .planning/phases/13-ithink-webhook-integration/13-03-PLAN.md
+Stopped at: Phase 13 complete — all 3 plans done, verification passed (6/6)
+Resume file: .planning/phases/14-cm-attention-dashboard/ (Phase 14 planning next)
