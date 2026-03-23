@@ -498,6 +498,23 @@ export const institutions = pgTable("institutions", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Contributor institutions (many-to-many junction)
+export const contributorInstitutions = pgTable(
+  "contributor_institutions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    contributorId: uuid("contributor_id")
+      .notNull()
+      .references(() => contributors.id, { onDelete: "cascade" }),
+    institutionId: uuid("institution_id")
+      .notNull()
+      .references(() => institutions.id, { onDelete: "cascade" }),
+    assignedAt: timestamp("assigned_at", { withTimezone: true }).defaultNow().notNull(),
+    assignedBy: uuid("assigned_by").references(() => contributors.id, { onDelete: "set null" }),
+  },
+  (table) => [unique("contributor_institutions_unique").on(table.contributorId, table.institutionId)],
+);
+
 // Contributor hours
 export const contributorHours = pgTable(
   "contributor_hours",
