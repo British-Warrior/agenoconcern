@@ -212,3 +212,7 @@ export type {
   ToggleActiveInput,
   SetContributorInstitutionsInput,
 } from "./schemas/institution.js";
+
+// iThink webhook schemas
+export { ithinkWebhookPayloadSchema } from "./schemas/ithink-webhook.js";
+export type { IThinkWebhookPayload } from "./schemas/ithink-webhook.js";

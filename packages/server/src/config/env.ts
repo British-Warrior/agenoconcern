@@ -52,6 +52,10 @@ const envSchema = z.object({
   VAPID_PUBLIC_KEY: z.string().default(""),
   VAPID_PRIVATE_KEY: z.string().default(""),
   VAPID_SUBJECT: z.string().default("mailto:support@indomitableunity.org"),
+
+  // iThink webhook signing secrets (HMAC-SHA256)
+  ITHINK_WEBHOOK_SECRET: z.string().min(32),
+  ITHINK_WEBHOOK_SECRET_PREV: z.string().min(32).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
