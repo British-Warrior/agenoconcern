@@ -6,6 +6,7 @@ import { ProtectedRoute } from "./components/layout/ProtectedRoute.js";
 import { ChallengerRoute } from "./components/layout/ChallengerRoute.js";
 import { CMRoute } from "./components/layout/CMRoute.js";
 import { InstitutionManagement } from "./pages/admin/InstitutionManagement.js";
+import { ContributorDetail } from "./pages/admin/ContributorDetail.js";
 import { ChallengerRegister } from "./pages/challenger/ChallengerRegister.js";
 import { ChallengerDashboard } from "./pages/challenger/ChallengerDashboard.js";
 import { SubmitChallenge } from "./pages/challenger/SubmitChallenge.js";
@@ -59,6 +60,7 @@ export function App() {
             {/* Admin routes — guarded by CMRoute (community_manager + admin) */}
             <Route element={<CMRoute />}>
               <Route path="/admin/institutions" element={<InstitutionManagement />} />
+              <Route path="/admin/contributors/:id" element={<ContributorDetail />} />
             </Route>
 
             {/* Public routes */}
