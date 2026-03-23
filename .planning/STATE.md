@@ -11,9 +11,9 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 
 Milestone: v1.2 — Institution Management & iThink Integration
 Phase: 13 of 15 (iThink Webhook Integration) — In progress
-Plan: 1 of 3 complete
+Plan: 2 of 3 complete
 Status: In progress
-Last activity: 2026-03-23 — Completed 13-01-PLAN.md (webhook tables, Drizzle schema, env secret, shared Zod schema)
+Last activity: 2026-03-23 — Completed 13-02-PLAN.md (webhook handler, route registration, curl verified)
 
 Progress: [████████████░░░░░░░░] 61% (13/20 phases complete across all milestones)
 
@@ -58,6 +58,9 @@ Recent decisions relevant to v1.2:
 - Phase 13 Plan 01: ithink_signal_type enum created via DO $$ IF NOT EXISTS block — CREATE TYPE IF NOT EXISTS is invalid PostgreSQL syntax
 - Phase 13 Plan 01: ITHINK_WEBHOOK_SECRET has no .default() in Zod env schema — server refuses to start without it (min 32 chars)
 - Phase 13 Plan 01: ITHINK_WEBHOOK_SECRET_PREV is .optional() — supports zero-downtime dual-secret rotation in Plan 13-02
+- Phase 13 Plan 02: Sign over `timestamp.rawBody` (UTF-8) not rawBody alone — matches iThink actual signing format
+- Phase 13 Plan 02: Timestamp window check placed AFTER signature verification — prevents timing oracle on expired-but-signed requests
+- Phase 13 Plan 02: Contributor/institution lookup uses same 422 for both missing cases — avoids enumeration
 
 ### Pending Todos
 
@@ -70,5 +73,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-23
-Stopped at: Phase 13 Plan 1 complete — webhook tables, env secret, shared Zod schema done
-Resume file: .planning/phases/13-ithink-webhook-integration/13-02-PLAN.md
+Stopped at: Phase 13 Plan 2 complete — webhook handler, route registration, curl verified
+Resume file: .planning/phases/13-ithink-webhook-integration/13-03-PLAN.md
