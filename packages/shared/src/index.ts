@@ -198,3 +198,17 @@ export type {
   RegisterChallengerInput,
   SubmitChallengerChallengeInput,
 } from "./schemas/challenger.js";
+
+// Institution schemas
+export {
+  createInstitutionSchema,
+  updateInstitutionSchema,
+  toggleActiveSchema,
+  setContributorInstitutionsSchema,
+} from "./schemas/institution.js";
+export type {
+  CreateInstitutionInput,
+  UpdateInstitutionInput,
+  ToggleActiveInput,
+  SetContributorInstitutionsInput,
+} from "./schemas/institution.js";
