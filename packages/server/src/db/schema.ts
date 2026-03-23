@@ -515,6 +515,38 @@ export const contributorInstitutions = pgTable(
   (table) => [unique("contributor_institutions_unique").on(table.contributorId, table.institutionId)],
 );
 
+// iThink webhook enum
+export const ithinkSignalTypeEnum = pgEnum("ithink_signal_type", ["attention_flag"]);
+
+// Webhook deliveries (idempotency log for all incoming webhook events)
+export const webhookDeliveries = pgTable("webhook_deliveries", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  deliveryId: varchar("delivery_id", { length: 255 }).notNull().unique(),
+  source: varchar("source", { length: 50 }).notNull().default("ithink"),
+  receivedAt: timestamp("received_at", { withTimezone: true }).defaultNow().notNull(),
+  processedAt: timestamp("processed_at", { withTimezone: true }),
+});
+
+// iThink attention flags (one row per processed signal)
+export const ithinkAttentionFlags = pgTable("ithink_attention_flags", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  contributorId: uuid("contributor_id")
+    .notNull()
+    .references(() => contributors.id, { onDelete: "cascade" }),
+  institutionId: uuid("institution_id")
+    .notNull()
+    .references(() => institutions.id, { onDelete: "cascade" }),
+  deliveryId: varchar("delivery_id", { length: 255 }).notNull().unique(),
+  signalType: ithinkSignalTypeEnum("signal_type").notNull(),
+  cohortSize: integer("cohort_size"),
+  flaggedCount: integer("flagged_count"),
+  clearedBy: uuid("cleared_by").references(() => contributors.id, { onDelete: "set null" }),
+  clearedAt: timestamp("cleared_at", { withTimezone: true }),
+  followUpNotes: text("follow_up_notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // Contributor hours
 export const contributorHours = pgTable(
   "contributor_hours",
