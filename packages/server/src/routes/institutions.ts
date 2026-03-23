@@ -1,8 +1,13 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "../db/index.js";
-import { institutions } from "../db/schema.js";
+import {
+  institutions,
+  contributorInstitutions,
+  challengeInterests,
+  contributorHours,
+} from "../db/schema.js";
 
 const router = Router();
 
@@ -33,13 +38,50 @@ router.get("/:slug", async (req: Request, res: Response) => {
     return;
   }
 
+  // ── Compute live stats ────────────────────────────────────────────────────
+  const assignmentRows = await db
+    .select({ contributorId: contributorInstitutions.contributorId })
+    .from(contributorInstitutions)
+    .where(eq(contributorInstitutions.institutionId, institution.id));
+
+  const memberIds = assignmentRows.map((r) => r.contributorId);
+
+  let liveStats: { contributors: number; challenges: number; hours: number } | null = null;
+
+  if (memberIds.length > 0) {
+    // Batch-query challenge interests
+    const ciRows = await db
+      .select({ challengeId: challengeInterests.challengeId })
+      .from(challengeInterests)
+      .where(inArray(challengeInterests.contributorId, memberIds));
+
+    const uniqueChallenges = new Set(ciRows.map((r) => r.challengeId));
+
+    // Batch-query hours
+    const hoursRows = await db
+      .select({
+        total: sql<string>`coalesce(sum(${contributorHours.hoursLogged}), 0)`.as("total"),
+      })
+      .from(contributorHours)
+      .where(inArray(contributorHours.contributorId, memberIds));
+
+    const hoursTotal = Number(hoursRows[0]?.total ?? 0);
+
+    liveStats = {
+      contributors: memberIds.length,
+      challenges: uniqueChallenges.size,
+      hours: hoursTotal,
+    };
+  }
+
+  // statsJson is preserved in DB as cache/fallback but not returned to the client
   res.json({
     id: institution.id,
     name: institution.name,
     slug: institution.slug,
     description: institution.description,
     city: institution.city,
-    stats: institution.statsJson,
+    stats: liveStats,
   });
 });
 
