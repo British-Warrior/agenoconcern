@@ -5,15 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income -- bridging the pension gap while contributing to communities.
-**Current focus:** v1.2 Phase 13 — iThink Webhook Integration
+**Current focus:** v1.2 Phase 14 — CM Attention Dashboard
 
 ## Current Position
 
 Milestone: v1.2 — Institution Management & iThink Integration
-Phase: 13 of 15 (iThink Webhook Integration) — COMPLETE
-Plan: 3 of 3 complete
-Status: Phase complete — ready for Phase 14 (CM Attention Dashboard)
-Last activity: 2026-03-23 — Phase 13 verified (6/6 must-haves passed)
+Phase: 14 of 15 (CM Attention Dashboard) — In progress
+Plan: 1 of 2 complete
+Status: In progress
+Last activity: 2026-03-23 — Completed 14-01-PLAN.md (attention flag API routes)
 
 Progress: [█████████████░░░░░░░] 65% (13/20 phases complete across all milestones)
 
@@ -63,6 +63,9 @@ Recent decisions relevant to v1.2:
 - Phase 13 Plan 02: Contributor/institution lookup uses same 422 for both missing cases — avoids enumeration
 - Phase 13 Plan 03: iThink dispatch built externally by Kirk — separate repo, not monorepo
 - Phase 13 Plan 03: Retry policy: 3 attempts with 1s/3s/9s exponential backoff (exceeds plan's fire-and-forget spec)
+- Phase 14 Plan 01: /attention/history registered before /:flagId — Express route order prevents "history" being matched as a UUID param
+- Phase 14 Plan 01: Flag fetch checks both id AND institutionId in WHERE — single 404 for non-existent or cross-institution flag (prevents enumeration)
+- Phase 14 Plan 01: LIMIT 1 on CM institution lookup is a pilot-scale assumption — one CM manages one institution
 
 ### Pending Todos
 
@@ -75,5 +78,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-23
-Stopped at: Phase 13 complete — all 3 plans done, verification passed (6/6)
-Resume file: .planning/phases/14-cm-attention-dashboard/ (Phase 14 planning next)
+Stopped at: Phase 14 Plan 01 complete — attention flag API routes implemented (3 routes)
+Resume file: .planning/phases/14-cm-attention-dashboard/14-02-PLAN.md
