@@ -83,6 +83,7 @@ Each task was committed atomically:
 
 1. **Task 1: Create admin API routes for institution CRUD** - `3101ee8` (feat)
 2. **Task 2: CM route guard, admin API client, React Query hooks, institution management page, and Navbar admin link** - `276c390` (feat)
+3. **Task 3: Checkpoint human-verify** — approved by user, no commit
 
 ## Files Created/Modified
 - `packages/server/src/routes/admin.ts` — Institution CRUD endpoints (GET, POST, PUT, PATCH /active), all protected by CM role middleware
