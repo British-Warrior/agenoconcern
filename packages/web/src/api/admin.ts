@@ -4,6 +4,12 @@ import type {
   UpdateInstitutionInput,
 } from "@indomitable-unity/shared";
 
+export interface InstitutionStats {
+  contributors: number;
+  challenges: number;
+  hours: number;
+}
+
 export interface Institution {
   id: string;
   name: string;
@@ -12,6 +18,23 @@ export interface Institution {
   city: string | null;
   isActive: boolean;
   createdAt: string;
+  stats: InstitutionStats | null;
+}
+
+export interface InstitutionContributor {
+  id: string;
+  name: string;
+  role: string;
+  status: string;
+  lastActivity: string | null;
+}
+
+export interface ContributorWithInstitutions {
+  id: string;
+  name: string;
+  role: string;
+  status: string;
+  institutions: { id: string; name: string }[];
 }
 
 export function getInstitutions(): Promise<Institution[]> {
@@ -43,4 +66,22 @@ export function toggleInstitutionActive(
     method: "PATCH",
     body: JSON.stringify({ isActive }),
   });
+}
+
+export function getInstitutionContributors(id: string): Promise<InstitutionContributor[]> {
+  return apiClient<InstitutionContributor[]>(`/api/admin/institutions/${id}/contributors`);
+}
+
+export function setContributorInstitutions(
+  contributorId: string,
+  institutionIds: string[],
+): Promise<{ contributorId: string; institutions: { id: string; name: string }[] }> {
+  return apiClient(`/api/admin/contributors/${contributorId}/institutions`, {
+    method: "PUT",
+    body: JSON.stringify({ institutionIds }),
+  });
+}
+
+export function getAllContributors(): Promise<ContributorWithInstitutions[]> {
+  return apiClient<ContributorWithInstitutions[]>("/api/admin/contributors");
 }

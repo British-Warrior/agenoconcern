@@ -1,11 +1,14 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import {
   useInstitutions,
   useCreateInstitution,
   useUpdateInstitution,
   useToggleActive,
+  useInstitutionContributors,
+  useAllContributors,
 } from "../../hooks/useInstitutions.js";
-import type { Institution } from "../../api/admin.js";
+import type { Institution, InstitutionContributor } from "../../api/admin.js";
 import { Button } from "../../components/ui/Button.js";
 import { Input } from "../../components/ui/Input.js";
 
@@ -99,6 +102,61 @@ function ConfirmDialog({
   );
 }
 
+// ─── Relative time formatter ───────────────────────────────────────────────────
+
+function formatRelative(isoDate: string | null): string {
+  if (!isoDate) return "No activity yet";
+  const diff = Date.now() - new Date(isoDate).getTime();
+  const days = Math.floor(diff / 86400000);
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 30) return `${days} days ago`;
+  const months = Math.floor(days / 30);
+  if (months === 1) return "1 month ago";
+  if (months < 12) return `${months} months ago`;
+  return `${Math.floor(months / 12)} years ago`;
+}
+
+// ─── Contributor list (expandable) ────────────────────────────────────────────
+
+interface ContributorListProps {
+  institutionId: string;
+}
+
+function ContributorList({ institutionId }: ContributorListProps) {
+  const { data, isLoading } = useInstitutionContributors(institutionId);
+
+  if (isLoading) {
+    return (
+      <div className="px-1 py-2 text-sm text-neutral-400 animate-pulse">
+        Loading contributors...
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <p className="text-sm text-neutral-400 px-1 py-2">No contributors assigned.</p>
+    );
+  }
+
+  return (
+    <ul className="divide-y divide-neutral-100">
+      {data.map((c: InstitutionContributor) => (
+        <li key={c.id} className="py-2 px-1 flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-neutral-800 truncate">{c.name}</p>
+            <p className="text-xs text-neutral-500 capitalize">{c.status}</p>
+          </div>
+          <span className="shrink-0 text-xs text-neutral-400 pt-0.5">
+            {formatRelative(c.lastActivity)}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 // ─── Institution card (view mode) ─────────────────────────────────────────────
 
 interface InstitutionCardViewProps {
@@ -114,6 +172,9 @@ function InstitutionCardView({
   onToggle,
   isTogglePending,
 }: InstitutionCardViewProps) {
+  const [expanded, setExpanded] = useState(false);
+  const stats = institution.stats;
+
   return (
     <div className="bg-white border border-neutral-200 rounded-xl p-6 flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
@@ -142,7 +203,30 @@ function InstitutionCardView({
         <p className="text-sm text-neutral-600 line-clamp-2">{institution.description}</p>
       )}
 
-      <p className="text-xs text-neutral-400">0 contributors</p>
+      {/* Live stats */}
+      {stats ? (
+        <p className="text-xs text-neutral-500">
+          {stats.contributors} contributors &middot; {stats.challenges} challenges &middot; {stats.hours} hours
+        </p>
+      ) : (
+        <p className="text-xs text-neutral-400">No contributors assigned</p>
+      )}
+
+      {/* Expandable contributor list */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          className="text-xs text-primary-700 hover:text-primary-900 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+        >
+          {expanded ? "Hide contributors" : "Show contributors"}
+        </button>
+        {expanded && (
+          <div className="mt-2 border-t border-neutral-100 pt-2">
+            <ContributorList institutionId={institution.id} />
+          </div>
+        )}
+      </div>
 
       <div className="flex items-center justify-between pt-2 border-t border-neutral-100">
         <div className="flex items-center gap-2">
@@ -251,6 +335,52 @@ function InstitutionCardEdit({
   );
 }
 
+// ─── Unassigned contributors section ──────────────────────────────────────────
+
+function UnassignedContributors() {
+  const { data, isLoading } = useAllContributors();
+
+  const unassigned = data?.filter((c) => c.institutions.length === 0) ?? [];
+
+  if (isLoading) {
+    return (
+      <div className="mt-12">
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Unassigned Contributors</h2>
+        <p className="text-sm text-neutral-400 animate-pulse">Loading...</p>
+      </div>
+    );
+  }
+
+  if (unassigned.length === 0) return null;
+
+  return (
+    <div className="mt-12">
+      <h2 className="text-lg font-semibold text-neutral-900 mb-1">Unassigned Contributors</h2>
+      <p className="text-sm text-neutral-500 mb-4">
+        These contributors are not linked to any institution. Click "View" to assign them.
+      </p>
+      <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden">
+        <ul className="divide-y divide-neutral-100">
+          {unassigned.map((c) => (
+            <li key={c.id} className="flex items-center justify-between gap-4 px-5 py-3">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-neutral-900 truncate">{c.name}</p>
+                <p className="text-xs text-neutral-500 capitalize">{c.status}</p>
+              </div>
+              <Link
+                to={`/admin/contributors/${c.id}`}
+                className="shrink-0 text-sm font-medium text-primary-700 hover:text-primary-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded px-1"
+              >
+                View
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export function InstitutionManagement() {
@@ -331,53 +461,58 @@ export function InstitutionManagement() {
 
       {/* Card grid */}
       {!isLoading && !error && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* New institution card (at top) */}
-          {creatingNew && (
-            <InstitutionCardEdit
-              isNew
-              onSave={(data) => void handleCreate(data)}
-              onCancel={() => setCreatingNew(false)}
-              isPending={createMutation.isPending}
-            />
-          )}
-
-          {/* Existing institution cards */}
-          {institutionsData?.map((institution) =>
-            editingId === institution.id ? (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* New institution card (at top) */}
+            {creatingNew && (
               <InstitutionCardEdit
-                key={institution.id}
-                initialName={institution.name}
-                initialDescription={institution.description}
-                initialCity={institution.city ?? ""}
-                onSave={(data) => void handleUpdate(institution.id, data)}
-                onCancel={() => setEditingId(null)}
-                isPending={updateMutation.isPending}
+                isNew
+                onSave={(data) => void handleCreate(data)}
+                onCancel={() => setCreatingNew(false)}
+                isPending={createMutation.isPending}
               />
-            ) : (
-              <InstitutionCardView
-                key={institution.id}
-                institution={institution}
-                onEdit={() => {
-                  setEditingId(institution.id);
-                  setCreatingNew(false);
-                }}
-                onToggle={() => setConfirmToggle(institution)}
-                isTogglePending={
-                  toggleMutation.isPending && confirmToggle?.id === institution.id
-                }
-              />
-            ),
-          )}
+            )}
 
-          {/* Empty state */}
-          {!creatingNew && institutionsData?.length === 0 && (
-            <div className="col-span-full text-center py-16 text-neutral-400">
-              <p className="text-lg font-medium">No institutions yet.</p>
-              <p className="text-sm mt-1">Click "New Institution" to add the first one.</p>
-            </div>
-          )}
-        </div>
+            {/* Existing institution cards */}
+            {institutionsData?.map((institution) =>
+              editingId === institution.id ? (
+                <InstitutionCardEdit
+                  key={institution.id}
+                  initialName={institution.name}
+                  initialDescription={institution.description}
+                  initialCity={institution.city ?? ""}
+                  onSave={(data) => void handleUpdate(institution.id, data)}
+                  onCancel={() => setEditingId(null)}
+                  isPending={updateMutation.isPending}
+                />
+              ) : (
+                <InstitutionCardView
+                  key={institution.id}
+                  institution={institution}
+                  onEdit={() => {
+                    setEditingId(institution.id);
+                    setCreatingNew(false);
+                  }}
+                  onToggle={() => setConfirmToggle(institution)}
+                  isTogglePending={
+                    toggleMutation.isPending && confirmToggle?.id === institution.id
+                  }
+                />
+              ),
+            )}
+
+            {/* Empty state */}
+            {!creatingNew && institutionsData?.length === 0 && (
+              <div className="col-span-full text-center py-16 text-neutral-400">
+                <p className="text-lg font-medium">No institutions yet.</p>
+                <p className="text-sm mt-1">Click "New Institution" to add the first one.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Unassigned contributors section */}
+          <UnassignedContributors />
+        </>
       )}
 
       {/* Confirmation dialog */}

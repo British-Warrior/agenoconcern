@@ -102,8 +102,6 @@ export function InstitutionLanding() {
     );
   }
 
-  const stats = data.stats ?? { contributors: 0, challenges: 0, hours: 0 };
-
   return (
     <div className="min-h-screen bg-neutral-50 py-12 px-4">
       <div className="max-w-3xl mx-auto space-y-8">
@@ -122,12 +120,14 @@ export function InstitutionLanding() {
           </p>
         )}
 
-        {/* Impact stats */}
-        <div className="grid grid-cols-3 gap-4">
-          <StatCard value={stats.contributors} label="Contributors" />
-          <StatCard value={stats.challenges} label="Challenges" />
-          <StatCard value={stats.hours} label="Hours Contributed" />
-        </div>
+        {/* Impact stats — only shown when contributors are assigned */}
+        {data.stats && (
+          <div className="grid grid-cols-3 gap-4">
+            <StatCard value={data.stats.contributors} label="Contributors" />
+            <StatCard value={data.stats.challenges} label="Challenges" />
+            <StatCard value={data.stats.hours} label="Hours Contributed" />
+          </div>
+        )}
 
         {/* Get Started CTA */}
         <div className="pt-2">
