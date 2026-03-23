@@ -80,6 +80,14 @@ export function Navbar() {
               >
                 Wellbeing
               </Link>
+              {(contributor?.role === "community_manager" || contributor?.role === "admin") && (
+                <Link
+                  to="/admin/institutions"
+                  className={`${isKiosk ? "text-base" : "text-sm"} font-medium text-neutral-700 hover:text-primary-600 transition-colors no-underline`}
+                >
+                  Admin
+                </Link>
+              )}
               <NotificationBell />
               {!isKiosk && isSupported && !isSubscribed && typeof Notification !== "undefined" && Notification.permission !== "denied" && (
                 <button
