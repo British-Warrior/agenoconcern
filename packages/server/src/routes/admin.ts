@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { asc, eq, inArray, sql } from "drizzle-orm";
+import { asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { z } from "zod";
 import { getDb } from "../db/index.js";
 import {
   institutions,
@@ -9,6 +10,7 @@ import {
   contributorHours,
   wellbeingCheckins,
   circleNotes,
+  ithinkAttentionFlags,
 } from "../db/schema.js";
 import { authMiddleware, requireRole } from "../middleware/auth.js";
 import {
@@ -17,6 +19,11 @@ import {
   toggleActiveSchema,
   setContributorInstitutionsSchema,
 } from "@indomitable-unity/shared";
+
+// ─── Attention flag schemas ────────────────────────────────────────────────────
+const resolveAttentionFlagSchema = z.object({
+  followUpNotes: z.string().min(1, "Follow-up notes are required"),
+});
 
 const router = Router();
 
@@ -453,6 +460,150 @@ router.put("/contributors/:contributorId/institutions", async (req, res) => {
     .where(eq(contributorInstitutions.contributorId, contributorId));
 
   res.json({ contributorId, institutions: updatedAssignments });
+});
+
+// ─── GET /attention — Active (unresolved) flags scoped to CM's institution ────
+router.get("/attention", async (req, res) => {
+  const cmId = req.contributor!.id;
+  const db = getDb();
+
+  // Look up CM's institution assignment (pilot: one CM per institution)
+  const [assignment] = await db
+    .select({ institutionId: contributorInstitutions.institutionId })
+    .from(contributorInstitutions)
+    .where(eq(contributorInstitutions.contributorId, cmId))
+    .limit(1);
+
+  if (!assignment) {
+    res.status(403).json({ error: "No institution assigned to this community manager" });
+    return;
+  }
+
+  const flags = await db
+    .select({
+      id: ithinkAttentionFlags.id,
+      contributorId: ithinkAttentionFlags.contributorId,
+      contributorName: contributors.name,
+      signalType: ithinkAttentionFlags.signalType,
+      cohortSize: ithinkAttentionFlags.cohortSize,
+      flaggedCount: ithinkAttentionFlags.flaggedCount,
+      createdAt: ithinkAttentionFlags.createdAt,
+    })
+    .from(ithinkAttentionFlags)
+    .innerJoin(contributors, eq(contributors.id, ithinkAttentionFlags.contributorId))
+    .where(
+      sql`${ithinkAttentionFlags.institutionId} = ${assignment.institutionId} AND ${ithinkAttentionFlags.clearedAt} IS NULL`,
+    )
+    .orderBy(desc(ithinkAttentionFlags.createdAt));
+
+  res.json(flags);
+});
+
+// ─── GET /attention/history — All flags (including resolved) for CM's institution
+// NOTE: Must be registered BEFORE /attention/:flagId to avoid Express treating
+// "history" as a flagId parameter.
+router.get("/attention/history", async (req, res) => {
+  const cmId = req.contributor!.id;
+  const db = getDb();
+
+  const [assignment] = await db
+    .select({ institutionId: contributorInstitutions.institutionId })
+    .from(contributorInstitutions)
+    .where(eq(contributorInstitutions.contributorId, cmId))
+    .limit(1);
+
+  if (!assignment) {
+    res.status(403).json({ error: "No institution assigned to this community manager" });
+    return;
+  }
+
+  const flags = await db
+    .select({
+      id: ithinkAttentionFlags.id,
+      contributorId: ithinkAttentionFlags.contributorId,
+      contributorName: contributors.name,
+      signalType: ithinkAttentionFlags.signalType,
+      cohortSize: ithinkAttentionFlags.cohortSize,
+      flaggedCount: ithinkAttentionFlags.flaggedCount,
+      createdAt: ithinkAttentionFlags.createdAt,
+      clearedAt: ithinkAttentionFlags.clearedAt,
+      followUpNotes: ithinkAttentionFlags.followUpNotes,
+      clearedBy: ithinkAttentionFlags.clearedBy,
+    })
+    .from(ithinkAttentionFlags)
+    .innerJoin(contributors, eq(contributors.id, ithinkAttentionFlags.contributorId))
+    .where(eq(ithinkAttentionFlags.institutionId, assignment.institutionId))
+    .orderBy(desc(ithinkAttentionFlags.createdAt));
+
+  res.json(flags);
+});
+
+// ─── POST /attention/:flagId/resolve — Resolve a flag with follow-up notes ───
+router.post("/attention/:flagId/resolve", async (req, res) => {
+  const flagId = req.params["flagId"] as string;
+
+  if (!UUID_PATTERN.test(flagId)) {
+    res.status(400).json({ error: "Invalid flag ID" });
+    return;
+  }
+
+  const parseResult = resolveAttentionFlagSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    res.status(400).json({ error: parseResult.error.flatten() });
+    return;
+  }
+
+  const cmId = req.contributor!.id;
+  const db = getDb();
+
+  // Look up CM's institution assignment
+  const [assignment] = await db
+    .select({ institutionId: contributorInstitutions.institutionId })
+    .from(contributorInstitutions)
+    .where(eq(contributorInstitutions.contributorId, cmId))
+    .limit(1);
+
+  if (!assignment) {
+    res.status(403).json({ error: "No institution assigned to this community manager" });
+    return;
+  }
+
+  // Fetch the flag — must belong to CM's institution (prevents cross-institution access)
+  const [flag] = await db
+    .select({
+      id: ithinkAttentionFlags.id,
+      clearedAt: ithinkAttentionFlags.clearedAt,
+    })
+    .from(ithinkAttentionFlags)
+    .where(
+      sql`${ithinkAttentionFlags.id} = ${flagId} AND ${ithinkAttentionFlags.institutionId} = ${assignment.institutionId}`,
+    )
+    .limit(1);
+
+  if (!flag) {
+    // Same 404 whether flag doesn't exist or belongs to different institution — prevents enumeration
+    res.status(404).json({ error: "Flag not found" });
+    return;
+  }
+
+  if (flag.clearedAt !== null) {
+    res.status(409).json({ error: "Flag already resolved" });
+    return;
+  }
+
+  const now = new Date();
+  const [updated] = await db
+    .update(ithinkAttentionFlags)
+    .set({
+      clearedBy: cmId,
+      clearedAt: now,
+      followUpNotes: parseResult.data.followUpNotes,
+      updatedAt: now,
+    })
+    .where(eq(ithinkAttentionFlags.id, flagId))
+    .returning();
+
+  res.json(updated);
 });
 
 export { router as adminRouter };
