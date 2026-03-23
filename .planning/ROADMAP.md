@@ -82,7 +82,7 @@ Plans:
 5. iThink dispatches a signed webhook to IU when a screening completes with a concern flag, and the flag appears in the ithink_attention_flags table (end-to-end integration test)
 6. The webhook shared secret can be rotated by the admin without dropping valid in-flight requests (dual-secret transition window verified)
 
-**Plans:** TBD
+**Plans:** 3 plans
 
 Plans:
 - [ ] 13-01: DB schema (ithink_attention_flags table, webhook_deliveries idempotency table) and ITHINK_WEBHOOK_SECRET env var (no fallback)
