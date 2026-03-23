@@ -11,9 +11,9 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 
 Milestone: v1.2 — Institution Management & iThink Integration
 Phase: 14 of 15 (CM Attention Dashboard) — In progress
-Plan: 1 of 2 complete
-Status: In progress
-Last activity: 2026-03-23 — Completed 14-01-PLAN.md (attention flag API routes)
+Plan: 2 of 2 — Tasks 1 and 2 complete, awaiting checkpoint:human-verify at Task 3
+Status: In progress (checkpoint)
+Last activity: 2026-03-23 — Completed 14-02 Tasks 1 and 2 (frontend dashboard and hooks)
 
 Progress: [█████████████░░░░░░░] 65% (13/20 phases complete across all milestones)
 
@@ -78,5 +78,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-23
-Stopped at: Phase 14 Plan 01 complete — attention flag API routes implemented (3 routes)
-Resume file: .planning/phases/14-cm-attention-dashboard/14-02-PLAN.md
+Stopped at: Phase 14 Plan 02 checkpoint:human-verify — Tasks 1 and 2 done, awaiting user verification of dashboard UI
+Resume file: .planning/phases/14-cm-attention-dashboard/14-02-PLAN.md (Task 3 checkpoint)
