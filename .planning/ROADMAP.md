@@ -104,7 +104,7 @@ Plans:
 2. CM can clear an attention flag by submitting follow-up notes; the flag disappears from the active list and the notes are recorded with a timestamp and the CM's identity
 3. CM can view the attention signal history for their institution ordered by date, showing all signals including resolved ones
 
-**Plans:** TBD
+**Plans:** 2 plans
 
 Plans:
 - [ ] 14-01: Attention API routes (GET /api/attention and POST /api/attention/:flagId/resolve) with institution scope enforced from DB (not JWT)
@@ -126,7 +126,7 @@ Plans:
 3. PDF is streamed to the browser — no file appears in S3; a second download generates a fresh document
 4. PDF uses Indomitable Unity brand styles (typography, colour, and logo consistent with platform identity)
 
-**Plans:** TBD
+**Plans:** 2 plans
 
 Plans:
 - [ ] 15-01: pdfkit dependency setup, packages/server/src/pdf/institution-report.ts document component, GET /api/institutions/:slug/report.pdf route (CM auth, streaming, correct headers, empty-state guard)
