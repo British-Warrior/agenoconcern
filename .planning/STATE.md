@@ -11,9 +11,9 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 
 Milestone: v1.2 — Institution Management & iThink Integration
 Phase: 12 of 15 (Institution Data Foundation)
-Plan: 2 of 3 in current phase — complete (checkpoint approved)
-Status: In progress
-Last activity: 2026-03-23 — Completed 12-02-PLAN.md (admin API routes + CM institution management UI, checkpoint approved)
+Plan: 3 of 3 in current phase — 3 auto tasks complete, awaiting checkpoint:human-verify
+Status: In progress — checkpoint reached
+Last activity: 2026-03-23 — Completed 12-03-PLAN.md auto tasks (contributor assignment + live stats); awaiting human verification
 
 Progress: [██████████░░░░░░░░░░] 55% (11/20 phases complete across all milestones)
 
@@ -52,6 +52,9 @@ Recent decisions relevant to v1.2:
 - Phase 12 Plan 02: CMRoute guard pattern — check role community_manager OR admin, redirect to /dashboard otherwise
 - Phase 12 Plan 02: adminRouter uses router.use(authMiddleware, requireRole) at top — all routes automatically protected
 - Phase 12 Plan 02: Contributor count in InstitutionManagement card is 0 placeholder — Plan 12-03 adds live aggregation
+- Phase 12 Plan 03: Live stats return null when no contributors assigned — frontend hides stats section entirely (no zeros)
+- Phase 12 Plan 03: statsJson preserved in DB as cache/fallback, not returned to client — live stats replace it
+- Phase 12 Plan 03: Assignment direction from contributor profile (/admin/contributors/:id) — CM selects institutions via checkbox picker
 
 ### Pending Todos
 
@@ -66,5 +69,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-23
-Stopped at: Phase 12 Plan 02 — complete (checkpoint approved by user)
-Resume file: .planning/phases/12-institution-data-foundation/12-03-PLAN.md
+Stopped at: Phase 12 Plan 03 — Task 4 checkpoint:human-verify
+Resume file: .planning/phases/12-institution-data-foundation/12-03-PLAN.md (Task 4 — resume after user approves)
