@@ -1,4 +1,5 @@
 import { apiClient } from "./client.js";
+import { API_BASE_URL } from "../lib/constants.js";
 import type {
   CreateInstitutionInput,
   UpdateInstitutionInput,
@@ -84,4 +85,35 @@ export function setContributorInstitutions(
 
 export function getAllContributors(): Promise<ContributorWithInstitutions[]> {
   return apiClient<ContributorWithInstitutions[]>("/api/admin/contributors");
+}
+
+export async function downloadInstitutionReport(
+  slug: string,
+  from?: string,
+  to?: string,
+): Promise<void> {
+  const params = new URLSearchParams();
+  if (from) params.set("from", from);
+  if (to) params.set("to", to);
+  const query = params.toString() ? "?" + params.toString() : "";
+
+  const res = await fetch(
+    API_BASE_URL + "/api/admin/institutions/" + slug + "/report.pdf" + query,
+    { credentials: "include" },
+  );
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Report generation failed" }));
+    throw new Error((err as { error: string }).error);
+  }
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "impact-report-" + slug + ".pdf";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }

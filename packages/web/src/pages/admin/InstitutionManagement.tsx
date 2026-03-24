@@ -9,6 +9,7 @@ import {
   useAllContributors,
 } from "../../hooks/useInstitutions.js";
 import type { Institution, InstitutionContributor } from "../../api/admin.js";
+import { downloadInstitutionReport } from "../../api/admin.js";
 import { Button } from "../../components/ui/Button.js";
 import { Input } from "../../components/ui/Input.js";
 
@@ -173,7 +174,28 @@ function InstitutionCardView({
   isTogglePending,
 }: InstitutionCardViewProps) {
   const [expanded, setExpanded] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const [showDateRange, setShowDateRange] = useState(false);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const stats = institution.stats;
+
+  const handleGenerateReport = async () => {
+    setReportError(null);
+    setIsGenerating(true);
+    try {
+      await downloadInstitutionReport(
+        institution.slug,
+        fromDate || undefined,
+        toDate || undefined,
+      );
+    } catch (err) {
+      setReportError(err instanceof Error ? err.message : "Report generation failed");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   return (
     <div className="bg-white border border-neutral-200 rounded-xl p-6 flex flex-col gap-3">
@@ -225,6 +247,63 @@ function InstitutionCardView({
           <div className="mt-2 border-t border-neutral-100 pt-2">
             <ContributorList institutionId={institution.id} />
           </div>
+        )}
+      </div>
+
+      {/* Generate Report */}
+      <div className="pt-2 border-t border-neutral-100">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="default"
+              className="text-sm px-3 py-1.5 min-h-0"
+              disabled={!stats || isGenerating}
+              loading={isGenerating}
+              onClick={() => void handleGenerateReport()}
+            >
+              Generate Report
+            </Button>
+            <button
+              type="button"
+              onClick={() => setShowDateRange((prev) => !prev)}
+              className="text-xs text-primary-700 hover:text-primary-900 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+            >
+              {showDateRange ? "Hide dates" : "Date range"}
+            </button>
+          </div>
+          {!stats && (
+            <span className="text-xs text-neutral-400">No contributors</span>
+          )}
+        </div>
+
+        {showDateRange && (
+          <div className="mt-2 flex gap-2">
+            <div className="flex-1">
+              <label className="text-xs text-neutral-500 block mb-1">From</label>
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                disabled={isGenerating}
+                className="w-full px-2 py-1 text-xs border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-xs text-neutral-500 block mb-1">To</label>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                disabled={isGenerating}
+                className="w-full px-2 py-1 text-xs border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500"
+              />
+            </div>
+          </div>
+        )}
+
+        {reportError && (
+          <p className="mt-1.5 text-xs text-red-600" role="alert">{reportError}</p>
         )}
       </div>
 
