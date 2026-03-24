@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income -- bridging the pension gap while contributing to communities.
-**Current focus:** v1.2 Phase 14 — CM Attention Dashboard
+**Current focus:** v1.2 Phase 15 — PDF Impact Report
 
 ## Current Position
 
 Milestone: v1.2 — Institution Management & iThink Integration
-Phase: 14 of 15 (CM Attention Dashboard) — In progress
-Plan: 2 of 2 — Tasks 1 and 2 complete, awaiting checkpoint:human-verify at Task 3
-Status: In progress (checkpoint)
-Last activity: 2026-03-23 — Completed 14-02 Tasks 1 and 2 (frontend dashboard and hooks)
+Phase: 15 of 15 (PDF Impact Report) — Not started
+Plan: 0 of 2
+Status: Ready for planning
+Last activity: 2026-03-24 — Phase 14 complete (CM Attention Dashboard verified)
 
-Progress: [█████████████░░░░░░░] 65% (13/20 phases complete across all milestones)
+Progress: [██████████████░░░░░] 70% (14/20 phases complete across all milestones)
 
 ## Performance Metrics
 
@@ -66,6 +66,8 @@ Recent decisions relevant to v1.2:
 - Phase 14 Plan 01: /attention/history registered before /:flagId — Express route order prevents "history" being matched as a UUID param
 - Phase 14 Plan 01: Flag fetch checks both id AND institutionId in WHERE — single 404 for non-existent or cross-institution flag (prevents enumeration)
 - Phase 14 Plan 01: LIMIT 1 on CM institution lookup is a pilot-scale assumption — one CM manages one institution
+- Phase 14 Plan 02: Navbar shows "Attention" link adjacent to "Admin" for CM/admin — no dropdown
+- Phase 14 Plan 02: Confirm Resolve button disabled when followUpNotes empty — frontend validation matches server Zod schema
 
 ### Pending Todos
 
@@ -77,6 +79,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-23
-Stopped at: Phase 14 Plan 02 checkpoint:human-verify — Tasks 1 and 2 done, awaiting user verification of dashboard UI
-Resume file: .planning/phases/14-cm-attention-dashboard/14-02-PLAN.md (Task 3 checkpoint)
+Last session: 2026-03-24
+Stopped at: Phase 14 complete — ready for Phase 15 planning
+Resume file: N/A
