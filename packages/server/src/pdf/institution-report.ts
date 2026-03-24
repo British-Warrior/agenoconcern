@@ -65,7 +65,7 @@ export function buildInstitutionReport(data: ReportData): PDFKit.PDFDocument {
     .font(FONTS.regular)
     .fontSize(11)
     .fillColor(AMBER)
-    .text("Bridging the pension gap through community contribution", 50, 48, { lineBreak: false });
+    .text("Deploying Expertise That Hasn't Passed Its Sell-By Date.", 50, 48, { lineBreak: false });
 
   // ── Report title section ─────────────────────────────────────────────────────
   let y = 110;

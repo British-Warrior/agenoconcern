@@ -662,10 +662,17 @@ router.get("/institutions/:slug/report.pdf", async (req, res) => {
   const contributorIds = assignments.map((a) => a.contributorId);
 
   // Build challenge count (unique challenges the contributors are interested in)
+  const ciConditions = [inArray(challengeInterests.contributorId, contributorIds)];
+  if (startDate) {
+    ciConditions.push(gte(challengeInterests.createdAt, startDate));
+  }
+  if (endDate) {
+    ciConditions.push(lte(challengeInterests.createdAt, endDate));
+  }
   const ciRows = await db
     .select({ challengeId: challengeInterests.challengeId })
     .from(challengeInterests)
-    .where(inArray(challengeInterests.contributorId, contributorIds));
+    .where(sql`${ciConditions.map((c) => sql`(${c})`).reduce((a, b) => sql`${a} AND ${b}`)}`);
 
   const uniqueChallenges = new Set(ciRows.map((r) => r.challengeId));
 
