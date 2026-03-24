@@ -11,9 +11,9 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 
 Milestone: v1.2 — Institution Management & iThink Integration
 Phase: 15 of 15 (PDF Impact Report) — In progress
-Plan: 1 of 2
-Status: In progress
-Last activity: 2026-03-24 — Completed 15-01-PLAN.md (PDF builder and streaming route)
+Plan: 2 of 2
+Status: In progress — checkpoint (human-verify)
+Last activity: 2026-03-24 — Completed Task 1 of 15-02-PLAN.md (downloadInstitutionReport + Generate Report UI)
 
 Progress: [██████████████░░░░░] 70% (14/20 phases complete across all milestones)
 
@@ -82,5 +82,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-24
-Stopped at: Phase 15, Plan 1 complete — ready for Plan 2 (frontend PDF download button)
+Stopped at: Phase 15, Plan 2 — checkpoint:human-verify (Task 1 complete, awaiting PDF verification)
 Resume file: .planning/phases/15-pdf-impact-report/15-02-PLAN.md
