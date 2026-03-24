@@ -10,10 +10,10 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 ## Current Position
 
 Milestone: v1.2 — Institution Management & iThink Integration
-Phase: 15 of 15 (PDF Impact Report) — Not started
-Plan: 0 of 2
-Status: Ready for planning
-Last activity: 2026-03-24 — Phase 14 complete (CM Attention Dashboard verified)
+Phase: 15 of 15 (PDF Impact Report) — In progress
+Plan: 1 of 2
+Status: In progress
+Last activity: 2026-03-24 — Completed 15-01-PLAN.md (PDF builder and streaming route)
 
 Progress: [██████████████░░░░░] 70% (14/20 phases complete across all milestones)
 
@@ -68,6 +68,8 @@ Recent decisions relevant to v1.2:
 - Phase 14 Plan 01: LIMIT 1 on CM institution lookup is a pilot-scale assumption — one CM manages one institution
 - Phase 14 Plan 02: Navbar shows "Attention" link adjacent to "Admin" for CM/admin — no dropdown
 - Phase 14 Plan 02: Confirm Resolve button disabled when followUpNotes empty — frontend validation matches server Zod schema
+- Phase 15 Plan 01: @fontsource/inter v5.x ships only WOFF/WOFF2 — Inter TTFs sourced directly from rsms/inter v4.1 GitHub release zip
+- Phase 15 Plan 01: Manual text layout for stats table rows — simpler and more reliable than pdfkit's undocumented table API
 
 ### Pending Todos
 
@@ -80,5 +82,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-24
-Stopped at: Phase 14 complete — ready for Phase 15 planning
-Resume file: N/A
+Stopped at: Phase 15, Plan 1 complete — ready for Plan 2 (frontend PDF download button)
+Resume file: .planning/phases/15-pdf-impact-report/15-02-PLAN.md
