@@ -41,17 +41,17 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 - ✓ Institutional landing pages (/i/:slug with impact stats) — v1.1
 - ✓ Kiosk auto-activation from institutional pages — v1.1
 
+- ✓ Institution CRUD (CM creates, edits, activates/deactivates institutions) — v1.2
+- ✓ Contributor-institution many-to-many assignment (CM assigns via checkbox picker) — v1.2
+- ✓ Live institution stats (contributor count, challenges, hours from DB queries, not static JSON) — v1.2
+- ✓ iThink webhook receiver (HMAC-SHA256, replay protection, idempotency, Zod validation, relationship check) — v1.2
+- ✓ iThink webhook dispatch (signed payloads, exponential backoff retry, dual-secret rotation) — v1.2
+- ✓ CM attention dashboard (institution-scoped flagged contributors, resolve with notes, signal history) — v1.2
+- ✓ PDF impact report (pdfkit branded PDF streamed to browser, date range filtering, Inter font) — v1.2
+
 ### Active
 
-## Current Milestone: v1.2 Institution Management & iThink Integration
-
-**Goal:** Give the CM operational tools to manage institution-contributor relationships with live impact data and PDF reports, and integrate iThink (Kirk's neurodivergence assessment app) so the platform can proactively support contributors flagged as needing attention.
-
-**Target features:**
-- Institution management (contributor-institution FK, CM assigns contributors, live aggregate stats, PDF impact reports)
-- iThink webhook dispatch (iThink sends signed webhooks when screenings flag concern)
-- IU webhook receiver (verify signature, match to institution, store "needs attention" flag)
-- CM attention view (flagged contributors list, filter by institution, clear after follow-up)
+(No active milestone — ready for next milestone planning)
 
 ### Out of Scope
 
@@ -81,12 +81,12 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 - **Funding:** NLCF Community Power Fund £80k (primary for MVP), UnLtd Awards £5-15k, Awards for All £300-£20k. MVP build within Community Power Fund budget.
 - **Key contact:** Maria Zappala GAICD — Australian board director, AI governance & anti-ageism advocate. Potential advisory board member.
 
-### Current State (v1.1 shipped)
+### Current State (v1.2 shipped)
 
-- **Codebase:** 24,799 lines TypeScript/TSX/CSS across 204 source files
-- **Tech stack:** Node.js/TypeScript monorepo, Express server, React/Vite frontend, PostgreSQL (Drizzle ORM), Stripe Connect, S3, OpenAI, web-push, Resend, react-idle-timer, recharts
-- **Architecture:** MCP server (14 tools) + REST API + React SPA (PWA) + VANTAGE API (key auth) + Kiosk mode + Challenger portal + Institutional landing pages
-- **Known tech debt:** 4 items (see v1.1 milestone audit) — none blocking pilot
+- **Codebase:** 22,113 lines TypeScript/TSX/CSS across ~220 source files
+- **Tech stack:** Node.js/TypeScript monorepo, Express server, React/Vite frontend, PostgreSQL (Drizzle ORM), Stripe Connect, S3, OpenAI, web-push, Resend, react-idle-timer, recharts, pdfkit
+- **Architecture:** MCP server (14 tools) + REST API + React SPA (PWA) + VANTAGE API (key auth) + Kiosk mode + Challenger portal + Institutional landing pages + iThink webhook receiver + CM admin (institutions, attention, PDF reports)
+- **Known tech debt:** LIMIT 1 CM institution lookup (pilot-scale), statsJson JSONB preserved but unused
 - **Legal pre-launch:** Employment Agencies Act 1973 classification, WEMWBS licence registration, DPIA/APD completion
 
 ### Data Model (6 Core Entities)
@@ -157,4 +157,4 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 | react-idle-timer over custom listeners | Purpose-built idle detection handles edge cases (visibility, cross-tab, throttle) | ✓ Good — 560k weekly downloads, stable |
 
 ---
-*Last updated: 2026-03-21 after v1.1 milestone completion*
+*Last updated: 2026-03-24 after v1.2 milestone completion*

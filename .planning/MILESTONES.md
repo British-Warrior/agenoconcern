@@ -1,5 +1,31 @@
 # Milestones: Indomitable Unity
 
+## v1.2 Institution Management & iThink Integration (Shipped: 2026-03-24)
+
+**Delivered:** CM operational tools for institution-contributor management with live impact data, iThink webhook integration for proactive contributor support, attention flag dashboard, and on-demand branded PDF impact reports.
+
+**Phases completed:** 12-15 (10 plans total)
+
+**Key accomplishments:**
+
+- Institution data foundation — many-to-many contributor-institution junction table, CM CRUD interface, live stats aggregation replacing static JSONB
+- iThink webhook integration — HMAC-SHA256 signed receiver with replay protection, idempotency, Zod validation, cross-institution spoofing check, and dual-secret rotation
+- CM attention dashboard — institution-scoped flagged contributor list, resolve-with-notes dialog, signal history view
+- PDF impact report — pdfkit-generated branded PDF streamed to browser (no S3), with Inter font, date range filtering, and empty-state guard
+
+**Stats:**
+
+- ~18 commits for feature work
+- 22,113 lines of TypeScript/TSX/CSS (total codebase)
+- 4 phases, 10 plans, 24 requirements
+- 2 days from 2026-03-23 to 2026-03-24
+
+**Git range:** `ef806ea` → `68e3e9b`
+
+**What's next:** TBD — pilot deployment, user testing, next milestone planning
+
+---
+
 ## v1.1 Pilot-Ready (Shipped: 2026-03-21)
 
 **Delivered:** Platform ready for East Midlands pilot — UX overhaul, VANTAGE API integration, challenger self-service portal, kiosk mode for institutional embedding, and public institution landing pages.
