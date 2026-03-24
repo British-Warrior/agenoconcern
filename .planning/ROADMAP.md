@@ -38,7 +38,7 @@
 - [x] **Phase 12: Institution Data Foundation** — contributor-institution junction table, CM institution CRUD, live stats (completed 2026-03-23)
 - [x] **Phase 13: iThink Webhook Integration** — signed webhook receiver with full security stack, iThink dispatch, attention flag storage (completed 2026-03-23)
 - [x] **Phase 14: CM Attention Dashboard** — flagged contributor view filtered by institution, resolve with notes (completed 2026-03-24)
-- [ ] **Phase 15: PDF Impact Report** — on-demand branded PDF streamed to browser
+- [x] **Phase 15: PDF Impact Report** — on-demand branded PDF streamed to browser (completed 2026-03-24)
 
 ---
 
@@ -152,7 +152,7 @@ Plans:
 | 12. Institution Data Foundation | v1.2 | 3/3 | Complete | 2026-03-23 |
 | 13. iThink Webhook Integration | v1.2 | 3/3 | Complete | 2026-03-23 |
 | 14. CM Attention Dashboard | v1.2 | 2/2 | Complete | 2026-03-24 |
-| 15. PDF Impact Report | v1.2 | 0/2 | Not started | - |
+| 15. PDF Impact Report | v1.2 | 2/2 | Complete | 2026-03-24 |
 
 ---
 *Full v1.0 details archived in milestones/v1.0-ROADMAP.md*

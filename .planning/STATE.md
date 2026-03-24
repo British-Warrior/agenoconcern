@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income -- bridging the pension gap while contributing to communities.
-**Current focus:** v1.2 Phase 15 — PDF Impact Report
+**Current focus:** v1.2 complete — all phases finished
 
 ## Current Position
 
 Milestone: v1.2 — Institution Management & iThink Integration
-Phase: 15 of 15 (PDF Impact Report) — In progress
-Plan: 2 of 2
-Status: In progress — checkpoint (human-verify)
-Last activity: 2026-03-24 — Completed Task 1 of 15-02-PLAN.md (downloadInstitutionReport + Generate Report UI)
+Phase: 15 of 15 (PDF Impact Report) — Complete
+Plan: 2 of 2 — Complete
+Status: Milestone complete
+Last activity: 2026-03-24 — Phase 15 complete (PDF Impact Report verified, gaps fixed)
 
-Progress: [██████████████░░░░░] 70% (14/20 phases complete across all milestones)
+Progress: [████████████████████] 75% (15/20 phases complete across all milestones)
 
 ## Performance Metrics
 
@@ -70,6 +70,8 @@ Recent decisions relevant to v1.2:
 - Phase 14 Plan 02: Confirm Resolve button disabled when followUpNotes empty — frontend validation matches server Zod schema
 - Phase 15 Plan 01: @fontsource/inter v5.x ships only WOFF/WOFF2 — Inter TTFs sourced directly from rsms/inter v4.1 GitHub release zip
 - Phase 15 Plan 01: Manual text layout for stats table rows — simpler and more reliable than pdfkit's undocumented table API
+- Phase 15 Plan 02: Raw fetch + blob for binary PDF download — apiClient only handles JSON
+- Phase 15 Plan 02: Generate Report button disabled when stats is null (no contributors)
 
 ### Pending Todos
 
@@ -82,5 +84,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-24
-Stopped at: Phase 15, Plan 2 — checkpoint:human-verify (Task 1 complete, awaiting PDF verification)
-Resume file: .planning/phases/15-pdf-impact-report/15-02-PLAN.md
+Stopped at: v1.2 milestone complete — all 4 phases (12-15) finished
+Resume file: N/A
