@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { asc, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "../db/index.js";
 import {
@@ -13,6 +13,7 @@ import {
   ithinkAttentionFlags,
 } from "../db/schema.js";
 import { authMiddleware, requireRole } from "../middleware/auth.js";
+import { buildInstitutionReport, type ReportData } from "../pdf/institution-report.js";
 import {
   createInstitutionSchema,
   updateInstitutionSchema,
@@ -604,6 +605,109 @@ router.post("/attention/:flagId/resolve", async (req, res) => {
     .returning();
 
   res.json(updated);
+});
+
+// ─── GET /institutions/:slug/report.pdf — Stream branded PDF impact report ────
+const SLUG_PATTERN = /^[a-z0-9-]{2,100}$/;
+
+router.get("/institutions/:slug/report.pdf", async (req, res) => {
+  const { slug } = req.params;
+
+  if (!SLUG_PATTERN.test(slug)) {
+    res.status(400).json({ error: "Invalid institution slug" });
+    return;
+  }
+
+  // Parse optional date range query params
+  const fromParam = typeof req.query.from === "string" ? req.query.from : undefined;
+  const toParam = typeof req.query.to === "string" ? req.query.to : undefined;
+
+  const startDate = fromParam ? new Date(fromParam) : null;
+  const endDate = toParam ? new Date(toParam) : null;
+
+  if (startDate && isNaN(startDate.getTime())) {
+    res.status(400).json({ error: "Invalid 'from' date parameter" });
+    return;
+  }
+  if (endDate && isNaN(endDate.getTime())) {
+    res.status(400).json({ error: "Invalid 'to' date parameter" });
+    return;
+  }
+
+  const db = getDb();
+
+  // Look up institution
+  const [institution] = await db
+    .select({ id: institutions.id, name: institutions.name, city: institutions.city })
+    .from(institutions)
+    .where(eq(institutions.slug, slug))
+    .limit(1);
+
+  if (!institution) {
+    res.status(404).json({ error: "Institution not found" });
+    return;
+  }
+
+  // Fetch contributor assignments
+  const assignments = await db
+    .select({ contributorId: contributorInstitutions.contributorId })
+    .from(contributorInstitutions)
+    .where(eq(contributorInstitutions.institutionId, institution.id));
+
+  if (assignments.length === 0) {
+    res.status(422).json({ error: "No contributors assigned to this institution — cannot generate report" });
+    return;
+  }
+
+  const contributorIds = assignments.map((a) => a.contributorId);
+
+  // Build challenge count (unique challenges the contributors are interested in)
+  const ciRows = await db
+    .select({ challengeId: challengeInterests.challengeId })
+    .from(challengeInterests)
+    .where(inArray(challengeInterests.contributorId, contributorIds));
+
+  const uniqueChallenges = new Set(ciRows.map((r) => r.challengeId));
+
+  // Build hours query with optional date filtering
+  const hoursConditions = [inArray(contributorHours.contributorId, contributorIds)];
+  if (startDate) {
+    hoursConditions.push(gte(contributorHours.loggedAt, startDate));
+  }
+  if (endDate) {
+    hoursConditions.push(lte(contributorHours.loggedAt, endDate));
+  }
+
+  const hoursRows = await db
+    .select({ hoursLogged: contributorHours.hoursLogged })
+    .from(contributorHours)
+    .where(sql`${hoursConditions.map((c) => sql`(${c})`).reduce((a, b) => sql`${a} AND ${b}`)}`);
+
+  const totalHours = hoursRows.reduce((sum, r) => sum + r.hoursLogged, 0);
+
+  const reportData: ReportData = {
+    institutionName: institution.name,
+    institutionCity: institution.city ?? null,
+    stats: {
+      contributors: contributorIds.length,
+      challenges: uniqueChallenges.size,
+      hours: totalHours,
+    },
+    generatedAt: new Date(),
+    dateRange: { startDate, endDate },
+  };
+
+  // Stream the PDF
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader(
+    "Content-Disposition",
+    `inline; filename="impact-report-${slug}.pdf"`,
+  );
+  res.setHeader("Cache-Control", "no-store");
+
+  const doc = buildInstitutionReport(reportData);
+  doc.pipe(res);
+  doc.end();
 });
 
 export { router as adminRouter };
