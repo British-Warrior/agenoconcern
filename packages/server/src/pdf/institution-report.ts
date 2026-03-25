@@ -23,6 +23,8 @@ export interface ReportData {
   stats: { contributors: number; challenges: number; hours: number };
   generatedAt: Date;
   dateRange: { startDate: Date | null; endDate: Date | null };
+  wellbeingBand?: "Low" | "Typical" | "High" | null;
+  wellbeingMessage?: string;
 }
 
 function formatDate(d: Date): string {
@@ -148,6 +150,43 @@ export function buildInstitutionReport(data: ReportData): PDFKit.PDFDocument {
       .text(statRows[i].value, statsX + statsWidth - 120, y + 8, { lineBreak: false });
 
     y += 28;
+  }
+
+  // ── Wellbeing band row ────────────────────────────────────────────────────────
+  if (data.wellbeingBand !== undefined) {
+    const wellbeingRowBg = statRows.length % 2 === 0 ? WHITE : LIGHT_GREY;
+    doc.rect(statsX, y, statsWidth, 28).fill(wellbeingRowBg);
+
+    doc
+      .font(FONTS.regular)
+      .fontSize(11)
+      .fillColor(NAVY)
+      .text("Wellbeing Band", statsX + 16, y + 8, { lineBreak: false });
+
+    const bandValue = data.wellbeingBand
+      ? data.wellbeingBand
+      : "—";
+
+    doc
+      .font(FONTS.bold)
+      .fontSize(11)
+      .fillColor(NAVY)
+      .text(bandValue, statsX + statsWidth - 120, y + 8, { lineBreak: false });
+
+    y += 28;
+
+    // Suppression or note message
+    if (data.wellbeingMessage) {
+      doc
+        .font(FONTS.regular)
+        .fontSize(9)
+        .fillColor(MID_GREY)
+        .text(data.wellbeingMessage, statsX + 16, y + 8, {
+          width: statsWidth - 32,
+          lineBreak: true,
+        });
+      y += 32;
+    }
   }
 
   // ── Footer ───────────────────────────────────────────────────────────────────

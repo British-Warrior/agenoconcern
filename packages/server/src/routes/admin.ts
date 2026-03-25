@@ -14,6 +14,7 @@ import {
 } from "../db/schema.js";
 import { authMiddleware, requireRole } from "../middleware/auth.js";
 import { buildInstitutionReport, type ReportData } from "../pdf/institution-report.js";
+import { rawToMetric, metricToBand } from "../lib/swemwbs-rasch.js";
 import {
   createInstitutionSchema,
   updateInstitutionSchema,
@@ -692,6 +693,57 @@ router.get("/institutions/:slug/report.pdf", async (req, res) => {
 
   const totalHours = hoursRows.reduce((sum, r) => sum + r.hoursLogged, 0);
 
+  // ── Wellbeing band query (consent-filtered, DISTINCT ON latest per contributor) ─
+  // Fetch the most recent consented check-in per contributor for this institution.
+  // Only check-ins where institutional_reporting = true are included.
+  const K_ANONYMITY = 5;
+  let wellbeingBand: "Low" | "Typical" | "High" | null = null;
+  let wellbeingMessage: string | undefined;
+
+  const wellbeingRows = await db
+    .selectDistinctOn([wellbeingCheckins.contributorId], {
+      contributorId: wellbeingCheckins.contributorId,
+      wemwbsScore: wellbeingCheckins.wemwbsScore,
+    })
+    .from(wellbeingCheckins)
+    .where(
+      sql`${inArray(wellbeingCheckins.contributorId, contributorIds)} AND ${eq(wellbeingCheckins.institutionalReporting, true)}`,
+    )
+    .orderBy(wellbeingCheckins.contributorId, desc(wellbeingCheckins.completedAt));
+
+  if (wellbeingRows.length < K_ANONYMITY) {
+    wellbeingBand = null;
+    wellbeingMessage =
+      "Wellbeing data not available — fewer than 5 contributors have shared their wellbeing data for this report period.";
+  } else {
+    // Compute Rasch metric bands for each contributor's most recent score
+    const bandCounts: Record<"Low" | "Typical" | "High", number> = {
+      Low: 0,
+      Typical: 0,
+      High: 0,
+    };
+    for (const row of wellbeingRows) {
+      try {
+        const metric = rawToMetric(row.wemwbsScore);
+        const band = metricToBand(metric);
+        bandCounts[band]++;
+      } catch {
+        // Skip invalid scores
+      }
+    }
+    // Modal band — Typical wins ties
+    if (
+      bandCounts.Typical >= bandCounts.Low &&
+      bandCounts.Typical >= bandCounts.High
+    ) {
+      wellbeingBand = "Typical";
+    } else if (bandCounts.Low >= bandCounts.High) {
+      wellbeingBand = "Low";
+    } else {
+      wellbeingBand = "High";
+    }
+  }
+
   const reportData: ReportData = {
     institutionName: institution.name,
     institutionCity: institution.city ?? null,
@@ -702,6 +754,8 @@ router.get("/institutions/:slug/report.pdf", async (req, res) => {
     },
     generatedAt: new Date(),
     dateRange: { startDate, endDate },
+    wellbeingBand,
+    wellbeingMessage,
   };
 
   // Stream the PDF
