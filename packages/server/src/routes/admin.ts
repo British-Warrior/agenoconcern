@@ -501,6 +501,69 @@ router.get("/attention", async (req, res) => {
   res.json(flags);
 });
 
+// ─── GET /attention/trend — 12-week flag count series + direction + activeCount
+// NOTE: Must be registered BEFORE /attention/:flagId to avoid Express treating
+// "trend" as a flagId parameter.
+router.get("/attention/trend", async (req, res) => {
+  const cmId = req.contributor!.id;
+  const db = getDb();
+
+  const [assignment] = await db
+    .select({ institutionId: contributorInstitutions.institutionId })
+    .from(contributorInstitutions)
+    .where(eq(contributorInstitutions.contributorId, cmId))
+    .limit(1);
+
+  if (!assignment) {
+    res.status(403).json({ error: "No institution assigned to this community manager" });
+    return;
+  }
+
+  const { institutionId } = assignment;
+
+  // 12-week series using generate_series
+  const weekRows = await db.execute<{ iso_week: string; count: number }>(sql`
+    WITH weeks AS (
+      SELECT generate_series(
+        date_trunc('week', now()) - interval '11 weeks',
+        date_trunc('week', now()),
+        '1 week'
+      ) AS week_start
+    )
+    SELECT
+      to_char(w.week_start, 'YYYY-"W"IW') AS iso_week,
+      coalesce(count(f.id)::int, 0) AS count
+    FROM weeks w
+    LEFT JOIN ithink_attention_flags f
+      ON date_trunc('week', f.created_at AT TIME ZONE 'UTC') = w.week_start
+      AND f.institution_id = ${institutionId}
+    GROUP BY w.week_start
+    ORDER BY w.week_start
+  `);
+
+  const weeks = Array.from(weekRows).map((r) => ({
+    isoWeek: r.iso_week,
+    count: Number(r.count),
+  }));
+
+  // Compute direction: compare last 4 weeks vs previous 4 weeks (weeks 5-8 of the 12)
+  const last4 = weeks.slice(8, 12).reduce((s: number, w) => s + w.count, 0);
+  const prev4 = weeks.slice(4, 8).reduce((s: number, w) => s + w.count, 0);
+  const direction: "Increasing" | "Stable" | "Decreasing" =
+    last4 > prev4 ? "Increasing" : last4 < prev4 ? "Decreasing" : "Stable";
+
+  // Active (unresolved) count
+  const activeRows = await db.execute<{ active_count: number }>(sql`
+    SELECT count(id)::int AS active_count
+    FROM ithink_attention_flags
+    WHERE institution_id = ${institutionId}
+      AND cleared_at IS NULL
+  `);
+  const activeCount = Number(Array.from(activeRows)[0]?.active_count ?? 0);
+
+  res.json({ weeks, direction, activeCount });
+});
+
 // ─── GET /attention/history — All flags (including resolved) for CM's institution
 // NOTE: Must be registered BEFORE /attention/:flagId to avoid Express treating
 // "history" as a flagId parameter.
