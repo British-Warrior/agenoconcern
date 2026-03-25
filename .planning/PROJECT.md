@@ -51,7 +51,15 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 
 ### Active
 
-(No active milestone — ready for next milestone planning)
+## Current Milestone: v1.3 Enhanced Reporting & Institution Portal
+
+**Goal:** Enrich the CM's operational data with wellbeing aggregates and attention trends in reports, automate PDF delivery to institutions, and give institutions a self-service portal to view their own impact data without CM mediation.
+
+**Target features:**
+- Wellbeing aggregate band in PDF impact report (anonymous, min 5 contributor threshold)
+- Attention signal trend visualization per institution (frequency direction)
+- Scheduled PDF report auto-delivery to institution contact email
+- Institution portal with separate login for institutions to access their own data
 
 ### Out of Scope
 
@@ -157,4 +165,4 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 | react-idle-timer over custom listeners | Purpose-built idle detection handles edge cases (visibility, cross-tab, throttle) | ✓ Good — 560k weekly downloads, stable |
 
 ---
-*Last updated: 2026-03-24 after v1.2 milestone completion*
+*Last updated: 2026-03-25 after v1.3 milestone start*

@@ -2,18 +2,18 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-24)
+See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income -- bridging the pension gap while contributing to communities.
-**Current focus:** Planning next milestone
+**Current focus:** v1.3 Enhanced Reporting & Institution Portal
 
 ## Current Position
 
-Milestone: v1.2 shipped — ready for next milestone
-Phase: N/A
-Plan: N/A
-Status: Between milestones
-Last activity: 2026-03-24 — v1.2 milestone archived
+Milestone: v1.3 — Enhanced Reporting & Institution Portal
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-25 — Milestone v1.3 started
 
 Progress: [████████████████████] 100% (15/15 phases complete across v1.0-v1.2)
 
@@ -28,7 +28,7 @@ Progress: [████████████████████] 100% (1
 
 ### Decisions
 
-All v1.2 decisions archived in milestones/v1.2-ROADMAP.md.
+All v1.0-v1.2 decisions archived in milestones/.
 Cumulative decisions in PROJECT.md Key Decisions table.
 
 ### Pending Todos
@@ -41,6 +41,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-24
-Stopped at: v1.2 milestone archived — ready for /gsd:new-milestone
+Last session: 2026-03-25
+Stopped at: v1.3 milestone — defining requirements
 Resume file: N/A
