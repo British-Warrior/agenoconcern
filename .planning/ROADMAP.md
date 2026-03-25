@@ -47,11 +47,11 @@ See: `.planning/milestones/v1.2-ROADMAP.md`
   3. Only contributors who have consented to the `institutional_reporting` purpose are counted toward the wellbeing band
   4. The attention dashboard shows a trend direction indicator (increasing/stable/decreasing) beside each institution's flag count
   5. The CM can open a weekly trend chart of attention flag counts for any institution
-**Plans:** TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 16-01: Wellbeing aggregation service — Rasch lookup, k-anonymity guard, consent filter
-- [ ] 16-02: Wellbeing band in PDF and attention trend indicators + chart
+- [ ] 16-01-PLAN.md — Wellbeing aggregation service: DB migration, Rasch utility, consent checkbox, wellbeing band query, PDF extension
+- [ ] 16-02-PLAN.md — Attention trend API endpoint, trend chart component, dashboard integration with indicator and Trends tab
 
 #### Phase 17: Scheduled Report Delivery
 
@@ -92,6 +92,6 @@ Plans:
 | 1-6 (Foundation → Payments) | v1.0 | 19/19 | Complete | 2026-03-15 |
 | 7-11 (UX → Kiosk) | v1.1 | 11/11 | Complete | 2026-03-21 |
 | 12-15 (Institutions → PDF) | v1.2 | 10/10 | Complete | 2026-03-24 |
-| 16. Wellbeing & Attention Analytics | v1.3 | 0/TBD | Not started | - |
+| 16. Wellbeing & Attention Analytics | v1.3 | 0/2 | Not started | - |
 | 17. Scheduled Report Delivery | v1.3 | 0/TBD | Not started | - |
 | 18. Institution Portal | v1.3 | 0/TBD | Not started | - |
