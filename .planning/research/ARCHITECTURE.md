@@ -1,1053 +1,676 @@
-# Architecture Research
+# Architecture Patterns
 
-**Domain:** Social enterprise platform — v1.2 Institution Management & iThink Integration
-**Researched:** 2026-03-21
-**Confidence:** HIGH (IU codebase direct inspection), MEDIUM (iThink — described from project context, not directly inspectable)
-
----
-
-## System Overview (v1.1 Baseline)
-
-```
-┌───────────────────────────────────────────────────────────────────┐
-│                        Browser / PWA                              │
-│  React SPA (Vite) — BrowserRouter, AuthProvider, TanStack Query   │
-│  Cookie auth (httpOnly JWT) — apiClient with 401 auto-refresh     │
-└───────────────────────────────┬───────────────────────────────────┘
-                                │ HTTPS REST (credentials: include)
-┌───────────────────────────────▼───────────────────────────────────┐
-│                    Express Server (Node.js / TypeScript)           │
-│  Middleware chain: cors → cookieParser → rawBody(stripe/webhook)  │
-│                    → express.json()                               │
-│  Auth: authMiddleware (JWT cookie) + requireRole() factory        │
-│  API key auth: apiKeyMiddleware (VANTAGE — X-API-Key header)      │
-│  Routes (all under /api/):                                        │
-│    auth, onboarding, challenges, circles, payments, impact,       │
-│    wellbeing, notifications, vantage, challenger, institutions    │
-└───────────────────────────────┬───────────────────────────────────┘
-                                │ Drizzle ORM (pg driver)
-┌───────────────────────────────▼───────────────────────────────────┐
-│                         PostgreSQL                                 │
-│  22 tables — contributors, contributor_profiles, cv_parse_jobs,   │
-│  challenges, challenge_interests, circles, circle_members,        │
-│  circle_notes, note_attachments, circle_resolutions,             │
-│  resolution_ratings, consent_records, payment_transactions,       │
-│  contributor_hours, wellbeing_checkins, push_subscriptions,       │
-│  notifications, oauth_accounts, password_reset_tokens,            │
-│  challenger_organisations, api_keys, institutions                 │
-└───────────────────────────────────────────────────────────────────┘
-
-                    iThink (separate system)
-┌───────────────────────────────────────────────────────────────────┐
-│  React Native app + Express API (/api/*)                          │
-│  Session-based auth (cookie). SQLite local DB.                    │
-│  Will gain outbound webhook dispatch capability in v1.2.          │
-└───────────────────────────────────────────────────────────────────┘
-```
+**Project:** Indomitable Unity v1.3 — Enhanced Reporting & Institution Portal
+**Researched:** 2026-03-25
+**Confidence:** HIGH (all patterns grounded in direct codebase inspection of v1.2 completed state)
 
 ---
 
-## v1.2 Integration Map
+## Existing Architecture Baseline (v1.2 Completed)
 
-Six features. Each has a distinct integration profile. This section answers: what is new, what is modified, what is untouched — for both IU and iThink.
-
----
-
-### Feature 1: Contributor-Institution FK
-
-**Current state:**
-
-`institutions` table exists with `stats_json JSONB` holding pre-seeded hardcoded counts (`contributors`, `challenges`, `hours`). The `contributors` table has no institution reference. Stats are static — never updated when contributors join or log hours.
-
-**What changes:**
-
-Add `institution_id` FK on the `contributors` table. This is the anchor for everything else in v1.2 — the CM attention view, the aggregate stats computation, and the PDF report all depend on knowing which contributors belong to which institution.
-
-**New DB column (manual migration script — NOT VALID pattern required):**
-
-```sql
--- Step 1: Add column and constraint WITHOUT validating existing rows (no table scan lock)
-ALTER TABLE contributors ADD COLUMN institution_id UUID;
-ALTER TABLE contributors
-  ADD CONSTRAINT contributors_institution_id_fkey
-  FOREIGN KEY (institution_id) REFERENCES institutions(id) ON DELETE SET NULL
-  NOT VALID;
-
--- Step 2: Validate existing rows (uses SHARE UPDATE EXCLUSIVE lock — allows concurrent reads and writes)
-ALTER TABLE contributors VALIDATE CONSTRAINT contributors_institution_id_fkey;
-
--- Step 3: Index for query performance
-CREATE INDEX idx_contributors_institution_id ON contributors(institution_id);
-```
-
-- `ON DELETE SET NULL` — deleting an institution does not cascade to contributor records.
-- Nullable — existing contributors have no institution assignment. CM assigns them.
-- `NOT VALID` / `VALIDATE CONSTRAINT` two-step is critical: a single `ALTER TABLE` statement on a live `contributors` table performs a full table scan with a write-blocking lock. The two-step avoids this.
-- Index is necessary: every CM query for contributors-by-institution hits this column.
-
-**Stats computation change:**
-
-Replace `stats_json` reads with live aggregate queries. The `institutions` route handler for `GET /:slug` currently returns `institution.statsJson`. This must be replaced with a JOIN-based aggregate at query time:
-
-```sql
--- contributor count
-SELECT COUNT(*) FROM contributors WHERE institution_id = $institutionId AND status = 'active';
-
--- challenges count (challenges where at least one institution contributor is a circle member)
-SELECT COUNT(DISTINCT ch.id)
-FROM challenges ch
-JOIN circles ci ON ci.challenge_id = ch.id
-JOIN circle_members cm ON cm.circle_id = ci.id
-JOIN contributors c ON c.id = cm.contributor_id
-WHERE c.institution_id = $institutionId;
-
--- hours count
-SELECT COALESCE(SUM(ch.hours_logged), 0)
-FROM contributor_hours ch
-JOIN contributors c ON c.id = ch.contributor_id
-WHERE c.institution_id = $institutionId;
-```
-
-These are cheap at pilot scale (tens of contributors per institution). The `stats_json` column must remain in the DB schema throughout v1.2 — do not remove it. Add live aggregation as a parallel code path, verify parity against known seed values, then cut over. Do not write-through update `stats_json` — it creates a maintenance burden for minimal gain at this scale.
-
-**Modified files:**
-
-| File | Change |
-|------|--------|
-| `packages/server/src/db/schema.ts` | Add `institutionId` column to `contributors` table |
-| `packages/server/src/routes/institutions.ts` | Replace `statsJson` reads with live aggregates |
-| `packages/server/scripts/add-contributor-institution-fk.mjs` | NEW — manual migration: NOT VALID FK + index |
-
-**Unchanged:**
-
-- All other routes. Contributors who log in, check wellbeing, join circles — none of those flows touch `institution_id`.
-- The institution landing page React component (`InstitutionLanding.tsx`) already reads `stats` from the JSON response. As long as the API response shape stays `{ contributors, challenges, hours }`, the page needs no change.
-
----
-
-### Feature 2: CM Institution Management Endpoints
-
-**What the CM needs:**
-
-The CM must be able to:
-1. List all active institutions
-2. List contributors assigned to a given institution
-3. Assign a contributor to an institution (set `institution_id`)
-4. Remove a contributor from an institution (set `institution_id = NULL`)
-5. Create/edit institution name, description, city
-6. Activate/deactivate an institution (controls kiosk landing page visibility)
-
-**Auth pattern:**
-
-All CM management routes use `authMiddleware` + `requireRole("community_manager")`. This is identical to the existing CM payments route pattern (`POST /api/payments/retainer`). No new middleware needed.
-
-**New routes (extend `routes/institutions.ts`):**
-
-```
-GET  /api/institutions
-     — list all institutions (CM view: includes inactive)
-     — requires: community_manager role
-     — response: { institutions: InstitutionSummary[] }
-
-POST /api/institutions
-     — create new institution
-     — requires: community_manager role
-     — body: { name, description, city }
-     — auto-generates slug from name (immutable after creation)
-     — response: 201 { institution }
-
-PUT  /api/institutions/:slug
-     — update institution name, description, city
-     — requires: community_manager role
-     — response: { institution }
-
-PATCH /api/institutions/:slug/status
-     — toggle isActive (activate/deactivate)
-     — requires: community_manager role
-     — body: { isActive: boolean }
-     — response: { ok: true }
-
-GET  /api/institutions/:slug/contributors
-     — list contributors assigned to this institution
-     — requires: community_manager role
-     — response: { contributors: ContributorSummary[] }
-
-PUT  /api/institutions/:slug/contributors/:contributorId
-     — assign contributor to institution (idempotent)
-     — requires: community_manager role
-     — body: {} (assignment inferred from route)
-     — response: 200 { ok: true }
-
-DELETE /api/institutions/:slug/contributors/:contributorId
-       — remove contributor from institution (sets institution_id = NULL)
-       — requires: community_manager role
-       — response: 200 { ok: true }
-```
-
-**Route boundary note:**
-
-The existing `GET /api/institutions/:slug` is public (no auth). The new CM management routes must be positioned after `authMiddleware` + `requireRole`. The router file should be structured so public routes come first, guarded routes come after. The `requireRole` factory already handles the check.
-
-**Modified files:**
-
-| File | Change |
-|------|--------|
-| `packages/server/src/routes/institutions.ts` | Add CM management routes |
-| `packages/shared/src/types/` | Add `InstitutionSummary`, `ContributorSummary` types if not already present |
-| `packages/shared/src/schemas/` | Add Zod input schemas for route body validation |
-
----
-
-### Feature 3: PDF Generation Endpoint
-
-**Architecture decision: server-side generation, streamed PDF.**
-
-The institution impact report must be a standalone document usable outside the browser — suitable for email attachment, printing, or inclusion in grant applications. It must be generated on demand, not stored.
-
-**Recommended library: `pdfkit ^0.18.0`**
-
-- Pure Node.js PDF generation. No headless browser, no Chrome binary.
-- Ships an ESM entry point (`js/pdfkit.es.js`) — compatible with this ESM-first monorepo.
-- Streams directly to Express response via `doc.pipe(res)` — no memory buffering.
-- v0.18.0 published March 15, 2026. HIGH confidence.
-
-`@react-pdf/renderer` was evaluated and rejected: active open ESM/`__dirname` breakage issues (#2624, #2907, #3017) confirmed open March 2026 in the ESM-first Node.js environment this project uses. Do not use it.
-
-Puppeteer was rejected: 300MB Chromium binary, 2–5s cold start per render, unacceptable for a synchronous HTTP download.
-
-**New route:**
-
-```
-GET /api/institutions/:slug/report.pdf
-    — requires: community_manager role
-    — generates PDF from live aggregate data
-    — streams PDF bytes to response
-    — Content-Type: application/pdf
-    — Content-Disposition: attachment; filename="[slug]-impact-report-[date].pdf"
-    — req.setTimeout(30_000) — guard against long renders on large datasets
-```
-
-**Data the report contains:**
-
-Computed from the same live aggregates as the stats endpoint, plus:
-- Institution name, city, description
-- Contributor list with name, status, hours contributed in period
-- Active challenges involving institution contributors
-- Wellbeing score band (aggregate, only if >= 5 contributors have check-ins in period — omit with note if threshold not met; never individual scores)
-- Date range query parameters (`from`, `to` — default: past 90 days)
-- Report generation date
-
-**Data flow:**
-
-```
-CM clicks "Download Report"
-    ↓ GET /api/institutions/:slug/report.pdf (cookie auth, CM role)
-Route handler:
-    1. fetch institution record (verify exists + active)
-    2. 4 parallel Drizzle queries:
-       - contributor list with hours in period
-       - challenge count via circle_members join
-       - wellbeing aggregate (anonymised, min-5 threshold)
-       - total hours in period
-    3. const doc = new PDFDocument()
-    4. res.setHeader("Content-Type", "application/pdf")
-    5. res.setHeader("Content-Disposition", `attachment; filename="${slug}-report.pdf"`)
-    6. doc.pipe(res)
-    7. build report content imperatively (pdfkit API)
-    8. doc.end()
-Browser receives PDF bytes → download prompt or inline viewer
-```
-
-**New files:**
+### Server File Map
 
 ```
 packages/server/src/
-├── routes/institutions.ts       MODIFIED — add GET /:slug/report.pdf route
-└── pdf/
-    └── institution-report.ts   NEW — pdfkit document builder (server-only)
+├── config/env.ts                        # getEnv() — validated env vars
+├── db/
+│   ├── index.ts                         # getDb() — singleton Drizzle instance
+│   └── schema.ts                        # All Drizzle table definitions
+├── middleware/
+│   ├── auth.ts                          # authMiddleware + requireRole(role)
+│   ├── api-key-auth.ts                  # VANTAGE X-Api-Key auth
+│   └── error-handler.ts
+├── pdf/
+│   ├── fonts/Inter-Regular.ttf          # Committed fonts (~96KB each)
+│   ├── fonts/Inter-Bold.ttf
+│   └── institution-report.ts            # buildInstitutionReport(ReportData) → PDFDocument
+├── routes/
+│   ├── admin.ts                         # adminRouter — community_manager + admin only
+│   │                                    # Mounts: institution CRUD, contributor mgmt,
+│   │                                    #         attention flags, PDF report endpoint
+│   ├── institutions.ts                  # Public GET /api/institutions/:slug (no auth)
+│   ├── wellbeing.ts                     # /checkin, /due, /history (contributor auth)
+│   ├── webhooks.ts                      # ithinkWebhookHandler (raw body, HMAC-SHA256)
+│   └── [auth, challenges, circles, payments, impact, notifications, vantage, challenger]
+├── services/
+│   ├── notification.service.ts          # notifyBatch(ids, payload)
+│   ├── wellbeing-reminder.job.ts        # node-cron daily at 09:00 UTC
+│   └── [auth, cv, llm, matching, s3, stripe]
+└── express-app.ts                       # Route assembly — raw body before express.json()
 ```
 
-**Important:** The PDF builder lives in `packages/server/src/pdf/` and is a server-only concern. It must not be imported into the React web bundle. Using a dedicated folder makes this boundary explicit.
-
-**Package to add to `packages/server/package.json`:**
+### Web File Map (relevant subset)
 
 ```
-pdfkit         ^0.18.0
-@types/pdfkit  ^0.13.x     (TypeScript types — not bundled with pdfkit)
+packages/web/src/
+├── api/
+│   ├── admin.ts          # CM API functions + downloadInstitutionReport (raw fetch/blob)
+│   ├── attention.ts      # getAttentionFlags, getAttentionHistory, resolveFlag
+│   ├── client.ts         # apiClient — JSON responses only, not usable for binary
+│   └── wellbeing.ts
+├── hooks/
+│   ├── useAttention.ts   # useAttentionFlags, useAttentionHistory, useResolveFlag
+│   └── useInstitutions.ts
+└── pages/admin/
+    ├── AttentionDashboard.tsx    # Active flags + history tabs
+    └── InstitutionManagement.tsx # Institution CRUD + PDF download button + date range
+```
+
+### Auth Surfaces
+
+| Route Scope | Guard Applied | Roles Allowed |
+|-------------|--------------|---------------|
+| `adminRouter` (all routes) | `authMiddleware` + `requireRole("community_manager")` | community_manager, admin |
+| Contributor routes | `authMiddleware` | contributor, community_manager, admin |
+| Public institution page | None | Anyone |
+| VANTAGE routes | `apiKeyMiddleware` | External systems with valid key |
+| iThink webhook | HMAC-SHA256 + timestamp window | iThink system only |
+
+Note: `requireRole("community_manager")` passes `admin` through (see `middleware/auth.ts` line 62: checks `role !== role && role !== "admin"`).
+
+### Existing Key Schema Tables
+
+| Table | Key Columns | Notes |
+|-------|-------------|-------|
+| `contributors` | id, role, status | Role enum: contributor, community_manager, admin, challenger |
+| `institutions` | id, slug, name, city, isActive, statsJson | `statsJson` is a cache field |
+| `contributor_institutions` | contributor_id, institution_id, assigned_at | Many-to-many junction |
+| `wellbeing_checkins` | contributor_id, wemwbs_score, ucla_score, completed_at | Time-series health data |
+| `ithink_attention_flags` | contributor_id, institution_id, cleared_at, signal_type | One row per iThink signal |
+| `webhook_deliveries` | delivery_id (unique), processed_at | Idempotency log |
+| `contributor_hours` | contributor_id, circle_id, hours_logged, logged_at | Activity ledger |
+| `challenge_interests` | contributor_id, challenge_id, created_at | Challenge participation |
+
+### Route Mount Order (express-app.ts — critical for new features)
+
+```
+1. POST /api/payments/webhook   — express.raw() (Stripe)
+2. POST /api/webhooks/ithink    — express.raw() (iThink HMAC-signed)
+3. app.use(express.json())      ← all raw-body routes MUST be above this
+4. All other routes
+5. app.use(adminRouter) at /api/admin
 ```
 
 ---
 
-### Feature 4: Webhook Receiver Endpoint (IU receives from iThink)
+## New Features: Integration Points
 
-**What this receives:**
+### Feature 1: Wellbeing Aggregation in PDF
 
-iThink sends a signed HTTP POST after a screening that produces a cohort-level attention signal. The payload is institution-level aggregate data — **no individual contributor identifiers**. This is a hard privacy constraint, not a preference.
+**Status of dependencies:** Fully available. `wellbeing_checkins` table exists with `wemwbs_score`, `ucla_score`, `completed_at`, `contributor_id`. PDF route exists at `GET /api/admin/institutions/:slug/report.pdf`. `buildInstitutionReport` is a pure function accepting a `ReportData` struct.
 
-Payload contains:
-- Institution identifier (slug or ID — must be agreed)
-- Signal type (e.g. `"attention_flag"`, `"high_concern"`)
-- Cohort size and flagged count (aggregate — never individual contributor IDs or emails)
-- Timestamp of the screening
-- A unique event ID for idempotency
+**Modified files only — no new files, no new tables.**
 
-**Architecture pattern: same as Stripe webhook.**
+#### Modified: `packages/server/src/pdf/institution-report.ts`
 
-The existing Stripe webhook handler (`POST /api/payments/webhook`) demonstrates the correct pattern:
-
-1. Raw body parsed before `express.json()` — required for HMAC signature verification
-2. Signature verified using a shared secret (timingSafeEqual — not `===`)
-3. Timestamp window check — reject if `|server_time - webhook_timestamp| > 300s` (replay protection)
-4. Idempotency check — store event_id in `webhook_deliveries` table before processing
-5. Payload validated with Zod — reject any payload containing per-contributor fields
-6. Signal written to `institution_attention_signals` table
-7. Returns 200 immediately — always 200 if signature is valid (prevents iThink retry storms)
-
-Apply this same pattern to the iThink receiver.
-
-**New route mount (express-app.ts):**
+Extend the exported `ReportData` interface with an optional wellbeing field:
 
 ```typescript
-// BEFORE express.json() — raw body required for HMAC verification
-app.post(
-  "/api/webhooks/ithink",
-  express.raw({ type: "application/json" }),
-  iThinkWebhookHandler,
-);
-```
-
-**Signature verification:**
-
-iThink signs payloads with HMAC-SHA256 using a shared secret. IU verifies using `crypto.timingSafeEqual` on the computed vs received HMAC. The shared secret is stored in `env.ts` as `ITHINK_WEBHOOK_SECRET`. `getEnv()` must throw at startup if this value is missing — no fallback.
-
-```typescript
-// Verification pattern (in webhook handler)
-const signature = req.headers["x-ithink-signature"] as string;
-const computed = createHmac("sha256", getEnv().ITHINK_WEBHOOK_SECRET)
-  .update(req.body as Buffer)
-  .digest("hex");
-const sigBuf = Buffer.from(signature.replace("sha256=", ""), "hex");
-const compBuf = Buffer.from(computed, "hex");
-if (sigBuf.length !== compBuf.length || !timingSafeEqual(sigBuf, compBuf)) {
-  res.status(401).json({ error: "Invalid signature" });
-  return;
+export interface ReportData {
+  institutionName: string;
+  institutionCity: string | null;
+  stats: { contributors: number; challenges: number; hours: number };
+  generatedAt: Date;
+  dateRange: { startDate: Date | null; endDate: Date | null };
+  // NEW — undefined or null when below privacy threshold
+  wellbeing?: {
+    avgWemwbsScore: number;
+    avgUclaScore: number;
+    checkinCount: number;
+  } | null;
 }
 ```
 
-**New DB tables:**
+The `buildInstitutionReport` function renders a wellbeing section only when `data.wellbeing` is non-null. The privacy threshold decision lives in the route handler — the PDF module never knows about it.
 
-```sql
--- Idempotency dedup table
-CREATE TABLE webhook_deliveries (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  source      VARCHAR(50) NOT NULL,         -- 'ithink'
-  event_id    VARCHAR(255) NOT NULL,         -- from payload
-  received_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE (source, event_id)
-);
+#### Modified: `GET /api/admin/institutions/:slug/report.pdf` in `routes/admin.ts`
 
--- Institution-level attention signals (cohort aggregate — no per-contributor data)
-CREATE TABLE institution_attention_signals (
-  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  institution_id UUID NOT NULL REFERENCES institutions(id) ON DELETE CASCADE,
-  delivery_id  UUID NOT NULL REFERENCES webhook_deliveries(id),
-  signal_type  VARCHAR(100) NOT NULL,        -- e.g. "attention_flag", "high_concern"
-  cohort_size  INTEGER NOT NULL,             -- total contributors in cohort at time of screening
-  flagged_count INTEGER NOT NULL,            -- count of cohort members flagged
-  raw_payload  JSONB NOT NULL,               -- full webhook payload for audit
-  screened_at  TIMESTAMPTZ NOT NULL,         -- timestamp from iThink payload
-  received_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_attention_signals_institution ON institution_attention_signals(institution_id);
-CREATE INDEX idx_attention_signals_received ON institution_attention_signals(institution_id, received_at DESC);
-```
-
-**No per-contributor FK.** The `institution_attention_signals` table intentionally has no `contributor_id` column. iThink sends cohort aggregates. Adding a `contributor_id` to this table would require iThink to send individual identifiers — a design decision that violates the privacy-first contract.
-
-**Contributor matching not required:** Unlike the earlier design iteration (which proposed matching by email), the final payload design is cohort-level only. The receiver resolves the institution by slug (`institutions.slug`), not a contributor.
-
-**New files:**
-
-```
-packages/server/src/
-├── routes/webhooks.ts                    NEW — iThink webhook handler
-├── db/schema.ts                          MODIFIED — webhook_deliveries + institution_attention_signals tables
-├── config/env.ts                         MODIFIED — add ITHINK_WEBHOOK_SECRET (no fallback)
-└── express-app.ts                        MODIFIED — mount webhook route before express.json()
-packages/server/scripts/
-└── add-webhook-tables.mjs                NEW — manual migration script
-```
-
----
-
-### Feature 5: Webhook Dispatch from iThink (iThink-side changes)
-
-**What iThink must add:**
-
-iThink currently has no outbound webhook capability. It needs to:
-1. Store a webhook endpoint URL and shared secret per institution (configurable by CM)
-2. After a screening that produces a flagged cohort result, send a signed POST to the configured URL
-3. Handle failures gracefully (log failures, never block the primary screening operation)
-
-**iThink architecture context:**
-
-- React Native app + Express API
-- Session-based auth
-- SQLite local DB
-
-**HMAC signing in iThink (React Native):**
-
-The iThink app runs React Native. Node.js built-in `crypto` is not available. `expo-crypto` does not expose `createHmac`. The correct library is `react-native-quick-crypto ^1.0.17` (Margelo's JSI-based `node:crypto` drop-in). Requires bare Expo workflow (`expo prebuild`) — does not work in Expo Go.
-
-**New iThink DB table (SQLite):**
-
-```sql
-CREATE TABLE IF NOT EXISTS webhook_configs (
-  id                    INTEGER PRIMARY KEY AUTOINCREMENT,
-  institution_identifier TEXT NOT NULL,  -- matches IU institution slug
-  endpoint_url          TEXT NOT NULL,
-  secret                TEXT NOT NULL,   -- shared secret for HMAC signing
-  is_active             INTEGER NOT NULL DEFAULT 1,
-  created_at            TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at            TEXT NOT NULL DEFAULT (datetime('now'))
-);
-```
-
-**New iThink API routes (CM configures):**
-
-```
-POST /api/webhooks/config
-     — create/update webhook config for an institution
-     — requires: session auth, CM role
-     — body: { institutionIdentifier, endpointUrl, secret }
-
-GET  /api/webhooks/config
-     — list webhook configs
-     — requires: session auth, CM role
-```
-
-**Webhook dispatch function (called from screening completion handler):**
+After the existing four aggregation queries (contributor IDs, challenge count, hours), add a fifth:
 
 ```typescript
-async function dispatchWebhook(
-  config: WebhookConfig,
-  payload: WebhookPayload,
-): Promise<void> {
-  const body = JSON.stringify(payload);
-  const sig = "sha256=" + createHmac("sha256", config.secret).update(body).digest("hex");
+// Fetch per-contributor wellbeing averages within the date window
+const wellbeingRows = await db
+  .select({
+    contributorId: wellbeingCheckins.contributorId,
+    avgWemwbs: sql<number>`avg(${wellbeingCheckins.wemwbsScore})`,
+    avgUcla: sql<number>`avg(${wellbeingCheckins.uclaScore})`,
+  })
+  .from(wellbeingCheckins)
+  .where(/* inArray(contributorIds) + optional date filters */)
+  .groupBy(wellbeingCheckins.contributorId);
 
-  try {
-    const response = await fetch(config.endpointUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-iThink-Signature": sig,
-      },
-      body,
-    });
+const WELLBEING_MIN_THRESHOLD = 5; // privacy gate — agree with stakeholders
+const checkinCount = wellbeingRows.length;
 
-    if (!response.ok) {
-      console.error(`[webhook] Dispatch failed: ${response.status}`);
+const wellbeing = checkinCount >= WELLBEING_MIN_THRESHOLD
+  ? {
+      avgWemwbsScore: wellbeingRows.reduce((s, r) => s + r.avgWemwbs, 0) / checkinCount,
+      avgUclaScore:   wellbeingRows.reduce((s, r) => s + r.avgUcla, 0)   / checkinCount,
+      checkinCount,
     }
-  } catch (err) {
-    // Fire-and-forget — screening must not fail if webhook is unreachable
-    console.error("[webhook] Dispatch error:", err);
-  }
-}
-```
+  : null;
 
-**Payload shape (agreed contract between iThink and IU):**
-
-```typescript
-interface IThinkWebhookPayload {
-  event_id: string;              // UUID — used by IU for idempotency dedup
-  event: "attention_flag";
-  institution_slug: string;      // matches IU institution slug
-  signal_type: string;           // e.g. "high_concern", "needs_checkin"
-  cohort_size: number;           // total contributors screened
-  flagged_count: number;         // count flagged (no individual IDs)
-  screened_at: string;           // ISO 8601 — used by IU for timestamp window check
-}
-```
-
-No `contributorEmail`, no `contributorId`. The payload contract explicitly excludes per-contributor identifiers. Any deviation in the iThink implementation causes the IU Zod schema to reject the webhook.
-
-**Key constraint:** The webhook dispatch must be fire-and-forget from the screening handler's perspective. A network failure sending a webhook must never cause the screening to fail or the iThink API to return an error to the React Native client.
-
-**iThink files touched:**
-
-```
-iThink/
-├── src/db/schema.sql (or migrations/)
-│   └── add webhook_configs table
-├── src/routes/
-│   └── webhooks.ts         NEW — config CRUD endpoints
-└── src/services/
-    └── webhook.service.ts  NEW — dispatchWebhook() + HMAC signing
-```
-
-The screening completion handler (wherever it lives in iThink's route layer) calls `dispatchWebhook()` after persisting the screening result, outside any transaction, wrapped in try-catch that only logs on failure.
-
----
-
-### Feature 6: CM Attention Dashboard (React page)
-
-**What it shows:**
-
-A list of institution cohort attention signals from iThink, most recent first. Each row shows:
-- Institution name
-- Signal type (human-readable label, not raw code)
-- Cohort summary: "X of Y flagged" (`flagged_count / cohort_size`)
-- When received (relative time: "3 days ago")
-- Trend: last 30 days of signals for the filtered institution as a simple list or mini-chart
-
-**Privacy guarantee:** No contributor names, no individual identifiers, no per-person data anywhere in this view. The attention view shows institution cohort health, not individual contributor status.
-
-**Institution scope enforcement:**
-
-The CM's institution is resolved from the database on every request — not from the JWT. The CM's `contributor.id` from the JWT is used to look up `contributors.institution_id` in the DB. All queries filter by that institution ID. This prevents cross-institution data leakage if a JWT is replayed or if the CM role is ever shared.
-
-**New API routes (on IU server):**
-
-```
-GET  /api/attention
-     — list attention signals for the CM's institution
-     — requires: community_manager role
-     — CM institution resolved from DB (contributors.institution_id), never from JWT
-     — query params: none required (institution is inferred from CM identity)
-     — response: { signals: AttentionSignal[], institutionName: string }
-
-GET  /api/attention/stats
-     — badge count: number of signals received in last 30 days for the CM's institution
-     — requires: community_manager role
-     — response: { count: number }
-```
-
-Note: signals are read-only from IU's perspective. There is no "resolve" action — iThink signals are informational. The CM acts out-of-band (contacts the institution, follows up with contributors). If a "dismiss" UX is wanted later, add it in v1.3 with a `dismissed_at` column.
-
-**New route file:**
-
-```
-packages/server/src/routes/attention.ts    NEW
-```
-
-Mounted in `express-app.ts` as `app.use("/api/attention", attentionRoutes)`.
-
-**New React page:**
-
-```
-packages/web/src/pages/attention/
-└── AttentionDashboard.tsx    NEW
-```
-
-Mounted in `App.tsx` as a protected route, restricted to `community_manager` role:
-
-```typescript
-<Route path="/attention" element={<AttentionDashboard />} />
-```
-
-**New API client and hook files:**
-
-```
-packages/web/src/api/attention.ts       NEW — typed fetch wrappers
-packages/web/src/hooks/useAttention.ts  NEW — TanStack Query hooks
+const reportData: ReportData = { ...existingFields, wellbeing };
 ```
 
 **Data flow:**
-
 ```
-CM opens /attention (protected route, community_manager only)
-    ↓ GET /api/attention (cookie auth, CM role)
-Server:
-  1. resolve CM's institution: SELECT institution_id FROM contributors WHERE id = $cmId
-  2. if no institution assigned: 200 { signals: [], institutionName: null }
-  3. SELECT s.*, i.name AS institution_name
-     FROM institution_attention_signals s
-     JOIN institutions i ON i.id = s.institution_id
-     WHERE s.institution_id = $cmInstitutionId
-     ORDER BY s.received_at DESC
-     LIMIT 30
-    ↓
-AttentionDashboard renders signal list
+GET /api/admin/institutions/:slug/report.pdf
+  → look up institution by slug
+  → fetch contributorIds
+  → [existing] hours + challenge aggregations
+  → [NEW] wellbeing aggregation → privacy threshold check
+  → buildInstitutionReport({ ...stats, wellbeing })
+  → doc.pipe(res) + doc.end()
 ```
 
 ---
 
-## New Tables Summary
+### Feature 2: Attention Trends
 
-| Table | Purpose | Key Columns |
-|-------|---------|-------------|
-| `webhook_deliveries` | Idempotency dedup for incoming iThink webhooks | `source`, `event_id` (UNIQUE constraint on pair) |
-| `institution_attention_signals` | Stores incoming iThink cohort-level signals | `institution_id`, `signal_type`, `cohort_size`, `flagged_count`, `screened_at`, `raw_payload` |
-| `webhook_configs` (iThink/SQLite) | Stores iThink outbound webhook targets per institution | `institution_identifier`, `endpoint_url`, `secret`, `is_active` |
+**Status of dependencies:** Fully available. `ithink_attention_flags` exists with `institution_id`, `created_at`, `cleared_at`. The existing attention routes (`/attention`, `/attention/history`) establish the institution-scoping pattern.
 
----
+**Modified files only — no new tables.**
 
-## New Columns Summary
+#### Modified: `routes/admin.ts`
 
-| Table | Column | Type | Purpose |
-|-------|--------|------|---------|
-| `contributors` | `institution_id` | `UUID REFERENCES institutions(id) ON DELETE SET NULL` | Assigns contributor to an institution (nullable, NOT VALID migration) |
-
----
-
-## New Routes Summary
-
-| Method | Path | Auth | Purpose |
-|--------|------|------|---------|
-| `GET` | `/api/institutions` | CM | List all institutions (CM management view) |
-| `POST` | `/api/institutions` | CM | Create institution |
-| `PUT` | `/api/institutions/:slug` | CM | Edit institution |
-| `PATCH` | `/api/institutions/:slug/status` | CM | Toggle active/inactive |
-| `GET` | `/api/institutions/:slug/contributors` | CM | List contributors assigned to institution |
-| `PUT` | `/api/institutions/:slug/contributors/:id` | CM | Assign contributor to institution |
-| `DELETE` | `/api/institutions/:slug/contributors/:id` | CM | Remove contributor from institution |
-| `GET` | `/api/institutions/:slug/report.pdf` | CM | Download PDF impact report |
-| `POST` | `/api/webhooks/ithink` | HMAC signature | Receive signed cohort signal from iThink |
-| `GET` | `/api/attention` | CM | List institution attention signals (DB-scoped to CM's institution) |
-| `GET` | `/api/attention/stats` | CM | Badge count of signals in last 30 days |
-
-All CM routes use `authMiddleware` + `requireRole("community_manager")`.
-The webhook route uses HMAC signature verification, not JWT auth.
-The attention routes resolve institution from DB, never from JWT.
-
----
-
-## Recommended Project Structure Changes for v1.2
-
-```
-packages/
-├── server/src/
-│   ├── routes/
-│   │   ├── institutions.ts     MODIFIED — CM CRUD + PDF route + live stats; public slug read unchanged
-│   │   ├── webhooks.ts         NEW — iThink webhook receiver
-│   │   └── attention.ts        NEW — CM attention view endpoints
-│   ├── db/
-│   │   └── schema.ts           MODIFIED — institution_id FK on contributors; webhook_deliveries + institution_attention_signals tables
-│   ├── pdf/
-│   │   └── institution-report.ts   NEW — pdfkit document builder (server-only; never imported by web)
-│   ├── config/
-│   │   └── env.ts              MODIFIED — add ITHINK_WEBHOOK_SECRET (no fallback, server fails to start without it)
-│   └── express-app.ts          MODIFIED — mount webhooks route (before express.json()); mount attention routes
-│
-├── server/scripts/
-│   ├── add-contributor-institution-fk.mjs     NEW — NOT VALID migration: FK column + index
-│   └── add-webhook-tables.mjs                 NEW — migration: webhook_deliveries + institution_attention_signals
-│
-└── web/src/
-    ├── pages/attention/
-    │   └── AttentionDashboard.tsx    NEW — cohort-level signal view; no per-contributor data
-    ├── api/
-    │   └── attention.ts              NEW — typed fetch wrappers
-    ├── hooks/
-    │   └── useAttention.ts           NEW — TanStack Query hooks
-    └── App.tsx                       MODIFIED — add /attention route
-```
-
-**iThink (separate repo):**
-
-```
-iThink/
-├── src/db/
-│   └── [migration] webhook_configs table
-├── src/routes/
-│   └── webhooks.ts         NEW — CM config endpoints
-└── src/services/
-    └── webhook.service.ts  NEW — dispatchWebhook() + HMAC signing (react-native-quick-crypto)
-```
-
----
-
-## Architectural Patterns
-
-### Pattern 1: Raw Body Before JSON Parser (Webhook Verification)
-
-**What:** Stripe webhook handler already demonstrates this. iThink webhook follows the same pattern.
-
-**When to use:** Any endpoint that must verify an HMAC signature over the raw request body. `express.json()` replaces `req.body` with a parsed object — the raw bytes needed for signature verification are gone.
-
-**Implementation:**
+Add a new route. Critical: register it BEFORE any `/:flagId` parameter routes (same constraint as the existing `/attention/history` comment in the file):
 
 ```typescript
-// express-app.ts — webhook routes BEFORE express.json()
-app.post("/api/payments/webhook", express.raw({ type: "application/json" }), stripeHandler);
-app.post("/api/webhooks/ithink", express.raw({ type: "application/json" }), iThinkHandler);
+// MUST be registered before /attention/:flagId/resolve
+router.get("/attention/trends", async (req, res) => {
+  const cmId = req.contributor!.id;
+  const db = getDb();
 
-// JSON parsing — comes after webhook mounts
-app.use(express.json());
-```
+  // Resolve CM institution from DB — never from JWT (existing pattern)
+  const [assignment] = await db
+    .select({ institutionId: contributorInstitutions.institutionId })
+    .from(contributorInstitutions)
+    .where(eq(contributorInstitutions.contributorId, cmId))
+    .limit(1);
 
-### Pattern 2: Live Aggregate Stats (Replace Static JSONB)
+  if (!assignment) {
+    res.status(403).json({ error: "No institution assigned to this community manager" });
+    return;
+  }
 
-**What:** Replace `stats_json` reads in the institutions route with JOIN-based aggregate queries at request time.
+  // Weekly counts for last 12 weeks
+  const weeklyCounts = await db.execute(sql`
+    SELECT
+      date_trunc('week', created_at) AS week_bucket,
+      count(*)                       AS total,
+      count(cleared_at)              AS resolved
+    FROM ithink_attention_flags
+    WHERE institution_id = ${assignment.institutionId}
+      AND created_at >= now() - interval '12 weeks'
+    GROUP BY week_bucket
+    ORDER BY week_bucket DESC
+  `);
 
-**When to use:** When data is too dynamic to cache safely at this scale, and query cost is negligible (single-institution aggregates over tens of contributors).
-
-**Trade-off:** At >1000 contributors per institution, materialise the stats with a periodic job. At pilot scale, live queries are simpler and always correct. The `stats_json` column stays in the schema — do not remove it, as it allows an easy fallback and a later caching mechanism if needed.
-
-### Pattern 3: Server-Side PDF Streaming (pdfkit)
-
-**What:** pdfkit builds a PDF document imperatively in Node.js and pipes the stream directly to the Express response. No buffering.
-
-**When to use:** On-demand document generation that must be printable and distributable without requiring a browser session.
-
-**Example:**
-
-```typescript
-import PDFDocument from "pdfkit";
-import { buildReportData } from "../pdf/institution-report.js";
-
-router.get("/:slug/report.pdf", authMiddleware, requireRole("community_manager"), async (req, res) => {
-  req.setTimeout(30_000);
-  const data = await buildReportData(req.params.slug, req.query);
-  const doc = new PDFDocument({ margin: 50 });
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename="${req.params.slug}-report.pdf"`);
-  doc.pipe(res);
-  // ... build report content imperatively
-  doc.end();
+  res.json({ weeklyCounts: weeklyCounts.rows });
 });
 ```
 
-### Pattern 4: Webhook Idempotency via Dedup Table
+#### Modified: `packages/web/src/api/attention.ts`
 
-**What:** Before processing any webhook payload, INSERT into `webhook_deliveries` with a UNIQUE constraint on `(source, event_id)`. Catch PG unique violation (error code `23505`) — if it fires, the event has already been processed; return 200 and skip.
+Add `getAttentionTrends()` function following the same pattern as `getAttentionFlags`.
 
-**When to use:** Any inbound webhook where replays must not create duplicate records.
+#### Modified: `packages/web/src/hooks/useAttention.ts`
+
+Add `useAttentionTrends()` TanStack Query hook.
+
+#### Modified: `packages/web/src/pages/admin/AttentionDashboard.tsx`
+
+Add a third tab ("Trends") to the existing two-tab layout. The trends tab renders a chart or a weekly summary table. Check whether recharts is already in the dependency tree before importing a charting library.
+
+---
+
+### Feature 3: PDF Scheduling and Auto-Delivery
+
+**Status of dependencies:** Resend is already configured. `node-cron` is already installed and in use (`wellbeing-reminder.job.ts`). `buildInstitutionReport` is reusable. The PDF route's data aggregation is proven. New schema table required.
+
+**This is the most architecturally novel feature.** It introduces: a new DB table, a new cron job, and the first use of Resend for file attachments.
+
+#### New Schema: `pdf_report_schedules` table
+
+Add to `packages/server/src/db/schema.ts`:
 
 ```typescript
-try {
-  await db.insert(webhookDeliveries).values({ source: "ithink", eventId: payload.event_id });
-} catch (err: any) {
-  if (err?.code === "23505") {
-    res.json({ received: true }); // already processed
+export const reportFrequencyEnum = pgEnum("report_frequency", ["monthly", "quarterly"]);
+
+export const pdfReportSchedules = pgTable("pdf_report_schedules", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  institutionId: uuid("institution_id")
+    .notNull()
+    .references(() => institutions.id, { onDelete: "cascade" }),
+  frequency: reportFrequencyEnum("frequency").notNull(),
+  recipientEmail: varchar("recipient_email", { length: 255 }).notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  lastSentAt: timestamp("last_sent_at", { withTimezone: true }),
+  nextSendAt: timestamp("next_send_at", { withTimezone: true }).notNull(),
+  createdBy: uuid("created_by").references(() => contributors.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+```
+
+`nextSendAt` is computed at creation (e.g. first day of next month for monthly). The cron job queries `WHERE is_active = true AND next_send_at <= now()`. After dispatch, the job updates `last_sent_at = now()` and computes the new `next_send_at`.
+
+#### New File: `packages/server/src/services/pdf-report.job.ts`
+
+Follows the exact structure of `wellbeing-reminder.job.ts`:
+
+```typescript
+import cron from "node-cron";
+// ...
+
+export function startPdfReportJob(): void {
+  cron.schedule("0 6 * * *", async () => {  // 06:00 UTC daily
+    try {
+      await runPdfReportJob();
+    } catch (err) {
+      console.error("[pdf-report-job] Error:", err);
+    }
+  });
+  console.log("[pdf-report-job] Scheduled daily at 06:00 UTC");
+}
+
+async function runPdfReportJob(): Promise<void> {
+  const db = getDb();
+  const now = new Date();
+  const dueSchedules = await db
+    .select()
+    .from(pdfReportSchedules)
+    .where(and(eq(pdfReportSchedules.isActive, true), lte(pdfReportSchedules.nextSendAt, now)));
+
+  for (const schedule of dueSchedules) {
+    try {
+      await dispatchScheduledReport(db, schedule);
+    } catch (err) {
+      // Per-schedule catch — one failure does not abort the batch
+      console.error(`[pdf-report-job] Failed for schedule ${schedule.id}:`, err);
+    }
+  }
+}
+```
+
+#### New File: `packages/server/src/services/pdf-email.service.ts`
+
+**Key architectural constraint:** When sending via Resend as an email attachment, the PDF cannot be streamed — it must be buffered into a `Buffer` first. Resend's attachment API requires `content: Buffer`. This is the one correct use of buffering (contrast with the browser download endpoint where streaming is mandatory).
+
+```typescript
+import { buildInstitutionReport, type ReportData } from "../pdf/institution-report.js";
+
+export async function sendPdfReportEmail(
+  recipientEmail: string,
+  reportData: ReportData,
+  filename: string,
+): Promise<void> {
+  const doc = buildInstitutionReport(reportData);
+
+  // Buffer the PDF — required for Resend attachment API
+  const pdfBuffer = await bufferPdfDocument(doc);
+
+  const resend = new Resend(getEnv().RESEND_API_KEY);
+  await resend.emails.send({
+    from: "reports@indomitableunity.com",
+    to: recipientEmail,
+    subject: `Impact Report — ${reportData.institutionName}`,
+    html: `<p>Scheduled impact report for ${reportData.institutionName} is attached.</p>`,
+    attachments: [{ filename, content: pdfBuffer }],
+  });
+}
+
+function bufferPdfDocument(doc: PDFKit.PDFDocument): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    doc.on("data", (chunk: Buffer) => chunks.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+    doc.end();
+  });
+}
+```
+
+#### Modified: `packages/server/src/index.ts`
+
+```typescript
+startWellbeingReminderJob();
+startPdfReportJob();   // NEW
+```
+
+#### Modified: `packages/server/src/routes/admin.ts`
+
+Add schedule CRUD routes on the existing `adminRouter`:
+
+```
+POST   /api/admin/institutions/:id/report-schedules    — create schedule
+GET    /api/admin/institutions/:id/report-schedules    — list for institution
+PATCH  /api/admin/report-schedules/:scheduleId         — toggle active / change frequency
+DELETE /api/admin/report-schedules/:scheduleId         — delete
+```
+
+All guarded by the existing `adminRouter` middleware. The POST body (Zod-validated): `{ frequency: "monthly"|"quarterly", recipientEmail: string }`. `nextSendAt` is computed server-side.
+
+#### Modified: `packages/web/src/pages/admin/InstitutionManagement.tsx`
+
+Add a "Scheduled Reports" collapsible section to each institution card. Shows existing schedules (frequency badge, last sent, next send, active toggle). Includes an inline form to create a new schedule.
+
+---
+
+### Feature 4: Institution Portal
+
+**Status of dependencies:** The role enum and auth middleware exist but do not include `"institution_user"`. A new junction table is needed. Resend welcome email is already used for regular contributors.
+
+**This is the highest-risk feature architecturally** — it introduces a new auth role and new portal-scoped routes.
+
+#### Modified Schema: `contributorRoleEnum` in `schema.ts`
+
+Add `"institution_user"` to the existing enum:
+
+```typescript
+export const contributorRoleEnum = pgEnum("contributor_role", [
+  "contributor",
+  "community_manager",
+  "admin",
+  "challenger",
+  "institution_user",   // NEW
+]);
+```
+
+PostgreSQL enum extension requires a migration. Drizzle-kit generates `ALTER TYPE contributor_role ADD VALUE 'institution_user'` — this is non-transactional in PostgreSQL and must be run outside a transaction block. Write the migration as a standalone SQL file (not inside a `BEGIN`/`COMMIT` block).
+
+#### New Schema: `institution_user_assignments` table
+
+This is distinct from `contributor_institutions` (which links regular contributors to their institution). Institution portal users need a clean link:
+
+```typescript
+export const institutionUserAssignments = pgTable("institution_user_assignments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  contributorId: uuid("contributor_id")
+    .notNull()
+    .references(() => contributors.id, { onDelete: "cascade" }),
+  institutionId: uuid("institution_id")
+    .notNull()
+    .references(() => institutions.id, { onDelete: "cascade" }),
+  assignedAt: timestamp("assigned_at", { withTimezone: true }).defaultNow().notNull(),
+  assignedBy: uuid("assigned_by").references(() => contributors.id, { onDelete: "set null" }),
+}, (table) => [
+  unique("institution_user_assignments_unique").on(table.contributorId, table.institutionId),
+]);
+```
+
+#### New File: `packages/server/src/routes/institution-portal.ts`
+
+A separate router — NOT mounted on `adminRouter` (which blocks non-CM roles). The portal routes apply their own guard:
+
+```typescript
+const router = Router();
+router.use(authMiddleware);
+// Inline role check — institution_user OR admin (admin can preview the portal)
+router.use((req, res, next) => {
+  const role = req.contributor?.role;
+  if (role !== "institution_user" && role !== "admin") {
+    res.status(403).json({ error: "Insufficient permissions" });
     return;
   }
-  throw err;
-}
-// safe to process now — dedup guaranteed
+  next();
+});
+
+// GET /api/institution-portal/dashboard
+// GET /api/institution-portal/wellbeing
+// GET /api/institution-portal/attention  (read-only — no resolve action)
+// GET /api/institution-portal/report.pdf (on-demand, reuses buildInstitutionReport)
 ```
 
-### Pattern 5: DB-Resolved Institution Scope (Attention Routes)
+All queries scope to the institution resolved from `institution_user_assignments WHERE contributor_id = req.contributor.id` — same DB-resolution pattern as the CM attention routes.
 
-**What:** Resolve the CM's institution from `contributors.institution_id` in the DB on every request. Do not trust institution IDs from JWT claims or request params for data access decisions.
-
-**Why:** If a JWT is replayed or a CM is reassigned, the JWT claim becomes stale. DB resolution is always authoritative.
+#### Modified: `packages/server/src/express-app.ts`
 
 ```typescript
-const [cm] = await db
-  .select({ institutionId: contributors.institutionId })
-  .from(contributors)
-  .where(eq(contributors.id, req.contributor!.id))
-  .limit(1);
-
-if (!cm?.institutionId) {
-  res.json({ signals: [], institutionName: null });
-  return;
-}
-// use cm.institutionId for all subsequent queries
+import { institutionPortalRoutes } from "./routes/institution-portal.js";
+// ...
+app.use("/api/institution-portal", institutionPortalRoutes);
 ```
 
-### Pattern 6: Fire-and-Forget Webhook Dispatch (iThink side)
+#### Modified: `packages/server/src/routes/admin.ts`
 
-**What:** Dispatch is wrapped in try-catch. Failures are logged but never propagate. The screening result is persisted regardless of webhook outcome.
+Add institution user management routes:
 
-**When to use:** Any outbound integration where the primary action (screening persistence) must not be blocked by a network call to an external system.
+```
+POST   /api/admin/institution-users        — create institution_user account + send invite email
+GET    /api/admin/institution-users        — list all institution users with their institution
+DELETE /api/admin/institution-users/:id    — deactivate account
+```
+
+Account creation uses the existing `contributors` table (inserts with `role: "institution_user"`) and sends a password-reset-style invite email via Resend (reuse `auth.service.ts` token pattern).
+
+#### New Frontend Files
+
+**`packages/web/src/api/institution-portal.ts`** — fetch functions for portal endpoints.
+
+**`packages/web/src/hooks/useInstitutionPortal.ts`** — TanStack Query hooks.
+
+**`packages/web/src/pages/institution-portal/PortalDashboard.tsx`** — read-only view: institution name, headcount, challenges, hours, wellbeing trend, attention flags (no resolve button).
+
+#### Modified Frontend
+
+**`packages/web/src/App.tsx` (or TanStack Router file)** — add routes under `/portal/`:
+
+```tsx
+// Protected with a new InstitutionPortalRoute guard component
+// that checks role === "institution_user" or role === "admin"
+<Route path="/portal/dashboard" element={<InstitutionPortalRoute><PortalDashboard /></InstitutionPortalRoute>} />
+```
+
+**`packages/web/src/pages/admin/InstitutionManagement.tsx`** — add "Portal Users" section to each institution card with invite and deactivate controls.
+
+---
+
+## Component Boundaries
+
+| Component | Package | Responsibility | Communicates With |
+|-----------|---------|---------------|-------------------|
+| `routes/admin.ts` | server | CM CRUD (institutions, contributors, attention, schedules, institution users), PDF streaming | DB, `institution-report.ts`, `pdf-email.service.ts` |
+| `routes/institution-portal.ts` | server | Institution user read-only view, scoped to own institution | DB, `institution-report.ts` |
+| `routes/wellbeing.ts` | server | Contributor check-in submission and history | DB, consent records |
+| `pdf/institution-report.ts` | server | Stateless PDF document builder — no DB, no network | Called by route handlers and `pdf-email.service.ts` |
+| `services/pdf-report.job.ts` | server | Scheduled PDF dispatch — queries due schedules | DB, `pdf-email.service.ts` |
+| `services/pdf-email.service.ts` | server | Buffer PDF, attach to Resend email | `institution-report.ts`, Resend API |
+| `services/notification.service.ts` | server | Push notifications (unchanged) | DB, web-push |
+| `pages/admin/AttentionDashboard.tsx` | web | CM attention flags + history + trends | `api/attention.ts`, hooks |
+| `pages/admin/InstitutionManagement.tsx` | web | Institution CRUD, PDF, schedules, portal users | `api/admin.ts`, hooks |
+| `pages/institution-portal/PortalDashboard.tsx` | web | Institution user read-only dashboard | `api/institution-portal.ts`, hooks |
 
 ---
 
 ## Data Flow Diagrams
 
-### Flow 1: CM Assigns Contributor to Institution
+### On-Demand PDF (existing — extended with wellbeing)
 
 ```
-CM selects contributor, chooses institution
-    ↓ PUT /api/institutions/brixton-library/contributors/:contributorId
-authMiddleware → requireRole("community_manager")
-    ↓
-UPDATE contributors SET institution_id = $institutionId WHERE id = $contributorId
-    ↓
-200 { ok: true }
-    ↓ useMutation onSuccess: invalidateQueries(["institution", slug, "contributors"])
-Contributor list refetches — contributor now appears under institution
+CM clicks "Generate Report"
+  → downloadInstitutionReport(slug, from, to)   [api/admin.ts]
+  → raw fetch → GET /api/admin/institutions/:slug/report.pdf
+  → adminRouter auth guard
+  → DB: institution by slug
+  → DB: contributor_institutions → contributorIds
+  → DB: contributor_hours (date-filtered)
+  → DB: challenge_interests (date-filtered)
+  → [NEW] DB: wellbeing_checkins (date-filtered, grouped by contributor)
+  → privacy threshold check → wellbeing = data or null
+  → buildInstitutionReport({ stats, wellbeing })
+  → doc.pipe(res) + doc.end()  ← streams to browser
+  → browser: blob URL → <a>.click() → file download
 ```
 
-### Flow 2: Institution Landing Page with Live Stats
+### Scheduled PDF (new)
 
 ```
-Browser visits /i/brixton-library (public, no auth)
-    ↓ GET /api/institutions/brixton-library
-Route handler:
-  1. fetch institution record by slug (WHERE is_active = true)
-  2. COUNT(contributors WHERE institution_id = institution.id AND status = 'active')
-  3. COUNT(DISTINCT challenges via circles/circle_members JOIN)
-  4. SUM(contributor_hours WHERE contributor institution_id = institution.id)
-    ↓
-{ id, name, slug, description, city, stats: { contributors, challenges, hours } }
-InstitutionLanding renders stats — no React component change needed (same response shape)
+node-cron 06:00 UTC
+  → runPdfReportJob()
+  → DB: SELECT * FROM pdf_report_schedules WHERE is_active AND next_send_at <= now
+  → for each schedule:
+    → DB: institution + contributorIds + hours + challenges + wellbeing
+    → buildInstitutionReport(reportData)
+    → bufferPdfDocument(doc) → Buffer
+    → Resend.send({ to: recipientEmail, attachments: [pdfBuffer] })
+    → DB: UPDATE pdf_report_schedules SET last_sent_at, next_send_at
 ```
 
-### Flow 3: iThink Screening → IU Attention Signal
+### Attention Trends (new)
 
 ```
-iThink user completes a screening (cohort result: X of Y flagged)
-    ↓ Screening result persisted in iThink SQLite DB
-iThink screening handler calls dispatchWebhook(config, payload)
-    ↓ POST https://iu.example.com/api/webhooks/ithink
-    ↓ X-iThink-Signature: sha256=<hmac>
-    ↓ Body: { event_id, event, institution_slug, signal_type, cohort_size, flagged_count, screened_at }
-
-IU webhook handler:
-  1. verify HMAC (timingSafeEqual, not ===)
-  2. check timestamp window (|now - screened_at| <= 300s)
-  3. parse payload from raw Buffer via JSON.parse
-  4. validate with Zod (reject any payload containing per-contributor fields)
-  5. lookup institution by slug
-  6. INSERT webhook_deliveries (dedup) — catch 23505 and return 200 if duplicate
-  7. INSERT institution_attention_signals (institution_id, signal_type, cohort_size, flagged_count, raw_payload, screened_at)
-  8. res.status(200).json({ received: true })  ← always 200 if signature + timestamp valid
+CM opens AttentionDashboard → Trends tab
+  → useAttentionTrends()
+  → GET /api/admin/attention/trends
+  → adminRouter auth guard
+  → DB: resolve CM institution from contributor_institutions
+  → DB: GROUP BY date_trunc('week', created_at) on ithink_attention_flags
+        WHERE institution_id = :cmInstitutionId AND created_at >= now() - 12 weeks
+  → return { weeklyCounts: [{week, total, resolved}] }
+  → render chart or table in Trends tab
 ```
 
-### Flow 4: CM Attention Dashboard
+### Institution Portal (new)
 
 ```
-CM opens /attention (protected route, community_manager only)
-    ↓ GET /api/attention (cookie auth, CM role)
-Server:
-  1. resolve CM's institution from DB: SELECT institution_id FROM contributors WHERE id = $cmId
-  2. if no institution: return { signals: [], institutionName: null }
-  3. SELECT s.*, i.name FROM institution_attention_signals s
-     JOIN institutions i ON i.id = s.institution_id
-     WHERE s.institution_id = $cmInstitutionId
-     ORDER BY s.received_at DESC LIMIT 30
-    ↓
-AttentionDashboard renders signal list (cohort aggregates — no contributor names)
-```
-
-### Flow 5: CM Downloads PDF Impact Report
-
-```
-CM clicks "Download Report" for Brixton Library
-    ↓ GET /api/institutions/brixton-library/report.pdf (cookie auth, CM role)
-Route handler:
-  1. req.setTimeout(30_000)
-  2. fetch institution record (verify exists + active, guard empty state)
-  3. 4 parallel Drizzle queries (contributor list, hours, challenges, wellbeing aggregate with min-5 threshold)
-  4. const doc = new PDFDocument()
-  5. res.setHeader("Content-Type", "application/pdf")
-  6. res.setHeader("Content-Disposition", "attachment; filename=...")
-  7. doc.pipe(res)
-  8. build report content via pdfkit API (no buffering)
-  9. doc.end()
-Browser receives PDF bytes → download prompt or inline viewer
+Institution user accesses /portal/dashboard
+  → InstitutionPortalRoute: checks JWT role = "institution_user"
+  → GET /api/institution-portal/dashboard
+  → authMiddleware + inline role check
+  → DB: institution_user_assignments WHERE contributor_id = req.contributor.id
+  → DB: same aggregations as PDF route
+  → return { institutionName, stats, wellbeing }
+  → render PortalDashboard (read-only)
 ```
 
 ---
 
-## Integration Points — New vs Modified vs Unchanged
+## Patterns to Follow
 
-### IU Server
+### Pattern 1: Institution Scoping (must follow on every new route)
 
-| File | Status | Reason |
-|------|--------|--------|
-| `routes/institutions.ts` | MODIFIED | Add CM CRUD routes, contributor assignment routes, PDF route; replace stats_json with live aggregates |
-| `routes/webhooks.ts` | NEW | iThink cohort-level webhook receiver |
-| `routes/attention.ts` | NEW | CM attention view endpoints (DB-scoped) |
-| `pdf/institution-report.ts` | NEW | pdfkit document builder (server-only) |
-| `db/schema.ts` | MODIFIED | `institution_id` FK on contributors; `webhook_deliveries`; `institution_attention_signals` |
-| `config/env.ts` | MODIFIED | Add `ITHINK_WEBHOOK_SECRET` (no fallback — server fails to start without it) |
-| `express-app.ts` | MODIFIED | Mount webhook route (before express.json()); mount attention routes |
-| `scripts/add-contributor-institution-fk.mjs` | NEW | Manual migration: NOT VALID FK column + index |
-| `scripts/add-webhook-tables.mjs` | NEW | Manual migration: webhook_deliveries + institution_attention_signals |
+Resolve the actor's institution from the DB on every request. Never read it from the JWT payload.
 
-### IU Web
+```typescript
+// CM routes — existing pattern
+const [assignment] = await db
+  .select({ institutionId: contributorInstitutions.institutionId })
+  .from(contributorInstitutions)
+  .where(eq(contributorInstitutions.contributorId, cmId))
+  .limit(1);
 
-| File | Status | Reason |
-|------|--------|--------|
-| `pages/attention/AttentionDashboard.tsx` | NEW | CM cohort signal view (no per-contributor data) |
-| `api/attention.ts` | NEW | Typed fetch wrappers for attention endpoints |
-| `hooks/useAttention.ts` | NEW | TanStack Query hooks |
-| `App.tsx` | MODIFIED | Add `/attention` route (protected, CM only) |
+// Institution portal routes — new pattern (same structure, different table)
+const [assignment] = await db
+  .select({ institutionId: institutionUserAssignments.institutionId })
+  .from(institutionUserAssignments)
+  .where(eq(institutionUserAssignments.contributorId, req.contributor!.id))
+  .limit(1);
+```
 
-### Unchanged IU Components
+### Pattern 2: Cron Job Structure (copy wellbeing-reminder.job.ts)
 
-All of the following are untouched by v1.2:
-- All existing route files except `routes/institutions.ts` (only additive changes there)
-- All service files (`auth.service.ts`, `stripe.service.ts`, etc.)
-- All MCP tools
-- Middleware files (`auth.ts`, `api-key-auth.ts`) — no changes needed
-- All contributor-facing web pages (wellbeing, circles, challenges, onboarding, dashboard)
-- Institution landing page React component (`InstitutionLanding.tsx`) — API response shape unchanged
-- Challenger portal (all files)
-- VANTAGE routes
+Export `startXJob()` calling `cron.schedule(expression, handler)`. Wrap async handler in try/catch. For batch jobs (PDF scheduler), wrap each item's dispatch in its own try/catch so one failure does not abort the run. Call `startXJob()` from `index.ts`.
 
-### iThink (separate repo)
+### Pattern 3: PDF as Pure Function (never add DB access to institution-report.ts)
 
-| File | Status | Reason |
-|------|--------|--------|
-| `src/db/` migration | NEW | `webhook_configs` table |
-| `src/routes/webhooks.ts` | NEW | CM config CRUD endpoints |
-| `src/services/webhook.service.ts` | NEW | `dispatchWebhook()` + HMAC signing via react-native-quick-crypto |
-| Screening completion handler | MODIFIED | Call `dispatchWebhook()` after persisting result (outside transaction, fire-and-forget) |
+`buildInstitutionReport(data: ReportData)` is and must remain stateless. All DB queries happen in the caller (route handler or job dispatcher). Pass a complete, typed `ReportData` object. The wellbeing field extension follows this: the route handler applies the privacy threshold and passes `wellbeing: data | null` — the PDF module never decides what the threshold is.
+
+### Pattern 4: Binary Download vs. Email Buffer
+
+- **Browser download:** `doc.pipe(res); doc.end()` — stream directly, never buffer.
+- **Email attachment:** Collect `doc.on("data")` chunks, await `doc.on("end")`, then `Buffer.concat(chunks)` — Resend attachment API requires a `Buffer`.
+
+Never buffer for browser downloads. Never try to stream to Resend.
+
+### Pattern 5: Route Registration Order for Specific Paths
+
+In `routes/admin.ts`, specific string paths must be registered before parameterised paths on the same segment. The new `/attention/trends` route follows the same constraint as `/attention/history` — register it immediately after `/attention/history` and before `/attention/:flagId/resolve`.
 
 ---
 
-## Recommended Build Order
+## Anti-Patterns to Avoid
 
-Dependencies determine the safe sequence. DB schema must exist before routes use it. IU receiver must exist before iThink dispatch is tested end-to-end.
+### Anti-Pattern 1: JWT-Based Institution Scoping
 
-**Step 1 — DB migrations (IU)**
+Reading `institutionId` from the JWT payload. JWT claims are stale for up to the token TTL after a CM is reassigned. Always resolve from the DB. This is a GDPR-adjacent data leakage risk.
 
-1. `add-contributor-institution-fk.mjs` — adds `institution_id` to `contributors` (NOT VALID + VALIDATE + index)
-2. Update `db/schema.ts` to reflect the new column
-3. `add-webhook-tables.mjs` — adds `webhook_deliveries` and `institution_attention_signals`
-4. Update `db/schema.ts` for the new tables
+### Anti-Pattern 2: DB Queries Inside `buildInstitutionReport`
 
-Rationale: all subsequent steps depend on the schema. Run migrations before writing any route code that references the new columns.
+The PDF module must stay stateless. Adding a `getDb()` call breaks reusability between the browser streaming path and the email buffering path, and makes the module untestable without a DB mock.
 
-**Step 2 — Institution stats live aggregates (IU server)**
+### Anti-Pattern 3: Institution Portal Routes on `adminRouter`
 
-Modify the existing `GET /api/institutions/:slug` handler to compute stats from live queries instead of `statsJson`. This is a self-contained change to an existing file with a clear contract. Ship it before adding the CM management routes, so the public landing page stays correct throughout the build.
+`adminRouter` applies `requireRole("community_manager")` globally. Institution users would receive 403 before reaching any portal logic. Create a separate router with its own guard.
 
-**Step 3 — CM institution management routes (IU server + web)**
+### Anti-Pattern 4: PostgreSQL Enum Extension Inside a Transaction
 
-1. Add CM CRUD routes to `routes/institutions.ts` (list, create, edit, status toggle)
-2. Add contributor assignment/removal routes to `routes/institutions.ts`
-3. Add typed API client and TanStack Query hooks for institution management UI
-4. Add CM institution management page to web
+`ALTER TYPE contributor_role ADD VALUE 'institution_user'` is non-transactional in PostgreSQL. Wrapping it in `BEGIN`/`COMMIT` causes an error. Write the migration as a standalone SQL file outside a transaction block or use Drizzle's migration format that handles this.
 
-This gives the CM the ability to assign contributors to institutions before the PDF or webhook features are complete.
+### Anti-Pattern 5: Sending PDF as Base64 String to Resend
 
-**Step 4 — Webhook receiver (IU server)**
-
-1. Add `ITHINK_WEBHOOK_SECRET` to `config/env.ts` (no fallback)
-2. Create `routes/webhooks.ts` with the iThink receiver handler (full security stack: raw body, timingSafeEqual, timestamp window, idempotency, Zod, institution lookup)
-3. Mount in `express-app.ts` before `express.json()`
-
-This can be tested independently by sending a signed POST from curl before iThink is modified.
-
-**Step 5 — Webhook dispatch (iThink)**
-
-1. Add `webhook_configs` table to iThink SQLite
-2. Add CM config routes in iThink
-3. Add `webhook.service.ts` with `dispatchWebhook()` (react-native-quick-crypto)
-4. Modify the screening completion handler to call it (fire-and-forget, outside transaction)
-
-**Step 6 — CM attention view (IU server + web)**
-
-1. Create `routes/attention.ts` (DB-resolved institution scope on every request)
-2. Mount in `express-app.ts`
-3. Create `pages/attention/AttentionDashboard.tsx`, `api/attention.ts`, `hooks/useAttention.ts`
-4. Add route to `App.tsx`
-
-This is after webhook receiver because it consumes signals that only exist once both webhook sides are built and tested end-to-end.
-
-**Step 7 — PDF report (IU server)**
-
-1. Add `pdfkit ^0.18.0` and `@types/pdfkit` to `packages/server/package.json`
-2. Create `pdf/institution-report.ts` (pdfkit builder, server-only)
-3. Add `GET /:slug/report.pdf` route to `routes/institutions.ts`
-4. Add "Download Report" button to CM institution management page in web
-
-PDF is self-contained and the last CM feature. It depends on the institution management data (Step 3) but not on webhooks or the attention view.
+Resend's Node.js SDK accepts `Buffer` directly for attachment `content`. Using `.toString("base64")` adds 33% size overhead and an unnecessary encode/decode step. Pass the raw `Buffer`.
 
 ---
 
-## Anti-Patterns
+## New vs. Modified File Inventory
 
-### Anti-Pattern 1: Storing PDF Files in S3 on Generation
+### New Files
 
-**What people do:** Generate the PDF once, store it in S3, return a download URL.
+| File | Purpose |
+|------|---------|
+| `packages/server/src/services/pdf-report.job.ts` | Daily cron job: query due schedules, dispatch PDFs via email |
+| `packages/server/src/services/pdf-email.service.ts` | Buffer PDF document, send via Resend attachment |
+| `packages/server/src/routes/institution-portal.ts` | Institution user read-only portal routes |
+| `packages/web/src/api/institution-portal.ts` | Fetch functions for portal endpoints |
+| `packages/web/src/hooks/useInstitutionPortal.ts` | TanStack Query hooks for portal |
+| `packages/web/src/pages/institution-portal/PortalDashboard.tsx` | Institution user dashboard (read-only) |
 
-**Why it's wrong:** The report must reflect current data. Cached PDFs go stale the moment a contributor is added, an hour is logged, or a new signal arrives. For the CM at pilot scale (one institution per session), on-demand generation is negligible cost.
+### Modified Files
 
-**Do this instead:** Generate on request, stream to response via `doc.pipe(res)`, no storage. If S3 is needed later (e.g., email attachment), generate at send time.
+| File | Changes |
+|------|---------|
+| `packages/server/src/db/schema.ts` | Add `"institution_user"` to `contributorRoleEnum`; add `pdfReportSchedules` table; add `institutionUserAssignments` table; add `reportFrequencyEnum` |
+| `packages/server/src/pdf/institution-report.ts` | Extend `ReportData` with optional `wellbeing` field; render wellbeing section when present |
+| `packages/server/src/routes/admin.ts` | Add `/attention/trends` route; add schedule CRUD routes; add institution user CRUD routes |
+| `packages/server/src/index.ts` | Call `startPdfReportJob()` at startup |
+| `packages/server/src/express-app.ts` | Mount `institutionPortalRoutes` at `/api/institution-portal` |
+| `packages/web/src/api/attention.ts` | Add `getAttentionTrends()` |
+| `packages/web/src/hooks/useAttention.ts` | Add `useAttentionTrends()` |
+| `packages/web/src/pages/admin/AttentionDashboard.tsx` | Add Trends tab |
+| `packages/web/src/pages/admin/InstitutionManagement.tsx` | Add schedule management UI; add portal user management section |
+| `packages/web/src/api/admin.ts` | Add schedule CRUD functions; add institution user functions |
 
-### Anti-Pattern 2: Putting PDF Builder in Shared or Web Package
+### Unchanged Files (notable)
 
-**What people do:** Put the pdfkit document builder in `packages/shared` or `packages/web/src/`.
-
-**Why it's wrong:** pdfkit is a server-only concern. It references Node.js streams. Importing it into the web bundle causes build failures. The `packages/server/src/pdf/` folder makes the server-only boundary explicit.
-
-**Do this instead:** Isolate in `packages/server/src/pdf/`. Never import it from `packages/web` or `packages/shared`.
-
-### Anti-Pattern 3: Blocking Screening on Webhook Dispatch (iThink)
-
-**What people do:** `await dispatchWebhook(...)` in the screening handler without a try-catch, or inside the screening database transaction.
-
-**Why it's wrong:** If IU is unavailable, the screening fails. A network error in an outbound call corrupts the primary operation.
-
-**Do this instead:** Fire and forget. Persist the screening first, outside any transaction. Call `dispatchWebhook` after, with a top-level try-catch that logs on failure but does not rethrow.
-
-### Anti-Pattern 4: Using JSON Body Parser for Webhook Routes
-
-**What people do:** Forget to add the raw body parser before `express.json()` for webhook endpoints.
-
-**Why it's wrong:** The HMAC signature is computed over the raw bytes. Once `express.json()` parses the body, the raw bytes are gone — signature verification always fails with no obvious error.
-
-**Do this instead:** Mount webhook routes with `express.raw({ type: "application/json" })` before `app.use(express.json())` in `express-app.ts`. This is already done for the Stripe webhook — follow the same pattern exactly.
-
-### Anti-Pattern 5: Using `===` for HMAC Signature Comparison
-
-**What people do:** Compare `computedSig === receivedSig` as strings.
-
-**Why it's wrong:** String equality short-circuits on first mismatch — this is a timing side-channel that allows incremental signature reconstruction over many requests.
-
-**Do this instead:** `crypto.timingSafeEqual(Buffer.from(computedSig, "hex"), Buffer.from(receivedSig, "hex"))`. This pattern is already in `api-key-auth.ts` — copy it exactly.
-
-### Anti-Pattern 6: Per-Contributor Data in iThink Webhook Payload or CM View
-
-**What people do:** Add a `contributorEmail` or `contributorId` field to the webhook payload so the CM can see exactly which contributors were flagged.
-
-**Why it's wrong:** iThink is a privacy-first local-processing tool. Exfiltrating individual contributor identifiers over a webhook exposes GDPR special-category data (health/wellbeing signals). It destroys contributor trust and creates a breach liability. The CM view then becomes per-contributor surveillance, not cohort health monitoring.
-
-**Do this instead:** The webhook carries only `cohort_size` and `flagged_count`. The CM sees "6 of 18 flagged at Brixton Library" — actionable at the institution level. Individual intervention happens through normal CM-contributor relationship, not through the attention dashboard.
-
-### Anti-Pattern 7: Resolving CM Institution from JWT Claims
-
-**What people do:** Include the CM's `institutionId` in the JWT payload and use it directly to filter attention queries.
-
-**Why it's wrong:** JWTs are long-lived. If the CM is reassigned to a different institution, or if the JWT is replayed from a previous session, the claim is stale. Cross-institution leakage is a GDPR data breach — high-cost to remediate.
-
-**Do this instead:** Resolve `contributors.institution_id` from the DB on every attention request using the CM's `contributor.id` from the verified JWT. DB state is always authoritative.
-
-### Anti-Pattern 8: Returning Non-200 for Webhook Payload Processing Failures
-
-**What people do:** Return 422/404 when the institution slug in the webhook payload is not found in IU, or when the timestamp is slightly outside the window.
-
-**Why it's wrong:** iThink will retry on non-200 responses. If IU is briefly inconsistent (e.g., institution not yet created), the retry storm fills logs and creates duplicate events once the issue resolves.
-
-**Do this instead:** Return 200 for all signature-valid requests that fail for business logic reasons (unknown institution, outside timestamp window). Log the failure with the raw payload for investigation. Return 401 only for signature failure (the one case where iThink should never retry without fixing its signing code).
+| File | Why Not Changed |
+|------|----------------|
+| `packages/server/src/middleware/auth.ts` | `requireRole` is parameterised and already passes `admin`; portal routes implement their own inline role check rather than requiring middleware changes |
+| `packages/server/src/routes/institutions.ts` | Public landing page is unchanged |
+| `packages/server/src/routes/webhooks.ts` | No new webhooks in v1.3 |
+| `packages/server/src/services/wellbeing-reminder.job.ts` | Existing job unchanged |
 
 ---
 
-## Scaling Considerations
+## Build Order
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 0-1k contributors (pilot) | Live aggregate queries — no caching needed; pdfkit synchronous streaming acceptable; single-process webhook handling |
-| 1k-10k contributors | Materialise institution stats via periodic job (update `stats_json` every N minutes); add pagination to attention dashboard |
-| 10k+ contributors | Extract webhook receiver to a separate process with a queue; attention signals processing becomes async; PDF generation moves to a job queue with S3 delivery |
+| Phase | Features | Why This Order |
+|-------|----------|----------------|
+| 1 | Wellbeing aggregation in PDF + Attention trends | No new tables. Purely additive to existing files. Build and verify before adding scheduling complexity. |
+| 2 | PDF scheduling + auto-delivery | Depends on complete PDF (with wellbeing). New table + cron job. Independent of institution portal. |
+| 3 | Institution portal | New role enum value + new table + new routes + new frontend. Independent of scheduling. Can run in parallel with phase 2. |
+
+Schema migrations always first within a phase. For the enum extension migration (`institution_user` role value), write it as a raw SQL file outside a transaction — Drizzle-kit may generate it inside a transaction block by default, which PostgreSQL rejects for enum additions.
 
 ---
 
 ## Sources
 
-- Direct codebase inspection: `packages/server/src/` (all route files, middleware, db/schema.ts, config/env.ts, express-app.ts, scripts/)
-- Direct codebase inspection: `packages/web/src/` (App.tsx, all page directories, hooks/, api/)
-- Existing webhook pattern: `routes/payments.ts` + `express-app.ts` (Stripe raw body mount)
-- Existing API key pattern: `middleware/api-key-auth.ts` + `routes/vantage.ts` (timingSafeEqual)
-- [foliojs/pdfkit releases](https://github.com/foliojs/pdfkit/releases) — v0.18.0 published March 15, 2026; ESM entry point confirmed (HIGH confidence)
-- [margelo/react-native-quick-crypto](https://github.com/margelo/react-native-quick-crypto) — v1.0.17; `createHmac` + `Hmac.digest()` confirmed in implementation coverage doc (HIGH confidence)
-- [PostgreSQL ALTER TABLE docs](https://www.postgresql.org/docs/current/sql-altertable.html) — NOT VALID / VALIDATE CONSTRAINT pattern (HIGH confidence)
-- [standard-webhooks spec](https://github.com/standard-webhooks/standard-webhooks/blob/main/spec/standard-webhooks.md) — HMAC-SHA256 + timestamp replay prevention (MEDIUM confidence)
-- [GitHub: Validating Webhook Deliveries](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries) — timingSafeEqual pattern (HIGH confidence)
-- [Hookdeck: Webhook Idempotency](https://hookdeck.com/docs/guides/deduplication-guide) — dedup table pattern (MEDIUM confidence)
-- react-pdf rejection: issues #2624, #2907, #3017 confirmed open March 2026 (HIGH confidence)
-- iThink architecture: described from project context; not directly inspectable (MEDIUM confidence on exact file paths)
-
----
-
-*Architecture research for: Indomitable Unity v1.2 Institution Management & iThink Integration*
-*Researched: 2026-03-21 (updated with pdfkit decision and cohort-level signal model)*
+- Direct inspection: `packages/server/src/routes/admin.ts`, `routes/wellbeing.ts`, `routes/institutions.ts`, `express-app.ts`, `middleware/auth.ts`, `db/schema.ts`, `pdf/institution-report.ts`, `services/wellbeing-reminder.job.ts`
+- Direct inspection: `packages/web/src/pages/admin/AttentionDashboard.tsx`, `InstitutionManagement.tsx`, `api/admin.ts`, `api/attention.ts`
+- `.planning/phases/15-pdf-impact-report/15-RESEARCH.md` — pdfkit streaming vs. buffering, ESM font path, `ReportData` interface shape
+- `.planning/research/SUMMARY.md` (v1.2) — institution scoping pattern, attention route conventions
+- PostgreSQL docs — `ALTER TYPE ADD VALUE` is non-transactional (HIGH confidence)
+- Resend Node.js SDK docs — attachment `content` accepts `Buffer` (HIGH confidence — standard SDK behavior)
+- node-cron — `cron.schedule()` pattern, already in use in codebase
