@@ -57,26 +57,26 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| WELL-01 | - | Pending |
-| WELL-02 | - | Pending |
-| WELL-03 | - | Pending |
-| WELL-04 | - | Pending |
-| ATTN-05 | - | Pending |
-| ATTN-06 | - | Pending |
-| SCHED-01 | - | Pending |
-| SCHED-02 | - | Pending |
-| SCHED-03 | - | Pending |
-| SCHED-04 | - | Pending |
-| PORTAL-01 | - | Pending |
-| PORTAL-02 | - | Pending |
-| PORTAL-03 | - | Pending |
-| PORTAL-04 | - | Pending |
+| WELL-01 | Phase 16 | Pending |
+| WELL-02 | Phase 16 | Pending |
+| WELL-03 | Phase 16 | Pending |
+| WELL-04 | Phase 16 | Pending |
+| ATTN-05 | Phase 16 | Pending |
+| ATTN-06 | Phase 16 | Pending |
+| SCHED-01 | Phase 17 | Pending |
+| SCHED-02 | Phase 17 | Pending |
+| SCHED-03 | Phase 17 | Pending |
+| SCHED-04 | Phase 17 | Pending |
+| PORTAL-01 | Phase 18 | Pending |
+| PORTAL-02 | Phase 18 | Pending |
+| PORTAL-03 | Phase 18 | Pending |
+| PORTAL-04 | Phase 18 | Pending |
 
 **Coverage:**
 - v1.3 requirements: 14 total
-- Mapped to phases: 0
-- Unmapped: 14 (pending roadmap creation)
+- Mapped to phases: 14
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-25*
-*Last updated: 2026-03-25 after initial definition*
+*Last updated: 2026-03-25 — traceability populated after roadmap creation*
