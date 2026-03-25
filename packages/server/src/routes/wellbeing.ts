@@ -16,7 +16,7 @@ router.post("/checkin", authMiddleware, async (req, res) => {
     return;
   }
 
-  const { uclaItems, wemwbsItems } = result.data;
+  const { uclaItems, wemwbsItems, institutionalReporting } = result.data;
   const contributorId = req.contributor!.id;
   const db = getDb();
 
@@ -55,6 +55,7 @@ router.post("/checkin", authMiddleware, async (req, res) => {
       wemwbsItem6: wemwbsItems[5],
       wemwbsItem7: wemwbsItems[6],
       wemwbsScore,
+      institutionalReporting: institutionalReporting ?? false,
     })
     .returning({
       id: wellbeingCheckins.id,

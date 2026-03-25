@@ -456,6 +456,7 @@ export const wellbeingCheckins = pgTable("wellbeing_checkins", {
   wemwbsItem6: smallint("wemwbs_item6").notNull(),
   wemwbsItem7: smallint("wemwbs_item7").notNull(),
   wemwbsScore: smallint("wemwbs_score").notNull(),
+  institutionalReporting: boolean("institutional_reporting"),
   completedAt: timestamp("completed_at", { withTimezone: true }).defaultNow().notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });

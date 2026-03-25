@@ -29,6 +29,13 @@
       "when": 1773671213574,
       "tag": "0003_challenger-portal",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1774472673616,
+      "tag": "0004_institutional_reporting",
+      "breakpoints": true
     }
   ]
 }

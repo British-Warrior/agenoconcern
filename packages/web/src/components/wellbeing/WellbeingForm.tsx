@@ -63,6 +63,7 @@ export function WellbeingForm({
     null, null, null, null, null, null, null,
   ]);
   const [consentChecked, setConsentChecked] = useState(false);
+  const [institutionalReportingChecked, setInstitutionalReportingChecked] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const uclaComplete = uclaAnswers.every((a) => a !== null);
@@ -79,6 +80,7 @@ export function WellbeingForm({
       uclaItems: uclaAnswers as [number, number, number],
       wemwbsItems: swemwbsAnswers as [number, number, number, number, number, number, number],
       consentGranted: true,
+      institutionalReporting: institutionalReportingChecked,
     };
 
     try {
@@ -218,6 +220,24 @@ export function WellbeingForm({
             give explicit consent for Indomitable Unity to collect, store, and process my wellbeing
             responses to track my wellbeing over time. I can withdraw consent and request deletion
             at any time.
+          </span>
+        </label>
+      </section>
+
+      {/* Institutional reporting consent (optional) */}
+      <section className="bg-neutral-50 border border-neutral-200 rounded-[var(--radius-lg)] p-5">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={institutionalReportingChecked}
+            onChange={(e) => setInstitutionalReportingChecked(e.target.checked)}
+            className="mt-1 h-4 w-4 rounded border-neutral-300 text-primary-800 focus:ring-primary-700"
+          />
+          <span className="text-sm text-neutral-700 leading-relaxed">
+            I also consent to my anonymised wellbeing data being included in aggregate reports
+            shared with the institution that referred me. No personally identifiable information
+            will be disclosed; results are only reported when at least 5 contributors have
+            consented. This is optional and does not affect my check-in.
           </span>
         </label>
       </section>

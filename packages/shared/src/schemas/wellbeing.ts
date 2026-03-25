@@ -22,6 +22,10 @@ export const wellbeingCheckinSchema = z.object({
   consentGranted: z
     .literal(true)
     .describe("Explicit GDPR consent for special category health data — must be true"),
+  institutionalReporting: z
+    .boolean()
+    .default(false)
+    .describe("Optional consent to include anonymised data in aggregate institutional reports"),
 });
 
 export type WellbeingCheckinSchemaInput = z.infer<typeof wellbeingCheckinSchema>;
