@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 
 Milestone: v1.3 — Enhanced Reporting & Institution Portal
 Phase: 16 of 18 (Wellbeing & Attention Analytics)
-Plan: — of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-03-25 — v1.3 roadmap created (3 phases, 14 requirements mapped)
+Plan: 1 of 2 complete
+Status: In progress
+Last activity: 2026-03-25 — Completed 16-01-PLAN.md (wellbeing band analytics)
 
-Progress: [░░░░░░░░░░] 0% (v1.3: 0/TBD plans complete)
+Progress: [█░░░░░░░░░] 10% (v1.3: 1/TBD plans complete)
 
 ## Performance Metrics
 
@@ -31,8 +31,14 @@ Progress: [░░░░░░░░░░] 0% (v1.3: 0/TBD plans complete)
 All v1.0-v1.2 decisions archived in milestones/.
 Cumulative decisions in PROJECT.md Key Decisions table.
 
+v1.3 decisions made in 16-01:
+- k=5 anonymity threshold used (placeholder — stakeholder confirmation pending)
+- Typical band wins modal ties for institutional wellbeing reporting
+- institutional_reporting nullable boolean (NULL = non-consenting for legacy rows)
+- Migration applied via script (project pattern — prior migrations outside Drizzle tracking)
+
 v1.3 pre-build decisions still pending (stakeholder input needed):
-- k-anonymity threshold for wellbeing suppression (k=5 vs k=10)
+- k-anonymity threshold for wellbeing suppression (k=5 confirmed as placeholder)
 - SWEMWBS commercial licence confirmation before shipping wellbeing band
 - Portal auth isolation strategy (separate Express router vs subdomain)
 
@@ -49,5 +55,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: v1.3 roadmap created — ready to plan Phase 16
-Resume file: None
+Stopped at: Phase 16 Plan 1 complete — wellbeing band analytics
+Resume file: .planning/phases/16-wellbeing-attention-analytics/16-02-PLAN.md
