@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useAttentionFlags, useAttentionHistory, useResolveFlag } from "../../hooks/useAttention.js";
+import { useAttentionFlags, useAttentionHistory, useAttentionTrend, useResolveFlag } from "../../hooks/useAttention.js";
 import type { AttentionFlag, AttentionHistoryEntry } from "../../api/attention.js";
 import { Button } from "../../components/ui/Button.js";
+import { AttentionTrendChart } from "../../components/attention/AttentionTrendChart.js";
 
 // ─── Format date ───────────────────────────────────────────────────────────────
 
@@ -291,20 +292,86 @@ function SignalHistory() {
   );
 }
 
+// ─── Trend indicator ───────────────────────────────────────────────────────────
+
+const DIRECTION_ARROW: Record<string, string> = {
+  Increasing: "↑",
+  Stable: "→",
+  Decreasing: "↓",
+};
+
+function TrendIndicator() {
+  const { data } = useAttentionTrend();
+  if (!data) return null;
+
+  const arrow = DIRECTION_ARROW[data.direction] ?? "→";
+
+  return (
+    <p className="text-sm text-neutral-700 mb-6">
+      {data.activeCount} active flag{data.activeCount !== 1 ? "s" : ""}{" "}
+      <span aria-hidden="true">{arrow}</span>{" "}
+      {data.direction}
+    </p>
+  );
+}
+
+// ─── Trends section ────────────────────────────────────────────────────────────
+
+function AttentionTrends() {
+  const { data, isLoading, error } = useAttentionTrend();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20" role="status">
+        <svg
+          className="animate-spin h-8 w-8 text-primary-800"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+        <span className="sr-only">Loading...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-red-700" role="alert">
+        <p className="font-medium">Failed to load trend data.</p>
+        <p className="text-sm mt-1">{error instanceof Error ? error.message : "Unknown error"}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white border border-neutral-200 rounded-xl p-6">
+      <h2 className="text-sm font-medium text-neutral-700 mb-4">Weekly Flag Volume</h2>
+      <AttentionTrendChart data={data?.weeks ?? []} />
+    </div>
+  );
+}
+
 // ─── Main page ─────────────────────────────────────────────────────────────────
 
 export function AttentionDashboard() {
-  const [activeTab, setActiveTab] = useState<"active" | "history">("active");
+  const [activeTab, setActiveTab] = useState<"active" | "history" | "trends">("active");
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
       {/* Page header */}
-      <div className="mb-8">
+      <div className="mb-4">
         <h1 className="text-2xl font-bold text-neutral-900">Attention Dashboard</h1>
         <p className="text-neutral-500 mt-1">
           Review flagged contributors and manage follow-up actions.
         </p>
       </div>
+
+      {/* Trend indicator */}
+      <TrendIndicator />
 
       {/* Tab toggle */}
       <div className="flex gap-2 mb-6">
@@ -330,10 +397,23 @@ export function AttentionDashboard() {
         >
           History
         </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("trends")}
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+            activeTab === "trends"
+              ? "bg-primary-800 text-white"
+              : "bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50"
+          }`}
+        >
+          Trends
+        </button>
       </div>
 
       {/* Tab content */}
-      {activeTab === "active" ? <ActiveFlags /> : <SignalHistory />}
+      {activeTab === "active" && <ActiveFlags />}
+      {activeTab === "history" && <SignalHistory />}
+      {activeTab === "trends" && <AttentionTrends />}
     </div>
   );
 }
