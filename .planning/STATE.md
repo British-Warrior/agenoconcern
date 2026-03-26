@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 
 Milestone: v1.3 — Enhanced Reporting & Institution Portal
 Phase: 16 of 18 (Wellbeing & Attention Analytics)
-Plan: 1 of 2 complete
-Status: In progress
-Last activity: 2026-03-25 — Completed 16-01-PLAN.md (wellbeing band analytics)
+Plan: 2 of 2 complete
+Status: Phase complete
+Last activity: 2026-03-26 — Completed 16-02-PLAN.md (attention trend chart + dashboard Trends tab)
 
-Progress: [█░░░░░░░░░] 10% (v1.3: 1/TBD plans complete)
+Progress: [██░░░░░░░░] 20% (v1.3: 2/TBD plans complete)
 
 ## Performance Metrics
 
@@ -37,6 +37,11 @@ v1.3 decisions made in 16-01:
 - institutional_reporting nullable boolean (NULL = non-consenting for legacy rows)
 - Migration applied via script (project pattern — prior migrations outside Drizzle tracking)
 
+v1.3 decisions made in 16-02:
+- Bar fill #1a1d2e (navy/primary-800) for attention trend chart
+- Sparse data notice triggered when total period flags < 3 (not per-week)
+- TrendIndicator always visible above tabs (not scoped to Trends tab)
+
 v1.3 pre-build decisions still pending (stakeholder input needed):
 - k-anonymity threshold for wellbeing suppression (k=5 confirmed as placeholder)
 - SWEMWBS commercial licence confirmation before shipping wellbeing band
@@ -54,6 +59,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-25
-Stopped at: Phase 16 Plan 1 complete — wellbeing band analytics
-Resume file: .planning/phases/16-wellbeing-attention-analytics/16-02-PLAN.md
+Last session: 2026-03-26
+Stopped at: Phase 16 complete — attention trend chart and dashboard Trends tab
+Resume file: .planning/phases/17-[next-phase]/17-01-PLAN.md
