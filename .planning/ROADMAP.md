@@ -62,10 +62,11 @@ See: `.planning/milestones/v1.3-ROADMAP.md`
   3. CSS animations and transitions are suppressed when the user has enabled "reduce motion" in their OS settings
   4. The active Navbar link has `aria-current="page"` and screen readers identify it as the current page
   5. Running `npm run lint` in `packages/web` reports jsx-a11y violations as errors — zero existing violations pass silently
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 19-01: RouteChangeSync component, eslint-plugin-jsx-a11y strict config, lang verification, aria-current on Navbar links, prefers-reduced-motion CSS
+- [ ] 19-01-PLAN.md — RouteChangeSync component, aria-current on Navbar links, prefers-reduced-motion CSS, lang verification
+- [ ] 19-02-PLAN.md — eslint-plugin-jsx-a11y strict config, fix all existing violations
 
 ---
 
@@ -148,7 +149,7 @@ Plans:
 | 16. Wellbeing & Attention Analytics | v1.3 | 2/2 | Complete | 2026-03-27 |
 | 17. Scheduled Report Delivery | v1.3 | 2/2 | Complete | 2026-03-30 |
 | 18. Institution Portal | v1.3 | 2/2 | Complete | 2026-03-30 |
-| 19. Foundation | v1.4 | 0/1 | Not started | - |
+| 19. Foundation | v1.4 | 0/2 | Not started | - |
 | 20. Focus Infrastructure | v1.4 | 0/2 | Not started | - |
 | 21. Interactive Component Remediation | v1.4 | 0/2 | Not started | - |
 | 22. Screen Reader & ARIA Completeness | v1.4 | 0/2 | Not started | - |
