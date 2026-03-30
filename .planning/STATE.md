@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 Milestone: v1.4 — WCAG Compliance
 Phase: 19 of 23 (Foundation)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-03-30 — Completed 19-01-PLAN.md (accessibility foundation)
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-03-30 — Completed 19-02-PLAN.md (ESLint + jsx-a11y baseline)
 
-Progress: [█░░░░░░░░░] ~5% (1/21 plans)
+Progress: [██░░░░░░░░] ~10% (2/21 plans)
 
 ## Performance Metrics
 
@@ -38,6 +38,12 @@ v1.4 decisions logged to PROJECT.md as they are made.
 - Active nav link gets `text-primary-900 font-semibold` visual treatment alongside aria-current for sighted users
 - `type="button"` added to bare Navbar buttons (Enable Notifications, Install App) — prevents accidental form submission
 
+**19-02 (2026-03-30):**
+- ESLint flat config format (eslint.config.js) used — required for ESLint 9+
+- jsx-a11y/strict preset chosen (strictest available, aligns with WCAG 2.1 AA)
+- Interactive list items: button inside li, not onClick on li (NotificationBell refactored)
+- Label association pattern: always htmlFor + matching id on paired control
+
 ### Pending Todos
 
 None.
@@ -51,5 +57,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: Phase 19 Plan 01 complete — ready for 19-02
-Resume file: .planning/phases/19-foundation/19-02-PLAN.md
+Stopped at: Phase 19 complete — both plans done
+Resume file: None (Phase 19 complete, begin Phase 20)
