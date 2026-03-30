@@ -9,6 +9,10 @@ import {
   useAllContributors,
   useUpdateSchedule,
   useDeliveryLogs,
+  usePortalAccount,
+  useCreatePortalAccount,
+  useSetPortalAccountActive,
+  useResetPortalPassword,
 } from "../../hooks/useInstitutions.js";
 import type { Institution, InstitutionContributor, DeliveryLog } from "../../api/admin.js";
 import { downloadInstitutionReport } from "../../api/admin.js";
@@ -372,6 +376,191 @@ function ReportDeliverySection({ institution }: ReportDeliverySectionProps) {
   );
 }
 
+// ─── Portal access section ────────────────────────────────────────────────────
+
+interface PortalAccessSectionProps {
+  institutionId: string;
+}
+
+function PortalAccessSection({ institutionId }: PortalAccessSectionProps) {
+  const { data: account, isLoading, error } = usePortalAccount(institutionId);
+  const createMutation = useCreatePortalAccount();
+  const activeMutation = useSetPortalAccountActive();
+  const resetMutation = useResetPortalPassword();
+
+  const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  // After reset, show the new password
+  const handleResetPassword = () => {
+    setNewPassword(null);
+    resetMutation.mutate(account!.id, {
+      onSuccess: (result) => {
+        setNewPassword(result.password);
+      },
+    });
+  };
+
+  const handleCreate = () => {
+    setEmailError(null);
+    setNewPassword(null);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setEmailError("Enter a valid email address");
+      return;
+    }
+    createMutation.mutate(
+      { institutionId, email: email.trim() },
+      {
+        onSuccess: (result) => {
+          setEmail("");
+          setNewPassword(result.password);
+        },
+      },
+    );
+  };
+
+  const handleCopyPassword = () => {
+    if (!newPassword) return;
+    void navigator.clipboard.writeText(newPassword).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const isNoAccount = !isLoading && (error || !account);
+
+  return (
+    <div className="pt-3 border-t border-neutral-100">
+      <p className="text-xs font-semibold text-neutral-700 uppercase tracking-wide mb-2">
+        Portal Access
+      </p>
+
+      {isLoading && (
+        <p className="text-xs text-neutral-400 animate-pulse">Checking portal account...</p>
+      )}
+
+      {/* One-time password display (shown after create OR reset) */}
+      {newPassword && (
+        <div className="mb-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
+          <p className="text-xs font-semibold text-amber-800 mb-1">
+            Generated password — save this now, it will not be shown again
+          </p>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 font-mono text-sm text-amber-900 bg-amber-100 px-2 py-1 rounded break-all">
+              {newPassword}
+            </code>
+            <button
+              type="button"
+              onClick={handleCopyPassword}
+              className="shrink-0 text-xs text-amber-700 hover:text-amber-900 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded px-1"
+            >
+              {copied ? "Copied!" : "Copy"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* No account — show creation form */}
+      {isNoAccount && (
+        <div className="flex flex-col gap-2">
+          <p className="text-xs text-neutral-400">No portal account. Create one below.</p>
+          <div className="flex gap-2">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="portal@institution.org"
+              disabled={createMutation.isPending}
+              className="flex-1 px-2 py-1 text-xs border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500"
+            />
+            <button
+              type="button"
+              onClick={handleCreate}
+              disabled={createMutation.isPending || !email.trim()}
+              className="shrink-0 px-3 py-1 text-xs font-medium bg-[#1a1d2e] text-white rounded-md hover:bg-[#2a2d3e] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+            >
+              {createMutation.isPending ? "Creating..." : "Create"}
+            </button>
+          </div>
+          {emailError && (
+            <p className="text-xs text-red-600" role="alert">{emailError}</p>
+          )}
+          {createMutation.isError && (
+            <p className="text-xs text-red-600" role="alert">
+              {createMutation.error instanceof Error
+                ? createMutation.error.message
+                : "Failed to create portal account"}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Account exists — show management UI */}
+      {!isLoading && account && (
+        <div className="flex flex-col gap-2">
+          <p className="text-xs text-neutral-600">
+            <span className="font-medium">{account.email}</span>
+            <span
+              className={`ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                account.isActive
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
+              {account.isActive ? "Active" : "Inactive"}
+            </span>
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleResetPassword}
+              disabled={resetMutation.isPending}
+              className="text-xs text-primary-700 hover:text-primary-900 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded disabled:opacity-50"
+            >
+              {resetMutation.isPending ? "Resetting..." : "Reset Password"}
+            </button>
+            <span className="text-neutral-300">·</span>
+            <button
+              type="button"
+              onClick={() =>
+                activeMutation.mutate({
+                  accountId: account.id,
+                  isActive: !account.isActive,
+                  institutionId,
+                })
+              }
+              disabled={activeMutation.isPending}
+              className="text-xs text-primary-700 hover:text-primary-900 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded disabled:opacity-50"
+            >
+              {activeMutation.isPending
+                ? "Updating..."
+                : account.isActive
+                  ? "Deactivate"
+                  : "Activate"}
+            </button>
+          </div>
+          {resetMutation.isError && (
+            <p className="text-xs text-red-600" role="alert">
+              {resetMutation.error instanceof Error
+                ? resetMutation.error.message
+                : "Failed to reset password"}
+            </p>
+          )}
+          {activeMutation.isError && (
+            <p className="text-xs text-red-600" role="alert">
+              {activeMutation.error instanceof Error
+                ? activeMutation.error.message
+                : "Failed to update account status"}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Institution card (view mode) ─────────────────────────────────────────────
 
 interface InstitutionCardViewProps {
@@ -523,6 +712,9 @@ function InstitutionCardView({
 
       {/* Report delivery */}
       <ReportDeliverySection institution={institution} />
+
+      {/* Portal access */}
+      <PortalAccessSection institutionId={institution.id} />
 
       <div className="flex items-center justify-between pt-2 border-t border-neutral-100">
         <div className="flex items-center gap-2">

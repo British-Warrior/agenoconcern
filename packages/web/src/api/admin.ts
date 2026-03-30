@@ -115,6 +115,55 @@ export function fetchDeliveryLogs(id: string): Promise<DeliveryLog[]> {
   return apiClient<DeliveryLog[]>(`/api/admin/institutions/${id}/delivery-logs`);
 }
 
+// ---------------------------------------------------------------------------
+// Portal account management
+// ---------------------------------------------------------------------------
+
+export interface PortalAccountInfo {
+  id: string;
+  email: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface CreatePortalAccountResult {
+  id: string;
+  email: string;
+  password: string;
+}
+
+export async function createPortalAccount(
+  institutionId: string,
+  email: string,
+): Promise<CreatePortalAccountResult> {
+  return apiClient<CreatePortalAccountResult>("/api/portal/admin/create-portal-account", {
+    method: "POST",
+    body: JSON.stringify({ institutionId, email }),
+  });
+}
+
+export async function getPortalAccount(institutionId: string): Promise<PortalAccountInfo> {
+  return apiClient<PortalAccountInfo>(
+    `/api/portal/admin/account?institutionId=${encodeURIComponent(institutionId)}`,
+  );
+}
+
+export async function setPortalAccountActive(
+  accountId: string,
+  isActive: boolean,
+): Promise<PortalAccountInfo> {
+  return apiClient<PortalAccountInfo>(`/api/portal/admin/${accountId}/active`, {
+    method: "PATCH",
+    body: JSON.stringify({ isActive }),
+  });
+}
+
+export async function resetPortalPassword(accountId: string): Promise<{ password: string }> {
+  return apiClient<{ password: string }>(`/api/portal/admin/${accountId}/reset-password`, {
+    method: "POST",
+  });
+}
+
 export async function downloadInstitutionReport(
   slug: string,
   from?: string,

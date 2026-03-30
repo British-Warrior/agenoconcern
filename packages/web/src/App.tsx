@@ -8,6 +8,7 @@ import { CMRoute } from "./components/layout/CMRoute.js";
 import { InstitutionPortalRoute } from "./components/layout/InstitutionPortalRoute.js";
 import { PortalAuthProvider } from "./contexts/PortalAuthContext.js";
 import { PortalLogin } from "./pages/portal/PortalLogin.js";
+import { PortalDashboard } from "./pages/portal/PortalDashboard.js";
 import { InstitutionManagement } from "./pages/admin/InstitutionManagement.js";
 import { ContributorDetail } from "./pages/admin/ContributorDetail.js";
 import { AttentionDashboard } from "./pages/admin/AttentionDashboard.js";
@@ -59,7 +60,7 @@ export function App() {
               <InstitutionPortalRoute />
             </PortalAuthProvider>
           }>
-            {/* Dashboard and other portal routes added in plan 02 */}
+            <Route path="dashboard" element={<PortalDashboard />} />
           </Route>
 
           <Route element={<AppShell />}>

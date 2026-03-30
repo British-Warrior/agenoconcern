@@ -12,6 +12,25 @@ export interface PortalUser {
   institutionName: string;
 }
 
+export interface PortalDashboardData {
+  institutionName: string;
+  stats: {
+    contributors: number;
+    challenges: number;
+    hours: number;
+  };
+}
+
+export interface PortalAttentionFlag {
+  id: string;
+  contributorId: string;
+  contributorName: string;
+  signalType: string;
+  cohortSize: number | null;
+  flaggedCount: number | null;
+  createdAt: string;
+}
+
 interface ApiError {
   error: string;
   details?: unknown;
@@ -109,4 +128,39 @@ export async function portalLogout(): Promise<void> {
 
 export async function getPortalMe(): Promise<PortalUser> {
   return portalApiClient<PortalUser>("/api/portal/me");
+}
+
+export async function getPortalDashboard(): Promise<PortalDashboardData> {
+  return portalApiClient<PortalDashboardData>("/api/portal/dashboard");
+}
+
+export async function downloadPortalReport(): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/api/portal/report.pdf`, {
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    let errorMsg = "Report generation failed";
+    try {
+      const data = (await res.json()) as { error?: string };
+      if (data.error) errorMsg = data.error;
+    } catch {
+      // ignore
+    }
+    throw new Error(errorMsg);
+  }
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "impact-report.pdf";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+export async function getPortalAttentionFlags(): Promise<PortalAttentionFlag[]> {
+  return portalApiClient<PortalAttentionFlag[]>("/api/portal/attention");
 }
