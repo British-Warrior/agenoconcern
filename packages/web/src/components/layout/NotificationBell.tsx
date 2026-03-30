@@ -107,10 +107,7 @@ export function NotificationBell() {
           </div>
 
           {/* Notification list */}
-          <ul
-            role="list"
-            className="overflow-y-auto max-h-80 divide-y divide-stone-50"
-          >
+          <ul className="overflow-y-auto max-h-80 divide-y divide-stone-50">
             {notifications.length === 0 ? (
               <li className="px-4 py-6 text-center text-sm text-neutral-400">
                 No notifications yet
@@ -119,16 +116,22 @@ export function NotificationBell() {
               notifications.map((n) => (
                 <li
                   key={n.id}
-                  onClick={() => handleItemClick(n)}
                   className={[
-                    "px-4 py-3 cursor-pointer hover:bg-stone-50 transition-colors",
-                    n.url ? "cursor-pointer" : "cursor-default",
                     n.readAt === null ? "border-l-2 border-primary-600" : "border-l-2 border-transparent",
                   ].join(" ")}
                 >
-                  <p className="text-sm font-semibold text-neutral-800 truncate">{n.title}</p>
-                  <p className="text-xs text-neutral-500 truncate mt-0.5">{n.body}</p>
-                  <p className="text-xs text-neutral-400 mt-1">{relativeTime(n.createdAt)}</p>
+                  <button
+                    type="button"
+                    onClick={() => handleItemClick(n)}
+                    className={[
+                      "w-full text-left px-4 py-3 hover:bg-stone-50 transition-colors",
+                      n.url ? "cursor-pointer" : "cursor-default",
+                    ].join(" ")}
+                  >
+                    <p className="text-sm font-semibold text-neutral-800 truncate">{n.title}</p>
+                    <p className="text-xs text-neutral-500 truncate mt-0.5">{n.body}</p>
+                    <p className="text-xs text-neutral-400 mt-1">{relativeTime(n.createdAt)}</p>
+                  </button>
                 </li>
               ))
             )}

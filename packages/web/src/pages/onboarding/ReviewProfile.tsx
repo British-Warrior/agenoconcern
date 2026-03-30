@@ -308,10 +308,11 @@ export function ReviewProfile() {
 
           {/* Years of Experience */}
           <section className="bg-white border border-neutral-200 rounded-[var(--radius-lg)] p-6">
-            <label className="block text-base font-medium text-neutral-800 mb-2">
+            <label htmlFor="years-of-experience" className="block text-base font-medium text-neutral-800 mb-2">
               Years of Experience
             </label>
             <input
+              id="years-of-experience"
               type="number"
               min={0}
               max={60}

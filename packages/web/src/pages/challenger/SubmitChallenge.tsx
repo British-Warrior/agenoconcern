@@ -144,10 +144,11 @@ export function SubmitChallenge() {
           />
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">
+            <label htmlFor="challenge-brief" className="block text-sm font-medium text-neutral-700 mb-1">
               Brief <span className="text-error">*</span>
             </label>
             <textarea
+              id="challenge-brief"
               required
               rows={5}
               placeholder="Describe the challenge in detail — what the problem is, what success looks like, and any constraints."
@@ -185,10 +186,11 @@ export function SubmitChallenge() {
           />
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">
+            <label htmlFor="challenge-type" className="block text-sm font-medium text-neutral-700 mb-1">
               Type <span className="text-error">*</span>
             </label>
             <select
+              id="challenge-type"
               value={type}
               onChange={(e) =>
                 setType(

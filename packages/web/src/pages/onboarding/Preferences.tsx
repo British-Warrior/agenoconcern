@@ -212,10 +212,11 @@ export function Preferences() {
               </div>
               {/* Free-text Other */}
               <div className="mt-3">
-                <label className="block text-sm font-medium text-neutral-700 mb-1">
+                <label htmlFor="domain-other" className="block text-sm font-medium text-neutral-700 mb-1">
                   Other (optional)
                 </label>
                 <input
+                  id="domain-other"
                   type="text"
                   value={form.domainOther}
                   onChange={(e) =>
@@ -230,7 +231,7 @@ export function Preferences() {
 
           {/* Max Circles */}
           <section className="bg-white border border-neutral-200 rounded-[var(--radius-lg)] p-6">
-            <label className="block text-base font-medium text-neutral-800 mb-1">
+            <label htmlFor="max-circles" className="block text-base font-medium text-neutral-800 mb-1">
               Maximum Circles
             </label>
             <p className="text-sm text-neutral-500 mb-3">
@@ -238,6 +239,7 @@ export function Preferences() {
               You can change this anytime.
             </p>
             <input
+              id="max-circles"
               type="number"
               min={1}
               max={10}
@@ -257,6 +259,7 @@ export function Preferences() {
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
+                aria-label="Open to mentoring"
                 checked={form.willingToMentor}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, willingToMentor: e.target.checked }))

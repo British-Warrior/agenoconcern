@@ -683,8 +683,9 @@ function InstitutionCardView({
         {showDateRange && (
           <div className="mt-2 flex gap-2">
             <div className="flex-1">
-              <label className="text-xs text-neutral-500 block mb-1">From</label>
+              <label htmlFor="report-from-date" className="text-xs text-neutral-500 block mb-1">From</label>
               <input
+                id="report-from-date"
                 type="date"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
@@ -693,8 +694,9 @@ function InstitutionCardView({
               />
             </div>
             <div className="flex-1">
-              <label className="text-xs text-neutral-500 block mb-1">To</label>
+              <label htmlFor="report-to-date" className="text-xs text-neutral-500 block mb-1">To</label>
               <input
+                id="report-to-date"
                 type="date"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
@@ -819,10 +821,11 @@ function InstitutionCardEdit({
         disabled={isPending}
       />
       <div className="flex flex-col gap-1.5">
-        <label className="text-base font-medium text-neutral-800">
+        <label htmlFor="institution-description" className="text-base font-medium text-neutral-800">
           Description
         </label>
         <textarea
+          id="institution-description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Optional description..."

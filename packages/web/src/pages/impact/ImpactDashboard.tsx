@@ -108,8 +108,9 @@ function LogHoursForm({ challenges, onClose }: LogHoursFormProps) {
       ) : (
         <>
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">Circle</label>
+            <label htmlFor="log-hours-circle" className="block text-sm font-medium text-neutral-700 mb-1">Circle</label>
             <select
+              id="log-hours-circle"
               value={circleId}
               onChange={(e) => setCircleId(e.target.value)}
               required
@@ -134,8 +135,9 @@ function LogHoursForm({ challenges, onClose }: LogHoursFormProps) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">Description (optional)</label>
+            <label htmlFor="log-hours-description" className="block text-sm font-medium text-neutral-700 mb-1">Description (optional)</label>
             <textarea
+              id="log-hours-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               maxLength={500}

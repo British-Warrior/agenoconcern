@@ -119,7 +119,7 @@ export function useCreatePortalAccount() {
 export function useSetPortalAccountActive() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ accountId, isActive, institutionId }: { accountId: string; isActive: boolean; institutionId: string }) =>
+    mutationFn: ({ accountId, isActive }: { accountId: string; isActive: boolean; institutionId: string }) =>
       adminApi.setPortalAccountActive(accountId, isActive),
     onSuccess: (_data, { institutionId }) => {
       void queryClient.invalidateQueries({

@@ -97,10 +97,11 @@ export function ResolutionForm({
     <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
       {/* Problem Summary */}
       <div>
-        <label className="block text-xs font-semibold text-neutral-700 mb-1">
+        <label htmlFor="resolution-problem-summary" className="block text-xs font-semibold text-neutral-700 mb-1">
           Problem Summary <span className="text-red-500">*</span>
         </label>
         <textarea
+          id="resolution-problem-summary"
           value={form.problemSummary}
           onChange={(e) => handleChange("problemSummary", e.target.value)}
           placeholder="Describe the core problem or challenge being addressed..."
@@ -118,10 +119,11 @@ export function ResolutionForm({
 
       {/* Recommendations */}
       <div>
-        <label className="block text-xs font-semibold text-neutral-700 mb-1">
+        <label htmlFor="resolution-recommendations" className="block text-xs font-semibold text-neutral-700 mb-1">
           Recommendations <span className="text-red-500">*</span>
         </label>
         <textarea
+          id="resolution-recommendations"
           value={form.recommendations}
           onChange={(e) => handleChange("recommendations", e.target.value)}
           placeholder="Provide your recommended actions or solutions..."
@@ -139,10 +141,11 @@ export function ResolutionForm({
 
       {/* Evidence */}
       <div>
-        <label className="block text-xs font-semibold text-neutral-700 mb-1">
+        <label htmlFor="resolution-evidence" className="block text-xs font-semibold text-neutral-700 mb-1">
           Evidence <span className="text-red-500">*</span>
         </label>
         <textarea
+          id="resolution-evidence"
           value={form.evidence}
           onChange={(e) => handleChange("evidence", e.target.value)}
           placeholder="What evidence supports your recommendations?"
