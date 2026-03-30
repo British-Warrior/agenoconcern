@@ -10,10 +10,10 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 ## Current Position
 
 Milestone: v1.4 — WCAG Compliance
-Phase: 21 of 23 (Interactive Component Remediation) — Not started
-Plan: 0 of TBD
-Status: Ready for planning
-Last activity: 2026-03-30 — Phase 20 complete (Focus Infrastructure verified)
+Phase: 21 of 23 (Interactive Component Remediation) — In progress
+Plan: 2 of TBD
+Status: In progress
+Last activity: 2026-03-30 — Completed 21-02 (NotificationBell keyboard operability)
 
 Progress: [████░░░░░░] 40% (v1.4: 2/5 phases complete)
 
@@ -57,6 +57,11 @@ v1.4 decisions logged to PROJECT.md as they are made.
 - aria-required added to Input.tsx alongside native required prop for AT compatibility
 - ConsentBanner's peer-focus:ring-* classes left unchanged — Tailwind peer modifier, already uses accent-500
 
+**21-02 (2026-03-30):**
+- Disclosure trigger pattern: aria-expanded={open} + aria-haspopup="true" on bell button, role="menu" on panel
+- role="menu" + role="menuitem" chosen over listbox/option — items are actions, not selections
+- Disclosure dropdown uses no focus trap — Tab flows naturally through button elements; Escape returns focus to trigger via bellRef
+
 ### Pending Todos
 
 None.
@@ -70,5 +75,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: Phase 20, Plan 2 complete — WCAG focus ring standardisation done
-Resume file: .planning/phases/20-focus-infrastructure/ (begin 20-03)
+Stopped at: Phase 21, Plan 2 complete — NotificationBell keyboard operability done
+Resume file: .planning/phases/21-interactive-component-remediation/ (begin 21-03)
