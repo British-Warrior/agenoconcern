@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income — bridging the pension gap while contributing to communities.
-**Current focus:** Planning next milestone
+**Current focus:** v1.4 WCAG Compliance — full audit and remediation
 
 ## Current Position
 
-Milestone: v1.3 — Enhanced Reporting & Institution Portal — COMPLETE
-Phase: N/A — milestone shipped
-Plan: N/A
-Status: v1.3 shipped. Ready for next milestone.
-Last activity: 2026-03-30 — v1.3 milestone complete (3 phases, 6 plans, 14 requirements)
+Milestone: v1.4 — WCAG Compliance
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-30 — Milestone v1.4 started
 
-Progress: [██████████] 100% (v1.3 complete)
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -42,5 +42,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: v1.3 milestone complete and archived
-Resume file: None — start next milestone with /gsd:new-milestone
+Stopped at: v1.4 milestone started — defining requirements
+Resume file: None

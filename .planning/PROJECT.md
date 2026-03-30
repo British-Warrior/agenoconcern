@@ -56,7 +56,17 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 
 ### Active
 
-(No active milestone — v1.3 complete. Start next with `/gsd:new-milestone`.)
+## Current Milestone: v1.4 WCAG Compliance
+
+**Goal:** Full WCAG 2.2 AA audit and remediation across the entire application — keyboard navigation, screen reader support, focus management, form accessibility, motion respect, semantic HTML, and ARIA patterns.
+
+**Target features:**
+- Comprehensive accessibility audit of all pages and components
+- Keyboard navigation for every interactive element
+- Screen reader compatibility (ARIA labels, live regions, landmarks)
+- Focus management (modals, navigation, skip links)
+- Form accessibility (error linking, required field announcement)
+- Reduced motion support
 
 ### Out of Scope
 
@@ -168,4 +178,4 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 | Separate portal cookies | portal_access_token/portal_refresh_token avoid collision with contributor session | ✓ Good — both sessions can coexist |
 
 ---
-*Last updated: 2026-03-30 after v1.3 milestone completion*
+*Last updated: 2026-03-30 after v1.4 milestone start*
