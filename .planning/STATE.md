@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 Milestone: v1.4 — WCAG Compliance
 Phase: 20 of 23 (Focus Infrastructure) — In progress
-Plan: 1 of TBD
+Plan: 2 of TBD
 Status: In progress
-Last activity: 2026-03-30 — Completed 20-01-PLAN.md (accessibility primitives)
+Last activity: 2026-03-30 — Completed 20-02-PLAN.md (WCAG focus ring standardisation across 20 files)
 
-Progress: [██░░░░░░░░] 20% (v1.4: 1/5 phases complete; phase 20 plan 1/TBD done)
+Progress: [██░░░░░░░░] 20% (v1.4: 1/5 phases complete; phase 20 plan 2/TBD done)
 
 ## Performance Metrics
 
@@ -50,6 +50,13 @@ v1.4 decisions logged to PROJECT.md as they are made.
 - AnnounceProvider: clear-then-set (50ms) forces screen reader re-announcement on duplicate messages; single region at root prevents announcement race conditions
 - AnnounceProvider placed inside QueryClientProvider so future mutation hooks can call useAnnounce without context ordering issues
 
+**20-02 (2026-03-30):**
+- focus-visible: prefix used throughout — rings appear only on keyboard navigation, not mouse click
+- accent-500 token standardised across all 20 files — consistent with global *:focus-visible rule and Button.tsx
+- ChallengeForm fieldClass error-state updated from focus:ring-error/30 to focus-visible:ring-error (solid, compliant)
+- aria-required added to Input.tsx alongside native required prop for AT compatibility
+- ConsentBanner's peer-focus:ring-* classes left unchanged — Tailwind peer modifier, already uses accent-500
+
 ### Pending Todos
 
 None.
@@ -63,5 +70,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: Phase 20, Plan 1 complete — accessibility primitives done
-Resume file: .planning/phases/20-focus-infrastructure/ (begin 20-02)
+Stopped at: Phase 20, Plan 2 complete — WCAG focus ring standardisation done
+Resume file: .planning/phases/20-focus-infrastructure/ (begin 20-03)
