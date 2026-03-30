@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 ## Current Position
 
 Milestone: v1.3 — Enhanced Reporting & Institution Portal
-Phase: 18 of 18 (Institution Portal) — In progress
-Plan: 1 of 2
-Status: In progress
-Last activity: 2026-03-30 — Completed 18-01-PLAN.md (Portal Auth Layer)
+Phase: 18 of 18 (Institution Portal) — Awaiting human verification
+Plan: 2 of 2
+Status: Checkpoint — awaiting human verification of portal end-to-end flow
+Last activity: 2026-03-30 — Completed 18-02-PLAN.md (Portal Dashboard & CM Account UI)
 
-Progress: [██████░░░░] 67% (v1.3: 2/3 phases complete)
+Progress: [███████░░░] 78% (v1.3: Phase 18 plan 2 complete, checkpoint pending)
 
 ## Performance Metrics
 
@@ -57,6 +57,9 @@ v1.3 Phase 18 decisions:
 - Phase 18-01: Partial unique index (WHERE is_active=true) allows historical deactivated accounts while enforcing one active per institution
 - Phase 18-01: PortalAuthProvider placed on individual route elements in App.tsx (not full app) for complete isolation
 - Phase 18-01: Portal routes outside AppShell route — portal has its own minimal layout (no contributor nav)
+- Phase 18-02: Portal PDF endpoint uses all-time data (no date filtering) — institution portal is simpler than admin view
+- Phase 18-02: Portal account GET returns 404 when no account exists (hook disables retry on 404, frontend shows create form)
+- Phase 18-02: PDF download uses raw fetch (not portalApiClient) because response is binary blob
 
 v1.3 pre-build decisions still pending:
 - SWEMWBS commercial licence confirmation before wellbeing band goes live
@@ -73,5 +76,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: Phase 18 plan 01 complete — portal auth layer (DB, service, middleware, routes, frontend context, route guard, login page)
-Resume file: .planning/phases/18-institution-portal/18-02-PLAN.md
+Stopped at: Phase 18 plan 02 checkpoint — portal dashboard and CM account UI built, awaiting human verification
+Resume file: .planning/phases/18-institution-portal/18-02-PLAN.md (checkpoint:human-verify)
