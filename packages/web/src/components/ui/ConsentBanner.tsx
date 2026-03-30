@@ -140,15 +140,14 @@ export function ConsentBanner() {
           <Button variant="outline" onClick={handleRejectAll}>
             Reject All
           </Button>
-          {!showPreferences && (
-            <button
-              type="button"
-              onClick={() => setShowPreferences(true)}
-              className="text-base text-primary-800 underline hover:text-primary-700 min-h-[3rem] px-2 cursor-pointer"
-            >
-              Manage Preferences
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setShowPreferences(v => !v)}
+            aria-expanded={showPreferences}
+            className="text-base text-primary-800 underline hover:text-primary-700 min-h-[3rem] px-2 cursor-pointer"
+          >
+            {showPreferences ? "Hide Preferences" : "Manage Preferences"}
+          </button>
         </div>
       </div>
     </div>

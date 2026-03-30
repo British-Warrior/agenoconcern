@@ -94,6 +94,7 @@ export function ManageChallengeRow({ challenge, onEdit }: ManageChallengeRowProp
                     setShowInterests((v) => !v);
                     setShowTeamSuggestions(false);
                   }}
+                  aria-expanded={showInterests}
                   className="px-3 py-1 rounded-[var(--radius-md)] text-xs font-medium border border-primary-300 text-primary-700 hover:bg-primary-50 transition-colors duration-150"
                 >
                   {showInterests ? "Hide Interests" : "View Interests"}
@@ -104,6 +105,7 @@ export function ManageChallengeRow({ challenge, onEdit }: ManageChallengeRowProp
                     setShowTeamSuggestions((v) => !v);
                     setShowInterests(false);
                   }}
+                  aria-expanded={showTeamSuggestions}
                   className="px-3 py-1 rounded-[var(--radius-md)] text-xs font-medium border border-violet-300 text-violet-700 hover:bg-violet-50 transition-colors duration-150"
                 >
                   {showTeamSuggestions ? "Hide Teams" : "View Team Suggestions"}
