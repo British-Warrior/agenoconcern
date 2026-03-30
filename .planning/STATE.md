@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 
 Milestone: v1.3 — Enhanced Reporting & Institution Portal
 Phase: 17 of 18 (Scheduled Report Delivery) — In progress
-Plan: 1 of TBD
-Status: In progress
-Last activity: 2026-03-30 — Completed 17-01-PLAN.md (schema, cron job, toggle UI)
+Plan: 2 of 2 (phase complete)
+Status: Phase complete
+Last activity: 2026-03-30 — Completed 17-02-PLAN.md (delivery log viewer, full pipeline verified)
 
-Progress: [████░░░░░░] 40% (v1.3: 1.5/3 phases complete)
+Progress: [█████░░░░░] 50% (v1.3: 2/3 phases complete)
 
 ## Performance Metrics
 
@@ -49,6 +49,8 @@ v1.3 Phase 17 decisions:
 - Phase 17: Advisory lock key 7171 for report delivery job
 - Phase 17: Cadence radio buttons shown when contactEmail present (pre-select before enabling)
 - Phase 17: PUT /institutions/:id extended for contactEmail (no new route needed)
+- Phase 17-02: Delivery history as flat list (not table) — compact enough at 10 rows, avoids horizontal scroll
+- Phase 17-02: contactEmail and schedule columns added to GET /admin/institutions select — required for toggle to survive page reload
 
 v1.3 pre-build decisions still pending:
 - SWEMWBS commercial licence confirmation before wellbeing band goes live
@@ -66,5 +68,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: Phase 17 Plan 01 complete — delivery schema, cron job, and toggle UI in place
-Resume file: .planning/phases/17-scheduled-report-delivery/17-02-PLAN.md (if exists)
+Stopped at: Phase 17 complete — full scheduled report delivery pipeline verified (schema, cron, toggle UI, log viewer)
+Resume file: .planning/phases/18-institution-portal/ (next phase)
