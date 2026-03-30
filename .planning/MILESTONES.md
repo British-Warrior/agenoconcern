@@ -1,5 +1,30 @@
 # Milestones: Indomitable Unity
 
+## v1.3 Enhanced Reporting & Institution Portal (Shipped: 2026-03-30)
+
+**Delivered:** Wellbeing analytics in PDF reports, automated scheduled delivery to institution contacts, and a self-service institution portal with separate auth, stats dashboard, PDF download, and read-only attention flags.
+
+**Phases completed:** 16-18 (6 plans total)
+
+**Key accomplishments:**
+
+- Wellbeing band analytics — Rasch-transformed SWEMWBS scores, k=5 anonymity threshold, modal band with Typical tie-break, consent-gated opt-in, PDF integration
+- Attention trend visualization — 12-week ISO-week bar chart, direction indicator (increasing/stable/decreasing), dashboard Trends tab
+- Scheduled report delivery — hourly cron job with PostgreSQL advisory lock, PDF email via Resend with Buffer attachment, CM toggle UI with weekly/monthly cadence, exponential backoff retry (5 attempts)
+- Institution portal — separate JWT auth (type=portal discriminant), portal login/dashboard at /portal/*, stats cards, PDF download, read-only attention flags, CM account creation/management
+
+**Stats:**
+
+- 55 files changed (+9,186 lines)
+- 3 phases, 6 plans, 14 requirements
+- 5 days from 2026-03-25 to 2026-03-30
+
+**Git range:** `4b940d5` → `9970a9b`
+
+**What's next:** TBD — pilot deployment, user testing, v1.4 or v2.0 planning
+
+---
+
 ## v1.2 Institution Management & iThink Integration (Shipped: 2026-03-24)
 
 **Delivered:** CM operational tools for institution-contributor management with live impact data, iThink webhook integration for proactive contributor support, attention flag dashboard, and on-demand branded PDF impact reports.

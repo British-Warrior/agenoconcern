@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Indomitable Unity is a social enterprise platform that deploys experienced professionals (50-75+) who have been involuntarily excluded from the workforce into paid advisory work and unpaid community contribution. It addresses the "pension gap" — the ~12-year financial void between involuntary career exit (~55) and state pension eligibility (67+ UK). The platform is an MCP server exposing 14 domain tools, with a React/Vite web UI that VANTAGE (Kirk's adaptive AI agent) will overlay as the sole interface. v1.1 Pilot-Ready shipped 2026-03-21 — institutional embedding (kiosk mode), challenger self-service portal, VANTAGE API integration, and UX overhaul complete. Ready for East Midlands pilot deployment.
+Indomitable Unity is a social enterprise platform that deploys experienced professionals (50-75+) who have been involuntarily excluded from the workforce into paid advisory work and unpaid community contribution. It addresses the "pension gap" — the ~12-year financial void between involuntary career exit (~55) and state pension eligibility (67+ UK). The platform is an MCP server exposing 14 domain tools, with a React/Vite web UI that VANTAGE (Kirk's adaptive AI agent) will overlay as the sole interface. v1.3 shipped 2026-03-30 — wellbeing analytics in PDF reports, automated scheduled delivery, and a self-service institution portal. Ready for East Midlands pilot deployment.
 
 ## Core Value
 
@@ -49,17 +49,14 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 - ✓ CM attention dashboard (institution-scoped flagged contributors, resolve with notes, signal history) — v1.2
 - ✓ PDF impact report (pdfkit branded PDF streamed to browser, date range filtering, Inter font) — v1.2
 
+- ✓ Wellbeing band in PDF (Rasch-transformed SWEMWBS, k=5 anonymity, consent-gated, modal band) — v1.3
+- ✓ Attention trend direction indicator + weekly bar chart per institution — v1.3
+- ✓ Scheduled PDF delivery (cron + advisory lock, Resend email, weekly/monthly cadence, exponential backoff retry) — v1.3
+- ✓ Institution portal (separate JWT auth, portal login, stats dashboard, PDF download, read-only attention flags) — v1.3
+
 ### Active
 
-## Current Milestone: v1.3 Enhanced Reporting & Institution Portal
-
-**Goal:** Enrich the CM's operational data with wellbeing aggregates and attention trends in reports, automate PDF delivery to institutions, and give institutions a self-service portal to view their own impact data without CM mediation.
-
-**Target features:**
-- Wellbeing aggregate band in PDF impact report (anonymous, min 5 contributor threshold)
-- Attention signal trend visualization per institution (frequency direction)
-- Scheduled PDF report auto-delivery to institution contact email
-- Institution portal with separate login for institutions to access their own data
+(No active milestone — v1.3 complete. Start next with `/gsd:new-milestone`.)
 
 ### Out of Scope
 
@@ -89,13 +86,13 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 - **Funding:** NLCF Community Power Fund £80k (primary for MVP), UnLtd Awards £5-15k, Awards for All £300-£20k. MVP build within Community Power Fund budget.
 - **Key contact:** Maria Zappala GAICD — Australian board director, AI governance & anti-ageism advocate. Potential advisory board member.
 
-### Current State (v1.2 shipped)
+### Current State (v1.3 shipped)
 
-- **Codebase:** 22,113 lines TypeScript/TSX/CSS across ~220 source files
-- **Tech stack:** Node.js/TypeScript monorepo, Express server, React/Vite frontend, PostgreSQL (Drizzle ORM), Stripe Connect, S3, OpenAI, web-push, Resend, react-idle-timer, recharts, pdfkit
-- **Architecture:** MCP server (14 tools) + REST API + React SPA (PWA) + VANTAGE API (key auth) + Kiosk mode + Challenger portal + Institutional landing pages + iThink webhook receiver + CM admin (institutions, attention, PDF reports)
+- **Codebase:** ~31,000 lines TypeScript/TSX/CSS across ~275 source files
+- **Tech stack:** Node.js/TypeScript monorepo, Express server, React/Vite frontend, PostgreSQL (Drizzle ORM), Stripe Connect, S3, OpenAI, web-push, Resend, node-cron, react-idle-timer, recharts, pdfkit, jose, argon2
+- **Architecture:** MCP server (14 tools) + REST API + React SPA (PWA) + VANTAGE API (key auth) + Kiosk mode + Challenger portal + Institutional landing pages + iThink webhook receiver + CM admin (institutions, attention, PDF reports, scheduled delivery) + Institution portal (separate JWT auth)
 - **Known tech debt:** LIMIT 1 CM institution lookup (pilot-scale), statsJson JSONB preserved but unused
-- **Legal pre-launch:** Employment Agencies Act 1973 classification, WEMWBS licence registration, DPIA/APD completion
+- **Legal pre-launch:** Employment Agencies Act 1973 classification, SWEMWBS commercial licence confirmation, DPIA/APD completion
 
 ### Data Model (6 Core Entities)
 
@@ -163,6 +160,12 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 | Module-level kiosk flag persistence | ?kiosk=true disappears on navigation; module-level variable survives SPA routing | ✓ Good — simpler than threading param through every navigate() |
 | MVP institution stats as JSONB | No contributor-institution FK exists; seed stats as JSON for pilot | ✓ Good — avoids schema complexity, unblocks landing pages |
 | react-idle-timer over custom listeners | Purpose-built idle detection handles edge cases (visibility, cross-tab, throttle) | ✓ Good — 560k weekly downloads, stable |
+| Rasch-transformed SWEMWBS for wellbeing bands | Interval scaling (not ordinal raw sums) for valid group comparison | ✓ Good — statistically sound |
+| k=5 anonymity threshold | ONS minimum group size for published statistics; pilot-viable | ✓ Good — balances privacy and utility |
+| Advisory lock for delivery cron | pg_try_advisory_lock prevents duplicate execution across instances | ✓ Good — zero infrastructure overhead |
+| Separate Express router for portal (not subdomain) | No DNS/TLS/CORS changes; ChallengerRoute precedent already in codebase | ✓ Good — zero infra cost |
+| Portal JWT type discriminant | type=portal in JWT payload prevents cross-auth contamination | ✓ Good — simple, effective isolation |
+| Separate portal cookies | portal_access_token/portal_refresh_token avoid collision with contributor session | ✓ Good — both sessions can coexist |
 
 ---
-*Last updated: 2026-03-25 after v1.3 milestone start*
+*Last updated: 2026-03-30 after v1.3 milestone completion*
