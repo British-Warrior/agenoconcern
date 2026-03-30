@@ -567,6 +567,22 @@ export const ithinkAttentionFlags = pgTable("ithink_attention_flags", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Institution portal accounts
+export const institutionPortalAccounts = pgTable("institution_portal_accounts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  institutionId: uuid("institution_id")
+    .notNull()
+    .references(() => institutions.id, { onDelete: "cascade" }),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => contributors.id, { onDelete: "restrict" }),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // Contributor hours
 export const contributorHours = pgTable(
   "contributor_hours",

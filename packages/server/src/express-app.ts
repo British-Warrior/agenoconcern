@@ -16,6 +16,7 @@ import { challengerRoutes } from "./routes/challenger.js";
 import { institutionRoutes } from "./routes/institutions.js";
 import { adminRouter } from "./routes/admin.js";
 import { ithinkWebhookHandler } from "./routes/webhooks.js";
+import { portalAuthRoutes } from "./routes/portal/portal-auth.js";
 
 const app = express();
 
@@ -73,6 +74,9 @@ app.use("/api/vantage", vantageRoutes);
 
 // Challenger portal routes
 app.use("/api/challenger", challengerRoutes);
+
+// Institution portal auth routes (separate JWT cookies — NOT contributor auth)
+app.use("/api/portal", portalAuthRoutes);
 
 // Institution public routes (no auth required)
 app.use("/api/institutions", institutionRoutes);
