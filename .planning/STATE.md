@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 ## Current Position
 
 Milestone: v1.3 — Enhanced Reporting & Institution Portal
-Phase: 18 of 18 (Institution Portal) — Awaiting human verification
+Phase: 18 of 18 (Institution Portal) — COMPLETE
 Plan: 2 of 2
-Status: Checkpoint — awaiting human verification of portal end-to-end flow
-Last activity: 2026-03-30 — Completed 18-02-PLAN.md (Portal Dashboard & CM Account UI)
+Status: Phase complete — v1.3 milestone complete
+Last activity: 2026-03-30 — Completed 18-02-PLAN.md (Portal Dashboard & CM Account UI) — human verified
 
-Progress: [███████░░░] 78% (v1.3: Phase 18 plan 2 complete, checkpoint pending)
+Progress: [██████████] 100% (v1.3 complete — all 6 phases done)
 
 ## Performance Metrics
 
@@ -76,5 +76,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: Phase 18 plan 02 checkpoint — portal dashboard and CM account UI built, awaiting human verification
-Resume file: .planning/phases/18-institution-portal/18-02-PLAN.md (checkpoint:human-verify)
+Stopped at: v1.3 milestone complete — Phase 18 plan 02 human-verified and approved
+Resume file: None — v1.3 complete. Start v1.4 planning when ready.
