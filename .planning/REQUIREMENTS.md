@@ -66,8 +66,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| KBD-01 | Phase 20 | Pending |
-| KBD-02 | Phase 20 | Pending |
+| KBD-01 | Phase 20 | Done |
+| KBD-02 | Phase 20 | Done |
 | KBD-03 | Phase 19 | Done |
 | KBD-04 | Phase 21 | Pending |
 | KBD-05 | Phase 21 | Pending |
@@ -77,7 +77,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SR-04 | Phase 22 | Pending |
 | SR-05 | Phase 22 | Pending |
 | SR-06 | Phase 22 | Pending |
-| VIS-01 | Phase 20 | Pending |
+| VIS-01 | Phase 20 | Done |
 | VIS-02 | Phase 23 | Pending |
 | VIS-03 | Phase 19 | Done |
 | VIS-04 | Phase 19 | Done |
@@ -85,7 +85,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FORM-02 | Phase 22 | Pending |
 | TOOL-01 | Phase 19 | Done |
 | TOOL-02 | Phase 23 | Pending |
-| TOOL-03 | Phase 20 | Pending |
+| TOOL-03 | Phase 20 | Done |
 | TOOL-04 | Phase 19 | Done |
 
 **Coverage:**

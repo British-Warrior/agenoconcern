@@ -5,22 +5,22 @@
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income — bridging the pension gap while contributing to communities.
-**Current focus:** v1.4 WCAG Compliance — Phase 20: Focus Infrastructure
+**Current focus:** v1.4 WCAG Compliance — Phase 21: Interactive Component Remediation
 
 ## Current Position
 
 Milestone: v1.4 — WCAG Compliance
-Phase: 20 of 23 (Focus Infrastructure) — In progress
-Plan: 2 of TBD
-Status: In progress
-Last activity: 2026-03-30 — Completed 20-02-PLAN.md (WCAG focus ring standardisation across 20 files)
+Phase: 21 of 23 (Interactive Component Remediation) — Not started
+Plan: 0 of TBD
+Status: Ready for planning
+Last activity: 2026-03-30 — Phase 20 complete (Focus Infrastructure verified)
 
-Progress: [██░░░░░░░░] 20% (v1.4: 1/5 phases complete; phase 20 plan 2/TBD done)
+Progress: [████░░░░░░] 40% (v1.4: 2/5 phases complete)
 
 ## Performance Metrics
 
 **Velocity (v1.0-v1.3):**
-- Total plans completed: 48 (v1.0: 19, v1.1: 11, v1.2: 10, v1.3: 6, v1.4: 2)
+- Total plans completed: 50 (v1.0: 19, v1.1: 11, v1.2: 10, v1.3: 6, v1.4: 4)
 - Average duration: ~15 min
 - Total execution time: ~690 min
 
