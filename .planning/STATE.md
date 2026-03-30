@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income — bridging the pension gap while contributing to communities.
-**Current focus:** v1.4 WCAG Compliance — Phase 21: Interactive Component Remediation
+**Current focus:** v1.4 WCAG Compliance — Phase 22: Screen Reader & ARIA Completeness
 
 ## Current Position
 
 Milestone: v1.4 — WCAG Compliance
-Phase: 21 of 23 (Interactive Component Remediation) — In progress
-Plan: 2 of TBD
-Status: In progress
-Last activity: 2026-03-30 — Completed 21-02 (NotificationBell keyboard operability)
+Phase: 22 of 23 (Screen Reader & ARIA Completeness) — Complete
+Plan: 2 of 2
+Status: Phase complete
+Last activity: 2026-03-30 — Completed 22-02 (AttentionTrendChart companion data table, SR-06)
 
-Progress: [████░░░░░░] 40% (v1.4: 2/5 phases complete)
+Progress: [█████░░░░░] 50% (v1.4: 3/5 phases complete)
 
 ## Performance Metrics
 
@@ -62,6 +62,12 @@ v1.4 decisions logged to PROJECT.md as they are made.
 - role="menu" + role="menuitem" chosen over listbox/option — items are actions, not selections
 - Disclosure dropdown uses no focus trap — Tab flows naturally through button elements; Escape returns focus to trigger via bellRef
 
+**22-02 (2026-03-30):**
+- Toggle button placed after chart container for logical tab order: chart keyboard nav then toggle then table rows
+- data prop (TrendPoint[]) used for table rows rather than chartData — canonical source, avoids label field dependency
+- formatWeekLabel reused for table cells — identical week display between chart axis and table
+- accessibilityLayer left at recharts 3.x default (enabled) — keyboard nav between bars complements the table
+
 ### Pending Todos
 
 None.
@@ -75,5 +81,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: Phase 21, Plan 2 complete — NotificationBell keyboard operability done
-Resume file: .planning/phases/21-interactive-component-remediation/ (begin 21-03)
+Stopped at: Phase 22, Plan 2 complete — AttentionTrendChart companion data table done
+Resume file: .planning/phases/23-wcag-ci-and-manual-testing/ (begin 23-01)
