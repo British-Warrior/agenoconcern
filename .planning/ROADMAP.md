@@ -115,11 +115,11 @@ Plans:
   4. Skeleton loading placeholders are identified as loading state by screen readers — they have `role="status"` and `aria-busy="true"`
   5. AttentionTrendChart has a companion data table containing the same data — keyboard and screen reader users can access the chart data without a pointing device
   6. Auth form inputs (email, password) have correct `autocomplete` attribute values; password fields accept paste
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 22-01: SR-02 aria-describedby error linking, SR-03 dropzone label, SR-04 badge announcement via useAnnounce, SR-05 skeleton role/aria-busy
-- [ ] 22-02: SR-06 AttentionTrendChart companion data table, FORM-01 autocomplete attributes, FORM-02 paste not blocked verification
+- [ ] 22-01-PLAN.md — SR-02 error linking (Register privacy checkbox), SR-04 badge announcement via useAnnounce, SR-05 skeleton role/aria-busy across 8 pages
+- [ ] 22-02-PLAN.md — SR-06 AttentionTrendChart companion data table with toggle button
 
 ---
 
