@@ -18,6 +18,7 @@ import type { Institution, InstitutionContributor, DeliveryLog } from "../../api
 import { downloadInstitutionReport } from "../../api/admin.js";
 import { Button } from "../../components/ui/Button.js";
 import { Input } from "../../components/ui/Input.js";
+import { Modal } from "../../components/ui/Modal.js";
 
 // ─── Toggle switch component ──────────────────────────────────────────────────
 
@@ -77,35 +78,28 @@ function ConfirmDialog({
     : `Activate "${institutionName}"? This makes the kiosk page visible.`;
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="confirm-dialog-title"
-    >
-      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4">
-        <h2
-          id="confirm-dialog-title"
-          className="text-lg font-semibold text-neutral-900 mb-3"
+    <Modal isOpen={true} onClose={onCancel} titleId="confirm-dialog-title" className="max-w-sm p-8 rounded-2xl">
+      <h2
+        id="confirm-dialog-title"
+        className="text-lg font-semibold text-neutral-900 mb-3"
+      >
+        {action} Institution
+      </h2>
+      <p className="text-neutral-600 mb-6">{message}</p>
+      <div className="flex gap-3 justify-end">
+        <Button variant="secondary" onClick={onCancel} disabled={isPending}>
+          Cancel
+        </Button>
+        <Button
+          variant={isActive ? "outline" : "primary"}
+          className={isActive ? "border-red-500 text-red-600 hover:bg-red-50" : ""}
+          onClick={onConfirm}
+          loading={isPending}
         >
-          {action} Institution
-        </h2>
-        <p className="text-neutral-600 mb-6">{message}</p>
-        <div className="flex gap-3 justify-end">
-          <Button variant="secondary" onClick={onCancel} disabled={isPending}>
-            Cancel
-          </Button>
-          <Button
-            variant={isActive ? "outline" : "primary"}
-            className={isActive ? "border-red-500 text-red-600 hover:bg-red-50" : ""}
-            onClick={onConfirm}
-            loading={isPending}
-          >
-            {action}
-          </Button>
-        </div>
+          {action}
+        </Button>
       </div>
-    </div>
+    </Modal>
   );
 }
 
