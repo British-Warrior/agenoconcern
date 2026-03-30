@@ -61,6 +61,10 @@ router.get("/institutions", async (req, res) => {
       description: institutions.description,
       city: institutions.city,
       isActive: institutions.isActive,
+      contactEmail: institutions.contactEmail,
+      reportDeliveryEnabled: institutions.reportDeliveryEnabled,
+      reportCadence: institutions.reportCadence,
+      reportNextRunAt: institutions.reportNextRunAt,
       createdAt: institutions.createdAt,
     })
     .from(institutions)
