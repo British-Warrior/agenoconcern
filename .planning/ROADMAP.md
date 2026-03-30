@@ -92,6 +92,6 @@ Plans:
 | 1-6 (Foundation → Payments) | v1.0 | 19/19 | Complete | 2026-03-15 |
 | 7-11 (UX → Kiosk) | v1.1 | 11/11 | Complete | 2026-03-21 |
 | 12-15 (Institutions → PDF) | v1.2 | 10/10 | Complete | 2026-03-24 |
-| 16. Wellbeing & Attention Analytics | v1.3 | 0/2 | Not started | - |
+| 16. Wellbeing & Attention Analytics | v1.3 | 2/2 | Complete | 2026-03-27 |
 | 17. Scheduled Report Delivery | v1.3 | 0/TBD | Not started | - |
 | 18. Institution Portal | v1.3 | 0/TBD | Not started | - |
