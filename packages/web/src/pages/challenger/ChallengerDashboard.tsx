@@ -34,7 +34,13 @@ function formatDate(dateStr: string): string {
 
 function SkeletonCard() {
   return (
-    <div className="bg-white border border-neutral-200 rounded-[var(--radius-lg)] p-5 animate-pulse">
+    <div
+      className="bg-white border border-neutral-200 rounded-[var(--radius-lg)] p-5 animate-pulse"
+      role="status"
+      aria-busy="true"
+      aria-label="Loading"
+    >
+      <span className="sr-only">Loading...</span>
       <div className="h-5 bg-neutral-200 rounded w-2/3 mb-3" />
       <div className="h-3 bg-neutral-100 rounded w-1/4 mb-2" />
       <div className="h-3 bg-neutral-100 rounded w-1/3" />

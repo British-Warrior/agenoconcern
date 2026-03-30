@@ -31,7 +31,13 @@ export function ContributorDetail() {
   if (isLoading) {
     return (
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
-        <div className="animate-pulse space-y-4">
+        <div
+          className="animate-pulse space-y-4"
+          role="status"
+          aria-busy="true"
+          aria-label="Loading"
+        >
+          <span className="sr-only">Loading...</span>
           <div className="h-8 bg-neutral-200 rounded w-1/2" />
           <div className="h-5 bg-neutral-200 rounded w-1/4" />
           <div className="h-64 bg-neutral-200 rounded" />

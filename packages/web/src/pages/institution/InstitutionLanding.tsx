@@ -58,7 +58,13 @@ export function InstitutionLanding() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
-        <div className="animate-pulse space-y-4 w-full max-w-2xl px-4">
+        <div
+          className="animate-pulse space-y-4 w-full max-w-2xl px-4"
+          role="status"
+          aria-busy="true"
+          aria-label="Loading"
+        >
+          <span className="sr-only">Loading...</span>
           <div className="h-10 bg-neutral-200 rounded w-3/4" />
           <div className="h-5 bg-neutral-200 rounded w-1/3" />
           <div className="h-20 bg-neutral-200 rounded w-full" />

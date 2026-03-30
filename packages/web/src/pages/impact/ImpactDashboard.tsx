@@ -60,7 +60,13 @@ function PaymentTypeBadge({ type }: { type: string }) {
 
 function SkeletonCard() {
   return (
-    <div className="bg-white border border-neutral-200 rounded-[var(--radius-lg)] p-6 sm:p-8 animate-pulse">
+    <div
+      className="bg-white border border-neutral-200 rounded-[var(--radius-lg)] p-6 sm:p-8 animate-pulse"
+      role="status"
+      aria-busy="true"
+      aria-label="Loading"
+    >
+      <span className="sr-only">Loading...</span>
       <div className="h-5 bg-neutral-200 rounded w-1/3 mb-4" />
       <div className="h-4 bg-neutral-100 rounded w-full mb-2" />
       <div className="h-4 bg-neutral-100 rounded w-4/5" />

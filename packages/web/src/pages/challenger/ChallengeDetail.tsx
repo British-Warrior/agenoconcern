@@ -162,7 +162,13 @@ export function ChallengeDetail() {
   if (isLoading) {
     return (
       <div className="py-8 max-w-2xl mx-auto">
-        <div className="animate-pulse space-y-4">
+        <div
+          className="animate-pulse space-y-4"
+          role="status"
+          aria-busy="true"
+          aria-label="Loading"
+        >
+          <span className="sr-only">Loading...</span>
           <div className="h-7 bg-neutral-200 rounded w-2/3" />
           <div className="h-4 bg-neutral-100 rounded w-1/4" />
           <div className="h-24 bg-neutral-100 rounded" />

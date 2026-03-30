@@ -17,7 +17,13 @@ function formatGBP(pence: number): string {
 
 function SkeletonCard() {
   return (
-    <div className="bg-white border border-neutral-200 rounded-[var(--radius-lg)] p-6 animate-pulse">
+    <div
+      className="bg-white border border-neutral-200 rounded-[var(--radius-lg)] p-6 animate-pulse"
+      role="status"
+      aria-busy="true"
+      aria-label="Loading"
+    >
+      <span className="sr-only">Loading...</span>
       <div className="h-4 bg-neutral-200 rounded w-1/2 mb-3" />
       <div className="h-8 bg-neutral-100 rounded w-1/3 mb-2" />
       <div className="h-3 bg-neutral-100 rounded w-2/3" />

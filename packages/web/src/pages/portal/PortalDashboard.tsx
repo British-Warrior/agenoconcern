@@ -147,8 +147,9 @@ export function PortalDashboard() {
 
         {/* Stats section */}
         {isDashboardLoading ? (
-          <div className="text-sm text-neutral-400 animate-pulse" role="status">
-            Loading dashboard...
+          <div className="text-sm text-neutral-400 animate-pulse" role="status" aria-busy="true" aria-label="Loading">
+            <span className="sr-only">Loading...</span>
+            <span aria-hidden="true">Loading dashboard...</span>
           </div>
         ) : dashboardError ? (
           <div
@@ -209,8 +210,9 @@ export function PortalDashboard() {
 
         {/* Attention flags section */}
         {isFlagsLoading ? (
-          <div className="text-sm text-neutral-400 animate-pulse" role="status">
-            Loading attention flags...
+          <div className="text-sm text-neutral-400 animate-pulse" role="status" aria-busy="true" aria-label="Loading">
+            <span className="sr-only">Loading...</span>
+            <span aria-hidden="true">Loading attention flags...</span>
           </div>
         ) : flagsError ? (
           <div
