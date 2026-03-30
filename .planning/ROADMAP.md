@@ -96,11 +96,11 @@ Plans:
   2. Pressing Escape closes the open modal and returns focus to the button that triggered it
   3. Activating the NotificationBell with Enter or Space opens the dropdown; Tab navigates through each notification item; Enter activates the focused item
   4. Every toggle button and accordion in the application has `aria-expanded="true"` when open and `aria-expanded="false"` when closed — screen readers announce the state change
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 21-01: Migrate CircleFormationModal, AddMemberModal, ConfirmDialog to shared Modal wrapper; add aria-expanded to all disclosure widgets
-- [ ] 21-02: NotificationBell keyboard operability — keyboard open/close, item navigation, aria-expanded
+- [ ] 21-01-PLAN.md — Migrate CircleFormationModal, AddMemberModal, ConfirmDialog to shared Modal wrapper; add aria-expanded to all disclosure widgets
+- [ ] 21-02-PLAN.md — NotificationBell keyboard operability — keyboard open/close, item navigation, aria-expanded
 
 ---
 
