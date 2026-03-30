@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 ## Current Position
 
 Milestone: v1.3 — Enhanced Reporting & Institution Portal
-Phase: 17 of 18 (Scheduled Report Delivery) — Not started
-Plan: 0 of TBD
-Status: Ready for planning
-Last activity: 2026-03-27 — Phase 16 complete (Wellbeing & Attention Analytics verified)
+Phase: 17 of 18 (Scheduled Report Delivery) — In progress
+Plan: 1 of TBD
+Status: In progress
+Last activity: 2026-03-30 — Completed 17-01-PLAN.md (schema, cron job, toggle UI)
 
-Progress: [███░░░░░░░] 33% (v1.3: 1/3 phases complete)
+Progress: [████░░░░░░] 40% (v1.3: 1.5/3 phases complete)
 
 ## Performance Metrics
 
@@ -43,6 +43,13 @@ v1.3 decisions:
 - Phase 16: TrendIndicator always visible above tabs
 - Phase 16: Migration applied via script (project pattern)
 
+v1.3 Phase 17 decisions:
+- Phase 17: gatherReportData inlined in report-delivery.job.ts — no shared helper to avoid circular dependency with admin.ts
+- Phase 17: computeNextRunAt exported from job service and imported by admin.ts (single source of truth)
+- Phase 17: Advisory lock key 7171 for report delivery job
+- Phase 17: Cadence radio buttons shown when contactEmail present (pre-select before enabling)
+- Phase 17: PUT /institutions/:id extended for contactEmail (no new route needed)
+
 v1.3 pre-build decisions still pending:
 - SWEMWBS commercial licence confirmation before wellbeing band goes live
 - Portal auth isolation strategy (separate Express router vs subdomain)
@@ -58,6 +65,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-27
-Stopped at: Phase 16 complete — ready for Phase 17 planning
-Resume file: N/A
+Last session: 2026-03-30
+Stopped at: Phase 17 Plan 01 complete — delivery schema, cron job, and toggle UI in place
+Resume file: .planning/phases/17-scheduled-report-delivery/17-02-PLAN.md (if exists)
