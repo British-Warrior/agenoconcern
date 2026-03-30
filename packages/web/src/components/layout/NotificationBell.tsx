@@ -19,6 +19,8 @@ function relativeTime(dateStr: string): string {
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const bellRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const { data: notifications = [] } = useNotifications();
@@ -40,6 +42,33 @@ export function NotificationBell() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
+  // Escape key closes dropdown and returns focus to bell button
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setOpen(false);
+        bellRef.current?.focus();
+      }
+    }
+    if (open) {
+      document.addEventListener("keydown", handleKeyDown);
+    }
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
+
+  // Focus first focusable element in panel when dropdown opens
+  useEffect(() => {
+    if (open && panelRef.current) {
+      const timer = setTimeout(() => {
+        const first = panelRef.current?.querySelector<HTMLElement>(
+          "button, a[href], [tabindex]:not([tabindex='-1'])"
+        );
+        first?.focus();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
+
   function handleItemClick(n: Notification) {
     if (!n.readAt) {
       markRead.mutate(n.id);
@@ -59,8 +88,11 @@ export function NotificationBell() {
     <div ref={containerRef} className="relative">
       {/* Bell button */}
       <button
+        ref={bellRef}
         type="button"
         aria-label="Notifications"
+        aria-expanded={open}
+        aria-haspopup="true"
         onClick={() => setOpen((v) => !v)}
         className="relative p-2 text-neutral-600 hover:text-primary-800 transition-colors rounded-md hover:bg-stone-100"
       >
@@ -91,13 +123,19 @@ export function NotificationBell() {
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute right-0 mt-1 w-80 bg-white rounded-lg shadow-lg border border-stone-200 z-50">
+        <div
+          ref={panelRef}
+          role="menu"
+          aria-label="Notifications"
+          className="absolute right-0 mt-1 w-80 bg-white rounded-lg shadow-lg border border-stone-200 z-50"
+        >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100">
             <span className="font-semibold text-sm text-neutral-800">Notifications</span>
             {unreadCount > 0 && (
               <button
                 type="button"
+                role="menuitem"
                 onClick={handleMarkAllRead}
                 className="text-xs text-primary-700 hover:text-primary-900 transition-colors"
               >
@@ -122,6 +160,7 @@ export function NotificationBell() {
                 >
                   <button
                     type="button"
+                    role="menuitem"
                     onClick={() => handleItemClick(n)}
                     className={[
                       "w-full text-left px-4 py-3 hover:bg-stone-50 transition-colors",
