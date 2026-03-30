@@ -63,6 +63,22 @@ export function useToggleActive() {
   });
 }
 
+export function useUpdateSchedule() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: { reportDeliveryEnabled: boolean; reportCadence: "weekly" | "monthly" | null };
+    }) => adminApi.updateSchedule(id, data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: INSTITUTIONS_KEY });
+    },
+  });
+}
+
 export function useSetContributorInstitutions() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -20,6 +20,19 @@ export interface Institution {
   isActive: boolean;
   createdAt: string;
   stats: InstitutionStats | null;
+  contactEmail: string | null;
+  reportDeliveryEnabled: boolean;
+  reportCadence: "weekly" | "monthly" | null;
+  reportNextRunAt: string | null;
+}
+
+export interface DeliveryLog {
+  id: string;
+  attemptedAt: string;
+  status: "sent" | "failed";
+  recipientEmail: string;
+  errorMessage: string | null;
+  attemptNumber: number;
 }
 
 export interface InstitutionContributor {
@@ -85,6 +98,20 @@ export function setContributorInstitutions(
 
 export function getAllContributors(): Promise<ContributorWithInstitutions[]> {
   return apiClient<ContributorWithInstitutions[]>("/api/admin/contributors");
+}
+
+export function updateSchedule(
+  id: string,
+  data: { reportDeliveryEnabled: boolean; reportCadence: "weekly" | "monthly" | null },
+): Promise<Institution> {
+  return apiClient<Institution>(`/api/admin/institutions/${id}/schedule`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function fetchDeliveryLogs(id: string): Promise<DeliveryLog[]> {
+  return apiClient<DeliveryLog[]>(`/api/admin/institutions/${id}/delivery-logs`);
 }
 
 export async function downloadInstitutionReport(

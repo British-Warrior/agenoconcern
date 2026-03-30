@@ -7,6 +7,7 @@ import {
   useToggleActive,
   useInstitutionContributors,
   useAllContributors,
+  useUpdateSchedule,
 } from "../../hooks/useInstitutions.js";
 import type { Institution, InstitutionContributor } from "../../api/admin.js";
 import { downloadInstitutionReport } from "../../api/admin.js";
@@ -155,6 +156,122 @@ function ContributorList({ institutionId }: ContributorListProps) {
         </li>
       ))}
     </ul>
+  );
+}
+
+// ─── Report delivery section ──────────────────────────────────────────────────
+
+interface ReportDeliverySectionProps {
+  institution: Institution;
+}
+
+function ReportDeliverySection({ institution }: ReportDeliverySectionProps) {
+  const updateSchedule = useUpdateSchedule();
+  const [cadence, setCadence] = useState<"weekly" | "monthly">(
+    institution.reportCadence ?? "monthly",
+  );
+
+  const hasEmail = !!institution.contactEmail;
+  const isEnabled = institution.reportDeliveryEnabled;
+
+  const handleToggle = () => {
+    if (!hasEmail) return;
+    const newEnabled = !isEnabled;
+    updateSchedule.mutate({
+      id: institution.id,
+      data: {
+        reportDeliveryEnabled: newEnabled,
+        reportCadence: newEnabled ? cadence : null,
+      },
+    });
+  };
+
+  const handleCadenceChange = (newCadence: "weekly" | "monthly") => {
+    setCadence(newCadence);
+    if (isEnabled) {
+      updateSchedule.mutate({
+        id: institution.id,
+        data: { reportDeliveryEnabled: true, reportCadence: newCadence },
+      });
+    }
+  };
+
+  const formatNextDelivery = (iso: string | null): string => {
+    if (!iso) return "Not scheduled";
+    return new Date(iso).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  return (
+    <div className="pt-3 border-t border-neutral-100">
+      <p className="text-xs font-semibold text-neutral-700 uppercase tracking-wide mb-2">
+        Automatic Report Delivery
+      </p>
+
+      {!hasEmail && (
+        <p className="text-xs text-neutral-400 mb-2">
+          Set a contact email above to enable automatic delivery.
+        </p>
+      )}
+
+      <div className="flex items-center gap-2 mb-2">
+        <ToggleSwitch
+          checked={isEnabled}
+          onChange={handleToggle}
+          disabled={!hasEmail || updateSchedule.isPending}
+          label={isEnabled ? "Disable automatic report delivery" : "Enable automatic report delivery"}
+        />
+        <span className="text-xs text-neutral-500">
+          {isEnabled ? "Delivery enabled" : "Delivery disabled"}
+        </span>
+      </div>
+
+      {(isEnabled || hasEmail) && (
+        <div className="flex gap-3 mb-2">
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <input
+              type="radio"
+              name={`cadence-${institution.id}`}
+              value="weekly"
+              checked={cadence === "weekly"}
+              onChange={() => handleCadenceChange("weekly")}
+              disabled={updateSchedule.isPending}
+              className="accent-primary-700"
+            />
+            <span className="text-xs text-neutral-700">Weekly</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <input
+              type="radio"
+              name={`cadence-${institution.id}`}
+              value="monthly"
+              checked={cadence === "monthly"}
+              onChange={() => handleCadenceChange("monthly")}
+              disabled={updateSchedule.isPending}
+              className="accent-primary-700"
+            />
+            <span className="text-xs text-neutral-700">Monthly</span>
+          </label>
+        </div>
+      )}
+
+      {isEnabled && institution.reportNextRunAt && (
+        <p className="text-xs text-neutral-500">
+          Next delivery: {formatNextDelivery(institution.reportNextRunAt)}
+        </p>
+      )}
+
+      {updateSchedule.isError && (
+        <p className="text-xs text-red-600 mt-1" role="alert">
+          {updateSchedule.error instanceof Error
+            ? updateSchedule.error.message
+            : "Failed to update schedule"}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -307,6 +424,9 @@ function InstitutionCardView({
         )}
       </div>
 
+      {/* Report delivery */}
+      <ReportDeliverySection institution={institution} />
+
       <div className="flex items-center justify-between pt-2 border-t border-neutral-100">
         <div className="flex items-center gap-2">
           <ToggleSwitch
@@ -333,7 +453,8 @@ interface InstitutionCardEditProps {
   initialName?: string;
   initialDescription?: string;
   initialCity?: string;
-  onSave: (data: { name: string; description: string; city: string }) => void;
+  initialContactEmail?: string;
+  onSave: (data: { name: string; description: string; city: string; contactEmail?: string }) => void;
   onCancel: () => void;
   isPending: boolean;
   isNew?: boolean;
@@ -343,6 +464,7 @@ function InstitutionCardEdit({
   initialName = "",
   initialDescription = "",
   initialCity = "",
+  initialContactEmail = "",
   onSave,
   onCancel,
   isPending,
@@ -351,19 +473,28 @@ function InstitutionCardEdit({
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
   const [city, setCity] = useState(initialCity);
-  const [errors, setErrors] = useState<{ name?: string; city?: string }>({});
+  const [contactEmail, setContactEmail] = useState(initialContactEmail);
+  const [errors, setErrors] = useState<{ name?: string; city?: string; contactEmail?: string }>({});
 
   const validate = () => {
-    const errs: { name?: string; city?: string } = {};
+    const errs: { name?: string; city?: string; contactEmail?: string } = {};
     if (name.trim().length < 2) errs.name = "Name must be at least 2 characters";
     if (city.trim().length < 2) errs.city = "City must be at least 2 characters";
+    if (contactEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail.trim())) {
+      errs.contactEmail = "Enter a valid email address";
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
   const handleSave = () => {
     if (!validate()) return;
-    onSave({ name: name.trim(), description: description.trim(), city: city.trim() });
+    onSave({
+      name: name.trim(),
+      description: description.trim(),
+      city: city.trim(),
+      contactEmail: contactEmail.trim() || undefined,
+    });
   };
 
   return (
@@ -387,6 +518,15 @@ function InstitutionCardEdit({
         onChange={(e) => setCity(e.target.value)}
         error={errors.city}
         placeholder="e.g. Manchester"
+        disabled={isPending}
+      />
+      <Input
+        label="Contact Email"
+        type="email"
+        value={contactEmail}
+        onChange={(e) => setContactEmail(e.target.value)}
+        error={errors.contactEmail}
+        placeholder="e.g. reports@library.org.uk"
         disabled={isPending}
       />
       <div className="flex flex-col gap-1.5">
@@ -472,12 +612,12 @@ export function InstitutionManagement() {
   const [creatingNew, setCreatingNew] = useState(false);
   const [confirmToggle, setConfirmToggle] = useState<Institution | null>(null);
 
-  const handleCreate = async (data: { name: string; description: string; city: string }) => {
+  const handleCreate = async (data: { name: string; description: string; city: string; contactEmail?: string }) => {
     await createMutation.mutateAsync(data);
     setCreatingNew(false);
   };
 
-  const handleUpdate = async (id: string, data: { name: string; description: string; city: string }) => {
+  const handleUpdate = async (id: string, data: { name: string; description: string; city: string; contactEmail?: string }) => {
     await updateMutation.mutateAsync({ id, data });
     setEditingId(null);
   };
@@ -560,6 +700,7 @@ export function InstitutionManagement() {
                   initialName={institution.name}
                   initialDescription={institution.description}
                   initialCity={institution.city ?? ""}
+                  initialContactEmail={institution.contactEmail ?? ""}
                   onSave={(data) => void handleUpdate(institution.id, data)}
                   onCancel={() => setEditingId(null)}
                   isPending={updateMutation.isPending}

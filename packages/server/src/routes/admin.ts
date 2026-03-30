@@ -20,7 +20,10 @@ import {
   updateInstitutionSchema,
   toggleActiveSchema,
   setContributorInstitutionsSchema,
+  updateScheduleSchema,
 } from "@indomitable-unity/shared";
+import { reportDeliveryLogs } from "../db/schema.js";
+import { computeNextRunAt } from "../services/report-delivery.job.js";
 
 // ─── Attention flag schemas ────────────────────────────────────────────────────
 const resolveAttentionFlagSchema = z.object({
@@ -210,11 +213,12 @@ router.put("/institutions/:id", async (req, res) => {
   }
 
   // Build update object — do NOT allow slug changes
-  const { name, description, city } = result.data;
+  const { name, description, city, contactEmail } = result.data;
   const setValues: Record<string, unknown> = { updatedAt: new Date() };
   if (name !== undefined) setValues.name = name;
   if (description !== undefined) setValues.description = description;
   if (city !== undefined) setValues.city = city;
+  if (contactEmail !== undefined) setValues.contactEmail = contactEmail;
 
   const [updated] = await db
     .update(institutions)
@@ -832,6 +836,115 @@ router.get("/institutions/:slug/report.pdf", async (req, res) => {
   const doc = buildInstitutionReport(reportData);
   doc.pipe(res);
   doc.end();
+});
+
+// ─── PATCH /institutions/:id/schedule — Toggle report delivery schedule ───────
+router.patch("/institutions/:id/schedule", async (req, res) => {
+  const id = req.params["id"] as string;
+
+  if (!UUID_PATTERN.test(id)) {
+    res.status(400).json({ error: "Invalid institution ID" });
+    return;
+  }
+
+  const result = updateScheduleSchema.safeParse(req.body);
+  if (!result.success) {
+    res.status(400).json({ error: result.error.flatten() });
+    return;
+  }
+
+  const { reportDeliveryEnabled, reportCadence } = result.data;
+
+  const db = getDb();
+
+  const [institution] = await db
+    .select({
+      id: institutions.id,
+      contactEmail: institutions.contactEmail,
+    })
+    .from(institutions)
+    .where(eq(institutions.id, id))
+    .limit(1);
+
+  if (!institution) {
+    res.status(404).json({ error: "Institution not found" });
+    return;
+  }
+
+  if (reportDeliveryEnabled) {
+    if (!institution.contactEmail) {
+      res.status(400).json({ error: "Contact email must be set before enabling delivery" });
+      return;
+    }
+    if (!reportCadence) {
+      res.status(400).json({ error: "A cadence (weekly or monthly) must be selected when enabling delivery" });
+      return;
+    }
+  }
+
+  const setValues: Record<string, unknown> = {
+    reportDeliveryEnabled,
+    updatedAt: new Date(),
+  };
+
+  if (reportDeliveryEnabled && reportCadence) {
+    setValues.reportCadence = reportCadence;
+    setValues.reportNextRunAt = computeNextRunAt(reportCadence);
+  } else if (!reportDeliveryEnabled) {
+    setValues.reportNextRunAt = null;
+    // Keep cadence for memory — user may re-enable later
+  }
+
+  if (reportCadence !== undefined) {
+    setValues.reportCadence = reportCadence;
+  }
+
+  const [updated] = await db
+    .update(institutions)
+    .set(setValues)
+    .where(eq(institutions.id, id))
+    .returning();
+
+  res.json(updated);
+});
+
+// ─── GET /institutions/:id/delivery-logs — Delivery log viewer ───────────────
+router.get("/institutions/:id/delivery-logs", async (req, res) => {
+  const id = req.params["id"] as string;
+
+  if (!UUID_PATTERN.test(id)) {
+    res.status(400).json({ error: "Invalid institution ID" });
+    return;
+  }
+
+  const db = getDb();
+
+  const [institution] = await db
+    .select({ id: institutions.id })
+    .from(institutions)
+    .where(eq(institutions.id, id))
+    .limit(1);
+
+  if (!institution) {
+    res.status(404).json({ error: "Institution not found" });
+    return;
+  }
+
+  const logs = await db
+    .select({
+      id: reportDeliveryLogs.id,
+      attemptedAt: reportDeliveryLogs.attemptedAt,
+      status: reportDeliveryLogs.status,
+      recipientEmail: reportDeliveryLogs.recipientEmail,
+      errorMessage: reportDeliveryLogs.errorMessage,
+      attemptNumber: reportDeliveryLogs.attemptNumber,
+    })
+    .from(reportDeliveryLogs)
+    .where(eq(reportDeliveryLogs.institutionId, id))
+    .orderBy(desc(reportDeliveryLogs.attemptedAt))
+    .limit(10);
+
+  res.json(logs);
 });
 
 export { router as adminRouter };
