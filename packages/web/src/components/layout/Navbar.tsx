@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router";
+import { Link, NavLink, useNavigate } from "react-router";
 import { useAuth } from "../../hooks/useAuth.js";
 import { ROUTES } from "../../lib/constants.js";
 import { Button } from "../ui/Button.js";
@@ -50,55 +50,77 @@ export function Navbar() {
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <>
-              <Link
+              <NavLink
+                end
                 to={ROUTES.DASHBOARD}
-                className={`${isKiosk ? "text-base" : "text-sm"} font-medium text-neutral-700 hover:text-primary-600 transition-colors no-underline`}
+                className={({ isActive }) =>
+                  `${isKiosk ? "text-base" : "text-sm"} font-medium transition-colors no-underline ${isActive ? "text-primary-900 font-semibold" : "text-neutral-700 hover:text-primary-600"}`
+                }
               >
                 Dashboard
-              </Link>
-              <Link
+              </NavLink>
+              <NavLink
+                end
                 to={ROUTES.CHALLENGES}
-                className={`${isKiosk ? "text-base" : "text-sm"} font-medium text-neutral-700 hover:text-primary-600 transition-colors no-underline`}
+                className={({ isActive }) =>
+                  `${isKiosk ? "text-base" : "text-sm"} font-medium transition-colors no-underline ${isActive ? "text-primary-900 font-semibold" : "text-neutral-700 hover:text-primary-600"}`
+                }
               >
                 Challenges
-              </Link>
-              <Link
+              </NavLink>
+              <NavLink
+                end
                 to={ROUTES.CIRCLES}
-                className={`${isKiosk ? "text-base" : "text-sm"} font-medium text-neutral-700 hover:text-primary-600 transition-colors no-underline`}
+                className={({ isActive }) =>
+                  `${isKiosk ? "text-base" : "text-sm"} font-medium transition-colors no-underline ${isActive ? "text-primary-900 font-semibold" : "text-neutral-700 hover:text-primary-600"}`
+                }
               >
                 My Circles
-              </Link>
-              <Link
+              </NavLink>
+              <NavLink
+                end
                 to={ROUTES.IMPACT}
-                className={`${isKiosk ? "text-base" : "text-sm"} font-medium text-neutral-700 hover:text-primary-600 transition-colors no-underline`}
+                className={({ isActive }) =>
+                  `${isKiosk ? "text-base" : "text-sm"} font-medium transition-colors no-underline ${isActive ? "text-primary-900 font-semibold" : "text-neutral-700 hover:text-primary-600"}`
+                }
               >
                 My Impact
-              </Link>
-              <Link
+              </NavLink>
+              <NavLink
+                end
                 to={ROUTES.WELLBEING_CHECKIN}
-                className={`${isKiosk ? "text-base" : "text-sm"} font-medium text-neutral-700 hover:text-primary-600 transition-colors no-underline`}
+                className={({ isActive }) =>
+                  `${isKiosk ? "text-base" : "text-sm"} font-medium transition-colors no-underline ${isActive ? "text-primary-900 font-semibold" : "text-neutral-700 hover:text-primary-600"}`
+                }
               >
                 Wellbeing
-              </Link>
+              </NavLink>
               {(contributor?.role === "community_manager" || contributor?.role === "admin") && (
-                <Link
+                <NavLink
+                  end
                   to="/admin/institutions"
-                  className={`${isKiosk ? "text-base" : "text-sm"} font-medium text-neutral-700 hover:text-primary-600 transition-colors no-underline`}
+                  className={({ isActive }) =>
+                    `${isKiosk ? "text-base" : "text-sm"} font-medium transition-colors no-underline ${isActive ? "text-primary-900 font-semibold" : "text-neutral-700 hover:text-primary-600"}`
+                  }
                 >
                   Admin
-                </Link>
+                </NavLink>
               )}
               {(contributor?.role === "community_manager" || contributor?.role === "admin") && (
-                <Link
+                <NavLink
+                  end
                   to="/admin/attention"
-                  className={`${isKiosk ? "text-base" : "text-sm"} font-medium text-neutral-700 hover:text-primary-600 transition-colors no-underline`}
+                  className={({ isActive }) =>
+                    `${isKiosk ? "text-base" : "text-sm"} font-medium transition-colors no-underline ${isActive ? "text-primary-900 font-semibold" : "text-neutral-700 hover:text-primary-600"}`
+                  }
                 >
                   Attention
-                </Link>
+                </NavLink>
               )}
               <NotificationBell />
               {!isKiosk && isSupported && !isSubscribed && typeof Notification !== "undefined" && Notification.permission !== "denied" && (
                 <button
+                  type="button"
                   onClick={subscribe}
                   className="text-xs font-medium text-primary-700 hover:text-primary-900 transition-colors"
                 >
@@ -107,6 +129,7 @@ export function Navbar() {
               )}
               {!isKiosk && canInstall && (
                 <button
+                  type="button"
                   onClick={triggerInstall}
                   className="text-xs font-medium text-primary-700 hover:text-primary-900 transition-colors"
                 >
