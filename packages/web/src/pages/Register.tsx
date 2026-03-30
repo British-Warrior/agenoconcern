@@ -163,6 +163,8 @@ export function Register() {
               onChange={(e) => setPrivacyConsent(e.target.checked)}
               className="mt-1 w-5 h-5 rounded border-2 border-neutral-300 text-primary-800 focus-visible:ring-accent-500 cursor-pointer"
               required
+              aria-describedby={fieldErrors.privacy ? "privacy-consent-error" : undefined}
+              aria-invalid={fieldErrors.privacy ? true : undefined}
             />
             <label
               htmlFor="privacy-consent"
@@ -179,7 +181,7 @@ export function Register() {
             </label>
           </div>
           {fieldErrors.privacy && (
-            <p className="text-sm text-error font-medium" role="alert">
+            <p id="privacy-consent-error" className="text-sm text-error font-medium" role="alert">
               {fieldErrors.privacy}
             </p>
           )}

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import type { Notification } from "@indomitable-unity/shared";
 import { useNotifications, useMarkRead, useMarkAllRead } from "../../hooks/useNotifications.js";
+import { useAnnounce } from "../a11y/AnnounceProvider.js";
 
 function relativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -28,6 +29,17 @@ export function NotificationBell() {
   const markAllRead = useMarkAllRead();
 
   const unreadCount = notifications.filter((n) => n.readAt === null).length;
+
+  const announce = useAnnounce();
+  const prevCountRef = useRef<number>(unreadCount);
+
+  // Announce when unread count increases (new notifications arriving)
+  useEffect(() => {
+    if (unreadCount > prevCountRef.current) {
+      announce(`${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}`);
+    }
+    prevCountRef.current = unreadCount;
+  }, [unreadCount, announce]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
