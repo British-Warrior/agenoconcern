@@ -66,33 +66,33 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| KBD-01 | TBD | Pending |
-| KBD-02 | TBD | Pending |
-| KBD-03 | TBD | Pending |
-| KBD-04 | TBD | Pending |
-| KBD-05 | TBD | Pending |
-| SR-01 | TBD | Pending |
-| SR-02 | TBD | Pending |
-| SR-03 | TBD | Pending |
-| SR-04 | TBD | Pending |
-| SR-05 | TBD | Pending |
-| SR-06 | TBD | Pending |
-| VIS-01 | TBD | Pending |
-| VIS-02 | TBD | Pending |
-| VIS-03 | TBD | Pending |
-| VIS-04 | TBD | Pending |
-| FORM-01 | TBD | Pending |
-| FORM-02 | TBD | Pending |
-| TOOL-01 | TBD | Pending |
-| TOOL-02 | TBD | Pending |
-| TOOL-03 | TBD | Pending |
-| TOOL-04 | TBD | Pending |
+| KBD-01 | Phase 20 | Pending |
+| KBD-02 | Phase 20 | Pending |
+| KBD-03 | Phase 19 | Pending |
+| KBD-04 | Phase 21 | Pending |
+| KBD-05 | Phase 21 | Pending |
+| SR-01 | Phase 21 | Pending |
+| SR-02 | Phase 22 | Pending |
+| SR-03 | Phase 22 | Pending |
+| SR-04 | Phase 22 | Pending |
+| SR-05 | Phase 22 | Pending |
+| SR-06 | Phase 22 | Pending |
+| VIS-01 | Phase 20 | Pending |
+| VIS-02 | Phase 23 | Pending |
+| VIS-03 | Phase 19 | Pending |
+| VIS-04 | Phase 19 | Pending |
+| FORM-01 | Phase 22 | Pending |
+| FORM-02 | Phase 22 | Pending |
+| TOOL-01 | Phase 19 | Pending |
+| TOOL-02 | Phase 23 | Pending |
+| TOOL-03 | Phase 20 | Pending |
+| TOOL-04 | Phase 19 | Pending |
 
 **Coverage:**
 - v1.4 requirements: 21 total
-- Mapped to phases: 0
-- Unmapped: 21
+- Mapped to phases: 21
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-30*
-*Last updated: 2026-03-30 after initial definition*
+*Last updated: 2026-03-30 after roadmap creation*
