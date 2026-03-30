@@ -10,10 +10,10 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 ## Current Position
 
 Milestone: v1.3 — Enhanced Reporting & Institution Portal
-Phase: 18 of 18 (Institution Portal) — Not started
-Plan: 0 of TBD
-Status: Ready for planning
-Last activity: 2026-03-30 — Phase 17 complete (Scheduled Report Delivery verified)
+Phase: 18 of 18 (Institution Portal) — In progress
+Plan: 1 of 2
+Status: In progress
+Last activity: 2026-03-30 — Completed 18-01-PLAN.md (Portal Auth Layer)
 
 Progress: [██████░░░░] 67% (v1.3: 2/3 phases complete)
 
@@ -52,9 +52,14 @@ v1.3 Phase 17 decisions:
 - Phase 17-02: Delivery history as flat list (not table) — compact enough at 10 rows, avoids horizontal scroll
 - Phase 17-02: contactEmail and schedule columns added to GET /admin/institutions select — required for toggle to survive page reload
 
+v1.3 Phase 18 decisions:
+- Phase 18-01: Portal auth uses type=portal JWT discriminant (same JWT_SECRET, type field provides isolation)
+- Phase 18-01: Partial unique index (WHERE is_active=true) allows historical deactivated accounts while enforcing one active per institution
+- Phase 18-01: PortalAuthProvider placed on individual route elements in App.tsx (not full app) for complete isolation
+- Phase 18-01: Portal routes outside AppShell route — portal has its own minimal layout (no contributor nav)
+
 v1.3 pre-build decisions still pending:
 - SWEMWBS commercial licence confirmation before wellbeing band goes live
-- Portal auth isolation strategy (separate Express router vs subdomain)
 
 ### Pending Todos
 
@@ -68,5 +73,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: Phase 17 complete — full scheduled report delivery pipeline verified (schema, cron, toggle UI, log viewer)
-Resume file: .planning/phases/18-institution-portal/ (next phase)
+Stopped at: Phase 18 plan 01 complete — portal auth layer (DB, service, middleware, routes, frontend context, route guard, login page)
+Resume file: .planning/phases/18-institution-portal/18-02-PLAN.md
