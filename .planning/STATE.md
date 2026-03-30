@@ -5,22 +5,22 @@
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income — bridging the pension gap while contributing to communities.
-**Current focus:** v1.4 WCAG Compliance — Phase 19: Foundation
+**Current focus:** v1.4 WCAG Compliance — Phase 20: Focus Infrastructure
 
 ## Current Position
 
 Milestone: v1.4 — WCAG Compliance
-Phase: 19 of 23 (Foundation)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-03-30 — Completed 19-02-PLAN.md (ESLint + jsx-a11y baseline)
+Phase: 20 of 23 (Focus Infrastructure) — Not started
+Plan: 0 of TBD
+Status: Ready for planning
+Last activity: 2026-03-30 — Phase 19 complete (Foundation verified)
 
-Progress: [██░░░░░░░░] ~10% (2/21 plans)
+Progress: [██░░░░░░░░] 20% (v1.4: 1/5 phases complete)
 
 ## Performance Metrics
 
 **Velocity (v1.0-v1.3):**
-- Total plans completed: 46 (v1.0: 19, v1.1: 11, v1.2: 10, v1.3: 6)
+- Total plans completed: 48 (v1.0: 19, v1.1: 11, v1.2: 10, v1.3: 6, v1.4: 2)
 - Average duration: ~15 min
 - Total execution time: ~690 min
 
