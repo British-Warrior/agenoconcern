@@ -8,8 +8,9 @@ import {
   useInstitutionContributors,
   useAllContributors,
   useUpdateSchedule,
+  useDeliveryLogs,
 } from "../../hooks/useInstitutions.js";
-import type { Institution, InstitutionContributor } from "../../api/admin.js";
+import type { Institution, InstitutionContributor, DeliveryLog } from "../../api/admin.js";
 import { downloadInstitutionReport } from "../../api/admin.js";
 import { Button } from "../../components/ui/Button.js";
 import { Input } from "../../components/ui/Input.js";
@@ -159,6 +160,95 @@ function ContributorList({ institutionId }: ContributorListProps) {
   );
 }
 
+// ─── Delivery history log ──────────────────────────────────────────────────────
+
+interface DeliveryHistoryProps {
+  institutionId: string;
+}
+
+function formatAttemptedAt(iso: string): string {
+  const d = new Date(iso);
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const month = months[d.getUTCMonth()];
+  const year = d.getUTCFullYear();
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const mm = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${day} ${month} ${year} ${hh}:${mm}`;
+}
+
+function formatRetryAt(iso: string): string {
+  const d = new Date(iso);
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const mm = String(d.getUTCMinutes()).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const month = months[d.getUTCMonth()];
+  return `${day} ${month} ${hh}:${mm}`;
+}
+
+function DeliveryHistory({ institutionId }: DeliveryHistoryProps) {
+  const { data, isLoading } = useDeliveryLogs(institutionId);
+
+  if (isLoading) {
+    return (
+      <p className="text-xs text-neutral-400 animate-pulse mt-1">Loading delivery history...</p>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <p className="text-xs text-neutral-400 mt-1">No deliveries yet.</p>
+    );
+  }
+
+  return (
+    <div className="mt-2 border border-neutral-100 rounded-lg overflow-hidden">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="bg-neutral-50 text-neutral-500 text-left">
+            <th className="px-2 py-1.5 font-medium">Date</th>
+            <th className="px-2 py-1.5 font-medium">Status</th>
+            <th className="px-2 py-1.5 font-medium">Recipient</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-neutral-100">
+          {data.map((log: DeliveryLog) => (
+            <tr key={log.id} className="align-top">
+              <td className="px-2 py-1.5 text-neutral-600 whitespace-nowrap">
+                {formatAttemptedAt(log.attemptedAt)}
+              </td>
+              <td className="px-2 py-1.5 whitespace-nowrap">
+                {log.status === "sent" ? (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Sent
+                  </span>
+                ) : (
+                  <div>
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                      Failed
+                    </span>
+                    <span className="ml-1 text-neutral-400">Attempt {log.attemptNumber}/5</span>
+                    {log.nextRetryAt && (
+                      <p className="text-neutral-400 mt-0.5">Retry at {formatRetryAt(log.nextRetryAt)}</p>
+                    )}
+                    {log.errorMessage && (
+                      <p className="text-red-500 mt-0.5 max-w-[160px] break-words">{log.errorMessage}</p>
+                    )}
+                  </div>
+                )}
+              </td>
+              <td className="px-2 py-1.5 text-neutral-600 break-all">
+                {log.recipientEmail}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // ─── Report delivery section ──────────────────────────────────────────────────
 
 interface ReportDeliverySectionProps {
@@ -271,6 +361,13 @@ function ReportDeliverySection({ institution }: ReportDeliverySectionProps) {
             : "Failed to update schedule"}
         </p>
       )}
+
+      <div className="mt-3">
+        <p className="text-xs font-semibold text-neutral-700 uppercase tracking-wide mb-1">
+          Delivery History
+        </p>
+        <DeliveryHistory institutionId={institution.id} />
+      </div>
     </div>
   );
 }

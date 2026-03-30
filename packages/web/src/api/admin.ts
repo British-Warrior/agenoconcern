@@ -33,6 +33,7 @@ export interface DeliveryLog {
   recipientEmail: string;
   errorMessage: string | null;
   attemptNumber: number;
+  nextRetryAt: string | null;
 }
 
 export interface InstitutionContributor {

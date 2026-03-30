@@ -29,6 +29,14 @@ export function useAllContributors() {
   });
 }
 
+export function useDeliveryLogs(institutionId: string | null) {
+  return useQuery({
+    queryKey: ["admin", "institutions", institutionId, "delivery-logs"],
+    queryFn: () => adminApi.fetchDeliveryLogs(institutionId!),
+    enabled: !!institutionId,
+  });
+}
+
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 export function useCreateInstitution() {
