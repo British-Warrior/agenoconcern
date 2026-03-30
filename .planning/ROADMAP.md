@@ -5,7 +5,7 @@
 - [x] **v1.0 MVP** — Phases 1-6 (shipped 2026-03-15)
 - [x] **v1.1 Pilot-Ready** — Phases 7-11 (shipped 2026-03-21)
 - [x] **v1.2 Institution Management & iThink Integration** — Phases 12-15 (shipped 2026-03-24)
-- **v1.3 Enhanced Reporting & Institution Portal** — Phases 16-18 (in progress)
+- [x] **v1.3 Enhanced Reporting & Institution Portal** — Phases 16-18 (shipped 2026-03-30)
 
 ## Phases
 
@@ -82,8 +82,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 18-01-PLAN.md — Portal auth: DB table, JWT middleware, server routes (login/refresh/me), frontend auth context + route guard + login page
-- [ ] 18-02-PLAN.md — Portal dashboard (stats, PDF download, attention flags read-only), CM account creation UI
+- [x] 18-01-PLAN.md — Portal auth: DB table, JWT middleware, server routes (login/refresh/me), frontend auth context + route guard + login page
+- [x] 18-02-PLAN.md — Portal dashboard (stats, PDF download, attention flags read-only), CM account creation UI
 
 ## Progress
 
@@ -94,4 +94,4 @@ Plans:
 | 12-15 (Institutions -> PDF) | v1.2 | 10/10 | Complete | 2026-03-24 |
 | 16. Wellbeing & Attention Analytics | v1.3 | 2/2 | Complete | 2026-03-27 |
 | 17. Scheduled Report Delivery | v1.3 | 2/2 | Complete | 2026-03-30 |
-| 18. Institution Portal | v1.3 | 0/2 | Not started | - |
+| 18. Institution Portal | v1.3 | 2/2 | Complete | 2026-03-30 |

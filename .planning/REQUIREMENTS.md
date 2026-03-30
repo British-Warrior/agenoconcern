@@ -67,10 +67,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCHED-02 | Phase 17 | Done |
 | SCHED-03 | Phase 17 | Done |
 | SCHED-04 | Phase 17 | Done |
-| PORTAL-01 | Phase 18 | Pending |
-| PORTAL-02 | Phase 18 | Pending |
-| PORTAL-03 | Phase 18 | Pending |
-| PORTAL-04 | Phase 18 | Pending |
+| PORTAL-01 | Phase 18 | Done |
+| PORTAL-02 | Phase 18 | Done |
+| PORTAL-03 | Phase 18 | Done |
+| PORTAL-04 | Phase 18 | Done |
 
 **Coverage:**
 - v1.3 requirements: 14 total
