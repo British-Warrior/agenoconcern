@@ -298,4 +298,47 @@ router.post(
   },
 );
 
+// ---------------------------------------------------------------------------
+// GET /admin/account — Get portal account info for an institution (CM-only)
+// ---------------------------------------------------------------------------
+
+router.get(
+  "/admin/account",
+  authMiddleware,
+  requireRole("community_manager"),
+  async (req: Request, res: Response) => {
+    const institutionId = req.query.institutionId as string | undefined;
+
+    if (!institutionId) {
+      res.status(400).json({ error: "institutionId query parameter is required" });
+      return;
+    }
+
+    const db = getDb();
+
+    const [account] = await db
+      .select({
+        id: institutionPortalAccounts.id,
+        email: institutionPortalAccounts.email,
+        isActive: institutionPortalAccounts.isActive,
+        createdAt: institutionPortalAccounts.createdAt,
+      })
+      .from(institutionPortalAccounts)
+      .where(
+        and(
+          eq(institutionPortalAccounts.institutionId, institutionId),
+          eq(institutionPortalAccounts.isActive, true),
+        ),
+      )
+      .limit(1);
+
+    if (!account) {
+      res.status(404).json({ error: "No active portal account found for this institution" });
+      return;
+    }
+
+    res.json(account);
+  },
+);
+
 export { router as portalAuthRoutes };

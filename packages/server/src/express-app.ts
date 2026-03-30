@@ -17,6 +17,7 @@ import { institutionRoutes } from "./routes/institutions.js";
 import { adminRouter } from "./routes/admin.js";
 import { ithinkWebhookHandler } from "./routes/webhooks.js";
 import { portalAuthRoutes } from "./routes/portal/portal-auth.js";
+import { portalDashboardRoutes } from "./routes/portal/portal-dashboard.js";
 
 const app = express();
 
@@ -77,6 +78,9 @@ app.use("/api/challenger", challengerRoutes);
 
 // Institution portal auth routes (separate JWT cookies — NOT contributor auth)
 app.use("/api/portal", portalAuthRoutes);
+
+// Institution portal dashboard routes (protected by portalAuthMiddleware)
+app.use("/api/portal", portalDashboardRoutes);
 
 // Institution public routes (no auth required)
 app.use("/api/institutions", institutionRoutes);
