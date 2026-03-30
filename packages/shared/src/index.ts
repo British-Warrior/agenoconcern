@@ -205,12 +205,14 @@ export {
   updateInstitutionSchema,
   toggleActiveSchema,
   setContributorInstitutionsSchema,
+  updateScheduleSchema,
 } from "./schemas/institution.js";
 export type {
   CreateInstitutionInput,
   UpdateInstitutionInput,
   ToggleActiveInput,
   SetContributorInstitutionsInput,
+  UpdateScheduleInput,
 } from "./schemas/institution.js";
 
 // iThink webhook schemas

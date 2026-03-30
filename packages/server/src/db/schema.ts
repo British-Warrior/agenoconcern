@@ -495,8 +495,27 @@ export const institutions = pgTable("institutions", {
   city: varchar("city", { length: 100 }),
   statsJson: jsonb("stats_json").$type<{ contributors: number; challenges: number; hours: number }>().default({ contributors: 0, challenges: 0, hours: 0 }),
   isActive: boolean("is_active").notNull().default(true),
+  contactEmail: varchar("contact_email", { length: 255 }),
+  reportDeliveryEnabled: boolean("report_delivery_enabled").notNull().default(false),
+  reportCadence: varchar("report_cadence", { length: 10 }),
+  reportNextRunAt: timestamp("report_next_run_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Report delivery logs
+export const reportDeliveryLogs = pgTable("report_delivery_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  institutionId: uuid("institution_id")
+    .notNull()
+    .references(() => institutions.id, { onDelete: "cascade" }),
+  attemptedAt: timestamp("attempted_at", { withTimezone: true }).defaultNow().notNull(),
+  status: varchar("status", { length: 20 }).notNull(),
+  recipientEmail: varchar("recipient_email", { length: 255 }).notNull(),
+  errorMessage: text("error_message"),
+  attemptNumber: integer("attempt_number").notNull().default(1),
+  nextRetryAt: timestamp("next_retry_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 // Contributor institutions (many-to-many junction)
