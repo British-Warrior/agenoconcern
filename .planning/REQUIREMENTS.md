@@ -63,10 +63,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WELL-04 | Phase 16 | Pending |
 | ATTN-05 | Phase 16 | Pending |
 | ATTN-06 | Phase 16 | Pending |
-| SCHED-01 | Phase 17 | Pending |
-| SCHED-02 | Phase 17 | Pending |
-| SCHED-03 | Phase 17 | Pending |
-| SCHED-04 | Phase 17 | Pending |
+| SCHED-01 | Phase 17 | Done |
+| SCHED-02 | Phase 17 | Done |
+| SCHED-03 | Phase 17 | Done |
+| SCHED-04 | Phase 17 | Done |
 | PORTAL-01 | Phase 18 | Pending |
 | PORTAL-02 | Phase 18 | Pending |
 | PORTAL-03 | Phase 18 | Pending |

@@ -5,22 +5,22 @@
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income — bridging the pension gap while contributing to communities.
-**Current focus:** v1.3 Phase 17 — Scheduled Report Delivery
+**Current focus:** v1.3 Phase 18 — Institution Portal
 
 ## Current Position
 
 Milestone: v1.3 — Enhanced Reporting & Institution Portal
-Phase: 17 of 18 (Scheduled Report Delivery) — In progress
-Plan: 2 of 2 (phase complete)
-Status: Phase complete
-Last activity: 2026-03-30 — Completed 17-02-PLAN.md (delivery log viewer, full pipeline verified)
+Phase: 18 of 18 (Institution Portal) — Not started
+Plan: 0 of TBD
+Status: Ready for planning
+Last activity: 2026-03-30 — Phase 17 complete (Scheduled Report Delivery verified)
 
-Progress: [█████░░░░░] 50% (v1.3: 2/3 phases complete)
+Progress: [██████░░░░] 67% (v1.3: 2/3 phases complete)
 
 ## Performance Metrics
 
 **Velocity (v1.0-v1.2):**
-- Total plans completed: 42 (v1.0: 19, v1.1: 11, v1.2: 10, v1.3: 2)
+- Total plans completed: 44 (v1.0: 19, v1.1: 11, v1.2: 10, v1.3: 4)
 - Average duration: ~15 min
 - Total execution time: ~630 min
 

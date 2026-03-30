@@ -66,8 +66,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 17-01-PLAN.md — Schema migration, cron job with advisory lock, PDF email delivery, CM toggle UI with cadence selector
-- [ ] 17-02-PLAN.md — Delivery log viewer UI, end-to-end verification checkpoint
+- [x] 17-01-PLAN.md — Schema migration, cron job with advisory lock, PDF email delivery, CM toggle UI with cadence selector
+- [x] 17-02-PLAN.md — Delivery log viewer UI, end-to-end verification checkpoint
 
 #### Phase 18: Institution Portal
 
@@ -93,5 +93,5 @@ Plans:
 | 7-11 (UX -> Kiosk) | v1.1 | 11/11 | Complete | 2026-03-21 |
 | 12-15 (Institutions -> PDF) | v1.2 | 10/10 | Complete | 2026-03-24 |
 | 16. Wellbeing & Attention Analytics | v1.3 | 2/2 | Complete | 2026-03-27 |
-| 17. Scheduled Report Delivery | v1.3 | 0/2 | Not started | - |
+| 17. Scheduled Report Delivery | v1.3 | 2/2 | Complete | 2026-03-30 |
 | 18. Institution Portal | v1.3 | 0/TBD | Not started | - |
