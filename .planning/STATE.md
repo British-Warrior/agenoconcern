@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 Milestone: v1.4 — WCAG Compliance
 Phase: 19 of 23 (Foundation)
-Plan: 0 of 1 in current phase
-Status: Ready to plan
-Last activity: 2026-03-30 — Roadmap created for v1.4 (5 phases, 21 requirements)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-03-30 — Completed 19-01-PLAN.md (accessibility foundation)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] ~5% (1/21 plans)
 
 ## Performance Metrics
 
@@ -32,6 +32,12 @@ All v1.0-v1.3 decisions archived in milestones/ and PROJECT.md Key Decisions tab
 
 v1.4 decisions logged to PROJECT.md as they are made.
 
+**19-01 (2026-03-30):**
+- RouteChangeSync mounted in all 4 layout shells (AppShell + 3 guard routes) to cover every route entry path
+- NavLink `end` prop on all nav items prevents false-positive active states on parent-path matches
+- Active nav link gets `text-primary-900 font-semibold` visual treatment alongside aria-current for sighted users
+- `type="button"` added to bare Navbar buttons (Enable Notifications, Install App) — prevents accidental form submission
+
 ### Pending Todos
 
 None.
@@ -45,5 +51,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: v1.4 roadmap written — ready to plan Phase 19
-Resume file: None
+Stopped at: Phase 19 Plan 01 complete — ready for 19-02
+Resume file: .planning/phases/19-foundation/19-02-PLAN.md
