@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 ## Current Position
 
 Milestone: v1.4 — WCAG Compliance
-Phase: 20 of 23 (Focus Infrastructure) — Not started
-Plan: 0 of TBD
-Status: Ready for planning
-Last activity: 2026-03-30 — Phase 19 complete (Foundation verified)
+Phase: 20 of 23 (Focus Infrastructure) — In progress
+Plan: 1 of TBD
+Status: In progress
+Last activity: 2026-03-30 — Completed 20-01-PLAN.md (accessibility primitives)
 
-Progress: [██░░░░░░░░] 20% (v1.4: 1/5 phases complete)
+Progress: [██░░░░░░░░] 20% (v1.4: 1/5 phases complete; phase 20 plan 1/TBD done)
 
 ## Performance Metrics
 
@@ -44,6 +44,12 @@ v1.4 decisions logged to PROJECT.md as they are made.
 - Interactive list items: button inside li, not onClick on li (NotificationBell refactored)
 - Label association pattern: always htmlFor + matching id on paired control
 
+**20-01 (2026-03-30):**
+- useFocusTrap: custom hook (no external library) — focusable selectors target 6 element types, re-query on each keydown for dynamic DOM
+- Modal: createPortal to document.body, role=dialog on outer container (not inner panel) so backdrop click and trap ref are co-located
+- AnnounceProvider: clear-then-set (50ms) forces screen reader re-announcement on duplicate messages; single region at root prevents announcement race conditions
+- AnnounceProvider placed inside QueryClientProvider so future mutation hooks can call useAnnounce without context ordering issues
+
 ### Pending Todos
 
 None.
@@ -57,5 +63,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: Phase 19 complete — both plans done
-Resume file: None (Phase 19 complete, begin Phase 20)
+Stopped at: Phase 20, Plan 1 complete — accessibility primitives done
+Resume file: .planning/phases/20-focus-infrastructure/ (begin 20-02)
