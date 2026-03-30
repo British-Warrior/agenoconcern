@@ -79,11 +79,11 @@ Plans:
   2. The shared `Modal` wrapper closes on Escape key press and returns focus to the element that opened it
   3. `AnnounceProvider` mounts a single `aria-live="polite"` region in the DOM; calling `useAnnounce()` from any component queues a message that screen readers read aloud
   4. Focus rings on all interactive elements meet the 3:1 contrast ratio required by WCAG 2.4.11 — verified by browser DevTools colour picker
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 20-01: useFocusTrap hook, Modal shared wrapper, AnnounceProvider and useAnnounce hook
-- [ ] 20-02: Focus ring contrast — replace focus:ring-primary-500/30 globally with compliant token
+- [ ] 20-01-PLAN.md — useFocusTrap hook, Modal shared wrapper, AnnounceProvider and useAnnounce hook
+- [ ] 20-02-PLAN.md — Focus ring contrast — replace all semi-transparent and non-compliant focus rings with focus-visible:ring-accent-500
 
 ---
 
