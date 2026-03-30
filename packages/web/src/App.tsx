@@ -5,6 +5,9 @@ import { AppShell } from "./components/layout/AppShell.js";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute.js";
 import { ChallengerRoute } from "./components/layout/ChallengerRoute.js";
 import { CMRoute } from "./components/layout/CMRoute.js";
+import { InstitutionPortalRoute } from "./components/layout/InstitutionPortalRoute.js";
+import { PortalAuthProvider } from "./contexts/PortalAuthContext.js";
+import { PortalLogin } from "./pages/portal/PortalLogin.js";
 import { InstitutionManagement } from "./pages/admin/InstitutionManagement.js";
 import { ContributorDetail } from "./pages/admin/ContributorDetail.js";
 import { AttentionDashboard } from "./pages/admin/AttentionDashboard.js";
@@ -45,6 +48,20 @@ export function App() {
       <AuthProvider>
         <KioskProvider>
           <Routes>
+          {/* Institution portal — separate auth context, OUTSIDE AuthProvider/AppShell */}
+          <Route path="/portal/login" element={
+            <PortalAuthProvider>
+              <PortalLogin />
+            </PortalAuthProvider>
+          } />
+          <Route path="/portal/*" element={
+            <PortalAuthProvider>
+              <InstitutionPortalRoute />
+            </PortalAuthProvider>
+          }>
+            {/* Dashboard and other portal routes added in plan 02 */}
+          </Route>
+
           <Route element={<AppShell />}>
             {/* Challenger public route */}
             <Route path="/challenger/register" element={<ChallengerRegister />} />
