@@ -161,7 +161,7 @@ export function Register() {
               id="privacy-consent"
               checked={privacyConsent}
               onChange={(e) => setPrivacyConsent(e.target.checked)}
-              className="mt-1 w-5 h-5 rounded border-2 border-neutral-300 text-primary-800 focus:ring-accent-500 cursor-pointer"
+              className="mt-1 w-5 h-5 rounded border-2 border-neutral-300 text-primary-800 focus-visible:ring-accent-500 cursor-pointer"
               required
             />
             <label

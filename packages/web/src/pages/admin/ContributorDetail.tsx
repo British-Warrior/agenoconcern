@@ -73,7 +73,7 @@ export function ContributorDetail() {
       contributorId: contributor.id,
       institutionIds: [...checked],
     });
-    setSaved(true);
+    navigate("/admin/institutions");
   };
 
   return (
@@ -118,7 +118,7 @@ export function ContributorDetail() {
                     checked={checked.has(inst.id)}
                     onChange={() => toggle(inst.id)}
                     disabled={setAssignments.isPending}
-                    className="h-4 w-4 rounded border-neutral-300 text-primary-700 focus:ring-accent-500 focus:ring-2 cursor-pointer"
+                    className="h-4 w-4 rounded border-neutral-300 text-primary-700 focus-visible:ring-accent-500 focus-visible:ring-2 cursor-pointer"
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-neutral-900 truncate">{inst.name}</p>

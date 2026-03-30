@@ -213,7 +213,7 @@ export function WellbeingForm({
             type="checkbox"
             checked={consentChecked}
             onChange={(e) => setConsentChecked(e.target.checked)}
-            className="mt-1 h-4 w-4 rounded border-neutral-300 text-primary-800 focus:ring-primary-700"
+            className="mt-1 h-4 w-4 rounded border-neutral-300 text-primary-800 focus-visible:ring-accent-500"
           />
           <span className="text-sm text-neutral-700 leading-relaxed">
             I understand this data is classified as special category health data under UK GDPR. I
@@ -231,7 +231,7 @@ export function WellbeingForm({
             type="checkbox"
             checked={institutionalReportingChecked}
             onChange={(e) => setInstitutionalReportingChecked(e.target.checked)}
-            className="mt-1 h-4 w-4 rounded border-neutral-300 text-primary-800 focus:ring-primary-700"
+            className="mt-1 h-4 w-4 rounded border-neutral-300 text-primary-800 focus-visible:ring-accent-500"
           />
           <span className="text-sm text-neutral-700 leading-relaxed">
             I also consent to my anonymised wellbeing data being included in aggregate reports

@@ -223,7 +223,7 @@ export function Preferences() {
                     setForm((p) => ({ ...p, domainOther: e.target.value }))
                   }
                   placeholder="e.g. Aerospace"
-                  className="w-full min-h-[2.5rem] px-3 py-2 text-sm text-neutral-900 bg-white border-2 border-neutral-300 rounded-[var(--radius-md)] hover:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 placeholder:text-neutral-400"
+                  className="w-full min-h-[2.5rem] px-3 py-2 text-sm text-neutral-900 bg-white border-2 border-neutral-300 rounded-[var(--radius-md)] hover:border-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-accent-500 placeholder:text-neutral-400"
                 />
               </div>
             </fieldset>
@@ -250,7 +250,7 @@ export function Preferences() {
                   maxCircles: Math.min(10, Math.max(1, parseInt(e.target.value, 10) || 1)),
                 }))
               }
-              className="w-24 min-h-[3rem] px-4 py-3 text-base text-neutral-900 bg-white border-2 border-neutral-300 rounded-[var(--radius-md)] hover:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+              className="w-24 min-h-[3rem] px-4 py-3 text-base text-neutral-900 bg-white border-2 border-neutral-300 rounded-[var(--radius-md)] hover:border-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-accent-500"
             />
           </section>
 

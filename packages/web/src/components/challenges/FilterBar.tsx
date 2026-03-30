@@ -50,7 +50,7 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
               text-sm text-neutral-700
               border border-neutral-300 rounded-[var(--radius-sm)]
               bg-white
-              focus:outline-none focus:ring-2 focus:ring-accent-500
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500
               min-h-[2.5rem]
               cursor-pointer
             "

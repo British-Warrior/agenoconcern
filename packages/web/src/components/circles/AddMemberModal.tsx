@@ -114,7 +114,7 @@ export function AddMemberModal({ isOpen, onClose, circleId }: AddMemberModalProp
                   setError(null);
                 }}
                 placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
-                className={`w-full text-sm border rounded-[var(--radius-md)] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                className={`w-full text-sm border rounded-[var(--radius-md)] px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-transparent ${
                   error ? "border-red-400 bg-red-50" : "border-neutral-300"
                 }`}
               />

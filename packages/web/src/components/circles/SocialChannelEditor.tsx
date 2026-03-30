@@ -157,7 +157,7 @@ export function SocialChannelEditor({
         <select
           value={selectedPlatform}
           onChange={(e) => handlePlatformChange(e.target.value as SocialChannel)}
-          className="text-xs border border-neutral-300 rounded-[var(--radius-md)] px-2 py-1.5 bg-white text-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          className="text-xs border border-neutral-300 rounded-[var(--radius-md)] px-2 py-1.5 bg-white text-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-transparent"
         >
           {PLATFORMS.map((p) => (
             <option key={p} value={p}>
@@ -175,7 +175,7 @@ export function SocialChannelEditor({
           }}
           onBlur={handleUrlBlur}
           placeholder={`Paste your ${PLATFORM_LABELS[selectedPlatform]} link`}
-          className={`flex-1 text-xs border rounded-[var(--radius-md)] px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+          className={`flex-1 text-xs border rounded-[var(--radius-md)] px-2 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-transparent ${
             urlError
               ? "border-red-400 bg-red-50"
               : "border-neutral-300 bg-white text-neutral-800"

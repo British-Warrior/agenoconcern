@@ -473,7 +473,7 @@ function PortalAccessSection({ institutionId }: PortalAccessSectionProps) {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="portal@institution.org"
               disabled={createMutation.isPending}
-              className="flex-1 px-2 py-1 text-xs border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500"
+              className="flex-1 px-2 py-1 text-xs border border-neutral-300 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
             />
             <button
               type="button"
@@ -690,7 +690,7 @@ function InstitutionCardView({
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
                 disabled={isGenerating}
-                className="w-full px-2 py-1 text-xs border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500"
+                className="w-full px-2 py-1 text-xs border border-neutral-300 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
               />
             </div>
             <div className="flex-1">
@@ -701,7 +701,7 @@ function InstitutionCardView({
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
                 disabled={isGenerating}
-                className="w-full px-2 py-1 text-xs border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500"
+                className="w-full px-2 py-1 text-xs border border-neutral-300 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
               />
             </div>
           </div>
@@ -831,7 +831,7 @@ function InstitutionCardEdit({
           placeholder="Optional description..."
           disabled={isPending}
           rows={3}
-          className="px-4 py-3 text-base text-neutral-900 bg-white border-2 border-neutral-300 rounded-[var(--radius-md)] transition-colors duration-150 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 hover:border-neutral-400 resize-none"
+          className="px-4 py-3 text-base text-neutral-900 bg-white border-2 border-neutral-300 rounded-[var(--radius-md)] transition-colors duration-150 placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-accent-500 hover:border-neutral-400 resize-none"
         />
       </div>
       <div className="flex gap-3 justify-end pt-1">

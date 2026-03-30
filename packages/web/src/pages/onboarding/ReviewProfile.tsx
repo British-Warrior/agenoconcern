@@ -110,7 +110,7 @@ function TagListEditor({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className="flex-1 min-h-[2.5rem] px-3 py-2 text-sm text-neutral-900 bg-white border-2 border-neutral-300 rounded-[var(--radius-md)] hover:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 placeholder:text-neutral-400"
+            className="flex-1 min-h-[2.5rem] px-3 py-2 text-sm text-neutral-900 bg-white border-2 border-neutral-300 rounded-[var(--radius-md)] hover:border-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-accent-500 placeholder:text-neutral-400"
           />
           <button
             type="button"
@@ -262,7 +262,7 @@ export function ReviewProfile() {
               }
               rows={5}
               placeholder="A brief overview of your professional background and strengths"
-              className="w-full px-4 py-3 text-base text-neutral-900 bg-white border-2 border-neutral-300 rounded-[var(--radius-md)] hover:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 placeholder:text-neutral-400 resize-y"
+              className="w-full px-4 py-3 text-base text-neutral-900 bg-white border-2 border-neutral-300 rounded-[var(--radius-md)] hover:border-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-accent-500 placeholder:text-neutral-400 resize-y"
             />
           </section>
 
@@ -323,7 +323,7 @@ export function ReviewProfile() {
                   yearsOfExperience: Math.max(0, parseInt(e.target.value, 10) || 0),
                 })
               }
-              className="w-32 min-h-[3rem] px-4 py-3 text-base text-neutral-900 bg-white border-2 border-neutral-300 rounded-[var(--radius-md)] hover:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+              className="w-32 min-h-[3rem] px-4 py-3 text-base text-neutral-900 bg-white border-2 border-neutral-300 rounded-[var(--radius-md)] hover:border-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-accent-500"
             />
           </section>
 

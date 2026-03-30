@@ -106,7 +106,7 @@ export function ResolutionForm({
           onChange={(e) => handleChange("problemSummary", e.target.value)}
           placeholder="Describe the core problem or challenge being addressed..."
           rows={3}
-          className={`w-full text-sm border rounded-[var(--radius-md)] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-y ${
+          className={`w-full text-sm border rounded-[var(--radius-md)] px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-transparent resize-y ${
             fieldErrors.problemSummary
               ? "border-red-400 bg-red-50"
               : "border-neutral-300"
@@ -128,7 +128,7 @@ export function ResolutionForm({
           onChange={(e) => handleChange("recommendations", e.target.value)}
           placeholder="Provide your recommended actions or solutions..."
           rows={4}
-          className={`w-full text-sm border rounded-[var(--radius-md)] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-y ${
+          className={`w-full text-sm border rounded-[var(--radius-md)] px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-transparent resize-y ${
             fieldErrors.recommendations
               ? "border-red-400 bg-red-50"
               : "border-neutral-300"
@@ -150,7 +150,7 @@ export function ResolutionForm({
           onChange={(e) => handleChange("evidence", e.target.value)}
           placeholder="What evidence supports your recommendations?"
           rows={3}
-          className={`w-full text-sm border rounded-[var(--radius-md)] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-y ${
+          className={`w-full text-sm border rounded-[var(--radius-md)] px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-transparent resize-y ${
             fieldErrors.evidence
               ? "border-red-400 bg-red-50"
               : "border-neutral-300"
@@ -172,7 +172,7 @@ export function ResolutionForm({
           onChange={(e) => handleChange("dissentingViews", e.target.value)}
           placeholder="Note any minority positions or disagreements within the Circle..."
           rows={2}
-          className="w-full text-sm border border-neutral-300 rounded-[var(--radius-md)] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-y"
+          className="w-full text-sm border border-neutral-300 rounded-[var(--radius-md)] px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-transparent resize-y"
         />
       </div>
 
@@ -187,7 +187,7 @@ export function ResolutionForm({
           onChange={(e) => handleChange("implementationNotes", e.target.value)}
           placeholder="Practical steps, timelines, or considerations for implementing recommendations..."
           rows={2}
-          className="w-full text-sm border border-neutral-300 rounded-[var(--radius-md)] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-y"
+          className="w-full text-sm border border-neutral-300 rounded-[var(--radius-md)] px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-transparent resize-y"
         />
       </div>
 

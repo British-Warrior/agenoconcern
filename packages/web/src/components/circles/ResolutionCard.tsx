@@ -211,7 +211,7 @@ export function ResolutionCard({
             onChange={(e) => setFeedback(e.target.value)}
             placeholder="Add optional feedback for the Circle..."
             rows={2}
-            className="w-full text-sm border border-neutral-300 rounded-[var(--radius-md)] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-y"
+            className="w-full text-sm border border-neutral-300 rounded-[var(--radius-md)] px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-transparent resize-y"
           />
           {ratingError && (
             <p className="text-xs text-red-600">{ratingError}</p>

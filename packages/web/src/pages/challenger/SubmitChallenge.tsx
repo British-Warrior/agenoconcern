@@ -154,7 +154,7 @@ export function SubmitChallenge() {
               placeholder="Describe the challenge in detail — what the problem is, what success looks like, and any constraints."
               value={brief}
               onChange={(e) => setBrief(e.target.value)}
-              className="w-full rounded-[var(--radius-md)] border border-neutral-300 px-3 py-2 text-base text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-y min-h-[120px]"
+              className="w-full rounded-[var(--radius-md)] border border-neutral-300 px-3 py-2 text-base text-neutral-900 placeholder-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-accent-500 resize-y min-h-[120px]"
             />
             {fieldErrors.brief && (
               <p className="mt-1 text-sm text-error font-medium" role="alert">
@@ -197,7 +197,7 @@ export function SubmitChallenge() {
                   e.target.value as "community" | "premium" | "knowledge_transition",
                 )
               }
-              className="w-full rounded-[var(--radius-md)] border border-neutral-300 px-3 py-2 text-base text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+              className="w-full rounded-[var(--radius-md)] border border-neutral-300 px-3 py-2 text-base text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-accent-500 bg-white"
             >
               <option value="community">Community</option>
               <option value="premium">Premium</option>

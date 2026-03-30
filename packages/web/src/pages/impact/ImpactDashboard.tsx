@@ -114,7 +114,7 @@ function LogHoursForm({ challenges, onClose }: LogHoursFormProps) {
               value={circleId}
               onChange={(e) => setCircleId(e.target.value)}
               required
-              className="w-full rounded-[var(--radius-md)] border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-[var(--radius-md)] border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
             >
               {circlesAvailable.map((c) => (
                 <option key={c.circleId} value={c.circleId!}>
@@ -142,7 +142,7 @@ function LogHoursForm({ challenges, onClose }: LogHoursFormProps) {
               onChange={(e) => setDescription(e.target.value)}
               maxLength={500}
               rows={3}
-              className="w-full rounded-[var(--radius-md)] border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+              className="w-full rounded-[var(--radius-md)] border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 resize-none"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -151,7 +151,7 @@ function LogHoursForm({ challenges, onClose }: LogHoursFormProps) {
               id="isPaid"
               checked={isPaid}
               onChange={(e) => setIsPaid(e.target.checked)}
-              className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+              className="rounded border-neutral-300 text-primary-600 focus-visible:ring-accent-500"
             />
             <label htmlFor="isPaid" className="text-sm text-neutral-700">Paid work</label>
           </div>

@@ -176,10 +176,10 @@ export function ChallengeForm({
   };
 
   const fieldClass = (hasError: boolean) =>
-    `w-full rounded-[var(--radius-md)] border px-3 py-2 text-sm bg-white text-neutral-900 focus:outline-none focus:ring-2 transition-colors duration-150 ${
+    `w-full rounded-[var(--radius-md)] border px-3 py-2 text-sm bg-white text-neutral-900 focus-visible:outline-none focus-visible:ring-2 transition-colors duration-150 ${
       hasError
-        ? "border-error focus:ring-error/30"
-        : "border-neutral-300 focus:ring-primary-500/30 focus:border-primary-500"
+        ? "border-error focus-visible:ring-error"
+        : "border-neutral-300 focus-visible:ring-accent-500 focus-visible:border-accent-500"
     } ${isLocked ? "bg-neutral-50 cursor-not-allowed text-neutral-500" : ""}`;
 
   const labelClass = "block text-sm font-medium text-neutral-700 mb-1";
@@ -290,7 +290,7 @@ export function ChallengeForm({
               onKeyDown={handleCustomDomainKeyDown}
               disabled={isPending}
               placeholder="Add a custom domain"
-              className="flex-1 rounded-[var(--radius-md)] border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 disabled:opacity-50"
+              className="flex-1 rounded-[var(--radius-md)] border border-neutral-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-accent-500 disabled:opacity-50"
             />
             <button
               type="button"
@@ -346,7 +346,7 @@ export function ChallengeForm({
               onKeyDown={handleSkillKeyDown}
               disabled={skillsNeeded.length >= 20 || isPending}
               placeholder="Type a skill and press Enter"
-              className="flex-1 rounded-[var(--radius-md)] border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 disabled:opacity-50"
+              className="flex-1 rounded-[var(--radius-md)] border border-neutral-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-accent-500 disabled:opacity-50"
             />
             <button
               type="button"

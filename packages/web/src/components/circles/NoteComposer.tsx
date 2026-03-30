@@ -151,7 +151,7 @@ export function NoteComposer({ circleId }: NoteComposerProps) {
         placeholder="Share a note with your Circle..."
         rows={3}
         disabled={isSubmitting}
-        className="w-full text-sm text-neutral-800 placeholder-neutral-400 outline-none resize-none leading-relaxed disabled:opacity-50 border border-neutral-300 rounded-[var(--radius-md)] px-3 py-2 bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
+        className="w-full text-sm text-neutral-800 placeholder-neutral-400 outline-none resize-none leading-relaxed disabled:opacity-50 border border-neutral-300 rounded-[var(--radius-md)] px-3 py-2 bg-white focus-visible:border-accent-500 focus-visible:ring-1 focus-visible:ring-accent-500 transition-colors"
       />
 
       {/* Dropzone */}

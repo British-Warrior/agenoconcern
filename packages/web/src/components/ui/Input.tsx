@@ -43,6 +43,7 @@ export function Input({
       <input
         id={id}
         required={required}
+        aria-required={required || undefined}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy || undefined}
         className={`
@@ -52,7 +53,7 @@ export function Input({
           border-2 rounded-[var(--radius-md)]
           transition-colors duration-150
           placeholder:text-neutral-400
-          focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-accent-500
           ${error ? "border-error" : "border-neutral-300 hover:border-neutral-400"}
         `.trim()}
         {...props}
