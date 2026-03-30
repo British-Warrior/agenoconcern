@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from "react-router";
 import { useAuth } from "../../hooks/useAuth.js";
+import { RouteChangeSync } from "../a11y/RouteChangeSync.js";
 
 export function ChallengerRoute() {
   const { isAuthenticated, isLoading, contributor } = useAuth();
@@ -44,5 +45,5 @@ export function ChallengerRoute() {
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <Outlet />;
+  return <><RouteChangeSync /><Outlet /></>;
 }

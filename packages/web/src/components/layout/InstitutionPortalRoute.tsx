@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from "react-router";
 import { usePortalAuth } from "../../hooks/usePortalAuth.js";
+import { RouteChangeSync } from "../a11y/RouteChangeSync.js";
 
 export function InstitutionPortalRoute() {
   const { isAuthenticated, isLoading } = usePortalAuth();
@@ -37,5 +38,5 @@ export function InstitutionPortalRoute() {
     return <Navigate to="/portal/login" replace />;
   }
 
-  return <Outlet />;
+  return <><RouteChangeSync /><Outlet /></>;
 }

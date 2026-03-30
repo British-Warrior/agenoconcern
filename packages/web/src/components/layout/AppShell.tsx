@@ -5,6 +5,7 @@ import { ConsentBanner, openCookieSettings } from "../ui/ConsentBanner.js";
 import { DevRoleSwitcher } from "../dev/DevRoleSwitcher.js";
 import { ROUTES } from "../../lib/constants.js";
 import { useKiosk } from "../../contexts/KioskContext.js";
+import { RouteChangeSync } from "../a11y/RouteChangeSync.js";
 
 export function AppShell() {
   const { isKiosk } = useKiosk();
@@ -24,6 +25,7 @@ export function AppShell() {
         role="main"
         className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-8 py-8"
       >
+        <RouteChangeSync />
         <Outlet />
       </main>
 
