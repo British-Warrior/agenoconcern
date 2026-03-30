@@ -1,182 +1,209 @@
-# Domain Pitfalls
+# Pitfalls Research
 
-**Domain:** Enhanced Reporting & Institution Portal — v1.3 addition to Indomitable Unity
-**Researched:** 2026-03-25
-**Milestone context:** Adding wellbeing aggregation, attention trends, PDF auto-delivery, and
-institution portal login to an existing Express + PostgreSQL + Drizzle + pdfkit + Resend stack.
-Auth is JWT cookie-based. Existing roles: contributor, community_manager, admin, challenger.
+**Domain:** WCAG 2.2 AA Retrofitting — Existing React/Vite SPA (Indomitable Unity)
+**Researched:** 2026-03-30
+**Confidence:** HIGH (W3C official specs, Deque, Sara Soueidan, verified against live codebase)
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause rewrites, legal exposure, or major security incidents.
+Mistakes that cause WCAG failures that automated tools cannot catch, or patterns that actively
+harm assistive technology users instead of helping them.
 
 ---
 
-### Pitfall 1: WEMWBS/SWEMWBS Commercial Licence Not Obtained Before Adding a Third-Party Portal
+### Pitfall 1: No Route-Change Focus Management
 
 **What goes wrong:**
-The existing system already stores and displays WEMWBS scores to the contributor who produced them.
-That use falls within most non-commercial licence grants. However, as soon as aggregated or
-individual WEMWBS scores are surfaced to an institution (a third-party organisation), Warwick
-Innovations' rules change. From 1 December 2024, any third party — consultant or private
-organisation — that is developing a system or application including WEMWBS must hold a full
-**commercial licence** before including the scale. Surfacing even anonymous band breakdowns (e.g.
-"40% of your cohort scores in the low wellbeing band") in an institution-facing PDF or portal
-counts as including WEMWBS in a system delivered to that third party.
+React Router replaces page content without a browser reload. Screen readers never announce the
+navigation occurred. Keyboard users are left focused on whatever they last activated — a nav link,
+a button — inside content that has now been replaced. The new page renders silently from a screen
+reader's perspective.
 
 **Why it happens:**
-Teams assume that because their own licence covers internal use, derived or aggregated outputs are
-fine to share externally. The licence explicitly prohibits re-sharing under your own licence.
+Developers build and test visually. Route transitions look correct on screen. The gap only
+surfaces with a screen reader or keyboard-only navigation. This codebase's `AppShell` has a skip
+link and correct `<main id="main-content">`, but no mechanism to move focus or announce the page
+change on route transition.
 
-**Consequences:**
-- Breach of Warwick Innovations licence terms — potential for injunction and back-billing at
-  commercial rates.
-- WEMWBS branding and item text cannot appear in institution-facing PDF reports without this
-  licence.
-- If the licence is later obtained the product may still need naming changes (the full scale name
-  "WEMWBS" is trademarked).
+**How to avoid:**
+On every route change: (1) update `document.title` with a meaningful page name (already done
+inconsistently across pages), (2) move focus to `#main-content` or the page `<h1>`
+programmatically. A `useRouteChangeAnnouncer` hook that watches `useLocation` and calls
+`document.getElementById('main-content')?.focus()` is the minimal correct approach — `<main>`
+must have `tabIndex={-1}` to receive programmatic focus without appearing in the Tab sequence.
+Alternatively, use a visually-hidden `aria-live="polite"` region updated with the new page title
+on each transition.
 
-**Prevention:**
-- Obtain a commercial licence from Warwick Innovations before Phase 15 PDF report work begins.
-  Licence page: warwick.ac.uk/services/innovations/wemwbs/using/
-- If the licence is not yet in place: strip WEMWBS branding from institution-facing outputs
-  entirely; report only generic "wellbeing score" ranges without identifying the instrument.
-- Store a record of licence number and expiry — it is valid for 12 months and must be renewed.
+**Warning signs:**
+Test with NVDA + Firefox: navigate between routes with keyboard only. If the screen reader does
+not announce the new page heading or title after clicking a nav link, this pitfall is present.
 
-**Detection:**
-Any PDF section or portal widget that names "WEMWBS", "SWEMWBS", or "Warwick-Edinburgh" and is
-visible to institution users without a current commercial licence is a violation.
-
-**Phase relevance:** Phase 15 (PDF Impact Report) — must be confirmed before build starts.
+**Phase to address:** Foundation / Audit phase — must be fixed before any other remediation.
+Route-change announcement affects every page in the app.
 
 ---
 
-### Pitfall 2: Re-identification of Wellbeing Bands Through Small-Cohort Aggregation
+### Pitfall 2: `aria-expanded` Missing on All Disclosure Widgets
 
 **What goes wrong:**
-When an institution has a small cohort (e.g. 3-8 contributors), reporting a band breakdown like
-"1 contributor in low wellbeing" effectively singles out an individual. Even without names, a
-community centre contact who knows their regulars can re-identify. WEMWBS/UCLA scores are
-**special category data** under UK GDPR Art. 9 (health data); inadequate anonymisation does not
-lift this obligation.
+The codebase has zero uses of `aria-expanded` anywhere. The `NotificationBell` renders a toggle
+button and a dropdown panel, but the button carries only `aria-label="Notifications"` with no
+state. Screen reader users hear "Notifications, button" with no indication whether the panel is
+open or closed. They activate it, and nothing is announced — they cannot tell if something
+happened.
 
-The ICO's anonymisation guidance explicitly states that k-anonymity alone does not guarantee
-anonymisation under UK GDPR — context (who the institution contact knows) must also be assessed.
-A differencing attack is trivial: a report generated last month showed 5 contributors; this month
-shows 6 with a new "low wellbeing" entry — the institution contact can infer the new member's
-score.
+The same failure exists on any other component using conditional rendering to show/hide a panel
+(filter toggles, any accordion not using Radix, any popover built inline).
 
 **Why it happens:**
-- Developers set a threshold (e.g. k=5) without accounting for differencing over time.
-- Suppression only applies to the lowest band, leaving the remainder leakable by subtraction.
-- Cohort size varies: an institution starts with 30 members, some leave, and over time the
-  threshold is silently crossed.
+Visual open/closed state is communicated through the DOM appearing and disappearing, which is
+obvious on screen. `aria-expanded` is the semantic equivalent for assistive technology and
+requires explicit synchronisation with component state.
 
-**Consequences:**
-- UK GDPR Art. 9 breach — ICO fine up to 17.5M GBP or 4% global turnover, plus mandatory
-  reporting within 72 hours.
-- Contributor trust damage — members consented for their own use, not disclosure to institutions.
+**How to avoid:**
+Any button that toggles visibility of another element must carry `aria-expanded={open}` and
+`aria-controls="panel-id"` where `panel-id` matches the `id` of the panel element. Radix UI
+components (already used for `ChallengeAccordion`) handle this automatically. For hand-rolled
+disclosures:
 
-**Prevention:**
-- Enforce a hard minimum cohort size (recommend k=10 for health data given the ICO's conservative
-  guidance) before any breakdown is shown; below this threshold suppress entirely and show
-  "Cohort too small to report".
-- Suppress any individual band cell that represents fewer than 5 contributors, even if the
-  cohort total is above threshold.
-- Do not report exact counts — report percentage bands only, rounded to the nearest 5%.
-- Disable time-series breakdowns entirely until the cohort has been stable above threshold for at
-  least two consecutive reporting periods.
-- Conduct a Data Protection Impact Assessment (DPIA) before launch; the combination of
-  health-adjacent data and third-party disclosure requires one under UK GDPR Art. 35.
+```tsx
+<button
+  aria-label="Notifications"
+  aria-expanded={open}
+  aria-haspopup="listbox"
+  aria-controls="notification-panel"
+  onClick={() => setOpen(v => !v)}
+>
+```
 
-**Detection:**
-Automated pre-render check: if cohortSize < 10, replace all band data with a suppression message
-before passing to pdfkit or the portal API response. Enforce at the data layer, not the
-display layer, so PDF and portal paths are both protected.
+**Warning signs:**
+`grep -r "aria-expanded" src/` returns zero results. Every `useState` managing a boolean
+show/hide that has no `aria-expanded` on its trigger button is a failure.
 
-**Phase relevance:** Phase 15 (PDF report), Phase 16 (institution portal).
+**Phase to address:** Interactive components remediation phase.
 
 ---
 
-### Pitfall 3: Institution Portal Users Accidentally Gaining Contributor-Role Access
+### Pitfall 3: Custom Modals Lack Focus Trap and Return Focus on Close
 
 **What goes wrong:**
-The system currently uses a single `contributors` table and a JWT carrying `{ sub, role }`. If
-institution portal users are added to the same table (even with a distinct role like
-`institution_viewer`), any bug in `requireRole` or a missed guard on a new route could allow
-an institution contact to reach contributor-facing endpoints. The current `requireRole` guard
-does not distinguish between "I am an institution user" and "I am a contributor with elevated
-role" — it only checks `role !== target && role !== 'admin'`.
-
-The multi-tenant security literature consistently identifies insufficient logical separation and
-session/role confusion as the leading cause of cross-tenant data leakage.
+`AddMemberModal` and `CircleFormationModal` are hand-rolled `<div role="dialog">` implementations.
+They have correct `role`, `aria-modal`, and `aria-labelledby`. However, they do not trap focus
+inside the dialog while open, and they do not return focus to the triggering element when closed.
+A keyboard user can Tab out of the open modal into the obscured background content behind the
+backdrop. When the modal closes, focus drops to `document.body`.
 
 **Why it happens:**
-- Convenience: reusing the existing auth system is faster.
-- The new role is added to the enum without auditing every existing route guard.
-- JWT payload contains no tenant scope, so the same token can be used on any route that passes
-  `authMiddleware`.
+The ARIA attributes (`role="dialog"`, `aria-modal="true"`, `aria-labelledby`) pass automated
+scanning and look complete. Focus trapping is a behavioural requirement that no automated tool
+catches. `aria-modal="true"` is a hint to screen readers, not a JavaScript focus lock — focus
+containment requires code.
 
-**Consequences:**
-- Institution contact reads individual contributor profiles, wellbeing history, or attention flags.
-- A UK data breach notifiable to the ICO.
+**How to avoid:**
+Either: (a) replace hand-rolled modals with Radix UI `Dialog` primitive, which handles focus
+trap, Escape key, and focus return automatically; or (b) add `focus-trap-react` wrapper around
+the modal panel div. On close, store a ref to the triggering element before the modal opens and
+call `triggerRef.current?.focus()` after close.
 
-**Prevention:**
-- Either (a) use a separate session namespace with a dedicated `institution_sessions` table and
-  a separate login endpoint (`/api/institution/auth/login`) that never mixes cookies with
-  contributor sessions, or (b) add an explicit `userType: 'contributor' | 'institution'` claim
-  to the JWT and enforce it in every guard.
-- Audit every existing route: any route written before institution users existed implicitly
-  assumed `req.contributor` refers to a real contributor. Add a `requireContributorUser()`
-  middleware that asserts `userType !== 'institution'` and apply it to all existing routes.
-- Do not add `institution_viewer` to the existing `contributorRoleEnum` pg enum if possible —
-  use a separate table and separate token-signing path to make mixing structurally impossible
-  at the DB and type level.
+**Warning signs:**
+Open any modal, press Tab repeatedly — if focus escapes to the navbar or body content, the trap
+is absent. Close the modal with keyboard — if focus is not returned to the button that opened it,
+return focus is absent.
 
-**Detection:**
-Integration test: log in as an institution user and assert that GET /api/wellbeing/history,
-GET /api/impact/contributor, and GET /api/admin/institutions all return 403.
-
-**Phase relevance:** Phase 16 (institution portal) — auth architecture must be settled before
-any portal endpoint is built.
+**Phase to address:** Interactive components remediation phase. This is a WCAG 2.1 Level A
+adjacent issue (SC 2.1.2 permits intentional focus traps only when a clear exit exists — the
+inverse failure is focus leaking into obscured content behind a modal).
 
 ---
 
-### Pitfall 4: node-cron Duplicate Email Delivery on Horizontal Scaling
+### Pitfall 4: `AttentionTrendChart` Has No Accessible Alternative
 
 **What goes wrong:**
-The existing `wellbeing-reminder.job.ts` uses `node-cron` scheduled inside the Express process.
-The new PDF auto-delivery job will follow the same pattern. When the application is deployed
-with more than one process (PM2 cluster mode, Docker replicas, or any multi-instance hosting),
-every instance registers and fires the same cron independently — this is a documented, open
-GitHub issue in `node-cron` and `node-schedule` with no built-in de-duplication. An institution
-that should receive one monthly PDF report instead receives N reports (one per instance).
+`WellbeingChart` correctly uses `aria-hidden="true"` on the chart container and provides a
+companion `<table className="sr-only">` with all data and meaningful column headers. This pattern
+was not carried forward to `AttentionTrendChart`. It renders a Recharts `BarChart` with no
+`aria-label`, no `role`, no `aria-hidden`, and no data table alternative. Screen reader users
+encounter an unlabelled SVG region with no meaningful content.
 
 **Why it happens:**
-`node-cron` is purely in-process; it has no awareness of other instances. The existing reminder
-job has the same problem but is lower-stakes (duplicate push notification) compared to duplicate
-email with PDF attachment.
+A good pattern existed but was not enforced as the project grew. This is the standard consistency
+debt failure in retrofits — one component is correct, later components are not.
 
-**Consequences:**
-- Institutions receive multiple copies of the same report email.
-- Email volume multiplies, increasing Resend cost and risking rate limits.
-- If the job also writes a `report_sent_at` timestamp, race conditions between instances can
-  corrupt the delivery log.
+**How to avoid:**
+Adopt a project-wide rule: every chart component must either (a) add `accessibilityLayer` to the
+Recharts component (provides keyboard navigation and basic ARIA) plus an `aria-label` on the
+outer container, or (b) hide the chart with `aria-hidden="true"` and provide a `<table
+className="sr-only">` sibling with the data. Option (b) — the wellbeing chart pattern — is more
+robust for complex visualisations where keyboard-navigable chart elements are not sufficient to
+convey meaning to a screen reader user.
 
-**Prevention:**
-- Add a PostgreSQL advisory lock (or a `scheduled_jobs` table with a unique constraint on
-  `(job_name, scheduled_for)`) that the job acquires before executing. Only the instance that
-  wins the lock sends the email; all others skip.
-- Alternatively, run the scheduler only on the primary instance using a `NODE_APP_INSTANCE=0`
-  guard (PM2 sets this env var automatically).
-- Retrofit the same fix to `wellbeing-reminder.job.ts` as part of this milestone.
+**Warning signs:**
+Inspect any chart in the Chrome DevTools Accessibility tree. If the chart SVG is not `aria-hidden`
+and has no accessible name, the failure is present.
 
-**Detection:**
-Deploy two instances in staging and observe whether two emails arrive for one scheduled trigger.
+**Phase to address:** Data visualisation remediation phase.
 
-**Phase relevance:** Phase 15 (PDF scheduling job) — design locking before writing the scheduler.
+---
+
+### Pitfall 5: Treating Automated Audit Results as Compliance
+
+**What goes wrong:**
+Teams run axe-core, fix the reported violations, and consider the accessibility work complete.
+Axe-core finds on average 57% of WCAG issues — meaning 43% of issues are invisible to automated
+scanning. The missing 43% includes: focus order logic, meaningful sequence, focus not obscured
+(WCAG 2.2 SC 2.4.11), live region behaviour under actual screen readers, colour contrast in
+dynamic states (hover, focus, error, disabled), motion preferences, and all WCAG 2.2-specific
+criteria (dragging alternatives, target size, focus appearance, accessible authentication).
+
+**Why it happens:**
+Automated tools are fast, produce shareable reports, and provide a false sense of completeness.
+"Zero axe violations" is a meaningful regression floor but is not a WCAG compliance claim.
+
+**How to avoid:**
+Use automated tools (axe-core via `@axe-core/react` in development, `@axe-core/playwright` in
+CI) as a regression floor, not a compliance ceiling. Budget explicit time for manual testing:
+keyboard-only navigation of all user flows, screen reader testing (NVDA + Firefox as primary,
+VoiceOver + Safari as secondary), Windows High Contrast Mode visual check, and colour contrast
+verification in all interactive states (not just default).
+
+**Warning signs:**
+If the audit plan consists only of "run axe-core and fix violations", incomplete coverage is
+guaranteed.
+
+**Phase to address:** Audit planning phase — scope must be established before remediation begins.
+
+---
+
+### Pitfall 6: `focus:ring-primary-500/30` Contrast Failure Across Multiple Components
+
+**What goes wrong:**
+The shared `Input` and `Button` components correctly use full-opacity focus rings
+(`focus:ring-2 focus:ring-accent-500`). However, across the codebase in ad-hoc inputs
+(ResolutionForm, ChallengeForm, CircleWorkspace, NoteComposer, AddMemberModal), there are
+over 30 `<input>` and `<textarea>` elements using `focus:ring-primary-500/30`. The `/30` opacity
+modifier produces approximately a 1.4:1 contrast ratio of the ring against a white background —
+a WCAG 2.1 SC 1.4.11 (Non-text Contrast, AA) failure. The requirement is 3:1.
+
+**Why it happens:**
+Opacity modifiers in Tailwind (`/30`, `/50`) look softer and more polished than full-opacity
+rings. The visual difference between a weak ring and a 3:1 ring is subtle on a calibrated display.
+Automated tools check contrast of text and images; focus ring contrast is checked by automated
+tools in some configurations but is frequently missed.
+
+**How to avoid:**
+Audit every `focus:ring-*` value. Replace `focus:ring-primary-500/30` with either `focus:ring-
+accent-500` (the project's established accessible focus colour) or another full-opacity colour
+with verified 3:1 contrast against the component's background. Prefer `focus-visible:ring-*`
+over `focus:ring-*` to avoid showing keyboard-style focus rings on mouse click (already done on
+Button and shared Input, inconsistently applied elsewhere).
+
+**Warning signs:**
+Any `focus:ring-*/[opacity]` or `focus:ring-primary-500/30` in Tailwind classnames is a likely
+contrast failure.
+
+**Phase to address:** Focus indicator audit phase.
 
 ---
 
@@ -184,243 +211,264 @@ Deploy two instances in staging and observe whether two emails arrive for one sc
 
 ---
 
-### Pitfall 5: pdfkit Buffer Accumulation in Memory Under Concurrent Report Requests
+### Pitfall 7: Missing `aria-current` on Active Navigation Links
 
 **What goes wrong:**
-`buildInstitutionReport` (already implemented in `packages/server/src/pdf/institution-report.ts`)
-returns a `PDFDocument` that the route must collect into a `Buffer` before attaching to an email
-or streaming to the browser. If multiple reports are generated concurrently — or if the PDF is
-expanded with charts or images — the entire PDF is held in memory simultaneously. The
-foliojs/pdfkit issue tracker documents OOM crashes with large page counts and heap exhaustion
-when images are embedded via data URIs.
+The `Navbar` renders `<Link>` elements for Dashboard, Challenges, Circles, etc. None carry
+`aria-current="page"` on the currently active route. Screen reader users navigating the nav cannot
+identify which page they are already on.
 
 **Prevention:**
-- Always use `doc.pipe()` to a writable stream and collect with a stream-to-buffer helper rather
-  than pushing into an array and concatenating. Never call `doc.end()` and then concatenate
-  chunks in a `data` event handler — this pattern accumulates the full content twice.
-- For reports that include embedded images (logos, charts), use file paths rather than inline
-  data URIs; pdfkit's `_imageRegistry` double-stores data URI content.
-- Set a per-request timeout and limit concurrent PDF generation. A simple `activeGenerations`
-  counter with a 503 fallback is sufficient for this platform's scale.
-- The existing `buildInstitutionReport` function returns `doc` without calling `doc.end()` —
-  callers must end and collect correctly. Document this contract explicitly in JSDoc.
-
-**Phase relevance:** Phase 15 (PDF report route and email attachment).
+Replace `<Link>` with React Router's `<NavLink>` which exposes an `isActive` boolean in its
+className callback. Apply `aria-current={isActive ? "page" : undefined}` to the rendered anchor.
 
 ---
 
-### Pitfall 6: Resend Attachment Size Limit and Spam Risk
+### Pitfall 8: Notification Dropdown Cannot Be Closed by Keyboard
 
 **What goes wrong:**
-Base64 encoding adds approximately 33% overhead to PDF size. Most receiving mail servers (Gmail,
-Outlook, NHS mail) enforce a 25 MB combined message limit. Exceeding this causes silent rejection
-at the SMTP relay — Resend may return a 202 success response, but the receiving server bounces.
-Rich PDF reports with embedded charts can grow quickly.
+`NotificationBell` closes on outside `mousedown`. There is no Escape key handler. Keyboard users
+who open the dropdown cannot close it without tabbing through every notification item to reach
+the end of the list, then continuing past it. The dropdown also lacks `aria-expanded` (Pitfall 2).
 
 **Prevention:**
-- Cap PDF report size at 8 MB (raw) before attaching — 8 MB x 1.33 is approximately 10.6 MB
-  encoded, well within the 25 MB limit and the conservative 10 MB safe zone.
-- If a report exceeds 8 MB, log a warning and upload to S3; send an email with a pre-signed
-  download link instead of an attachment.
-- Assert the content-type as `application/pdf`. Resend requires the correct MIME type.
-- Monitor Resend delivery webhook events (`delivery.failed`) — do not assume a 202 from the
-  send API means the recipient received the email.
-
-**Phase relevance:** Phase 15 (PDF email delivery).
+Add a `useEffect` listening for `keydown` with `key === 'Escape'` to call `setOpen(false)` and
+return focus to the bell button. This is WCAG 2.1 SC 2.1.2.
 
 ---
 
-### Pitfall 7: Trend Visualization of Sparse 56-Day Check-in Data Implying False Continuity
+### Pitfall 9: Multiple Simultaneous `role="alert"` Announcements
 
 **What goes wrong:**
-Contributors complete WEMWBS check-ins at most every 56 days. An institution cohort of 20 people
-with irregular completion means any given month might have 2-3 data points. Connecting these
-points with a line chart implies a continuous trend that does not exist. Institutions may make
-programmatic decisions (e.g. "wellbeing has been declining for 3 months") based on 3 dots joined
-by linear interpolation.
+`role="alert"` is equivalent to `aria-live="assertive"` — it interrupts whatever the screen reader
+is currently announcing. `InstitutionManagement.tsx` contains five or more separate `role="alert"`
+elements that can all be visible simultaneously (email error, name error, report error, institution
+error). When this page loads with pre-existing validation state, multiple assertive announcements
+fire in sequence, saturating the speech queue.
 
-**Why it happens:**
-Default chart libraries (Recharts, Chart.js) draw straight lines between points. The gap between
-two readings is invisible unless explicitly rendered.
+The shared `Input` component uses `role="alert"` correctly (it fires once when the error element
+mounts in response to user action). The issue is in ad-hoc inline error elements that are always
+in the DOM or appear together.
 
 **Prevention:**
-- Use a scatter plot with an optional trend line rather than a line chart for cohort aggregate
-  scores. The trend line should be a linear regression fit, clearly labelled "trend", not an
-  interpolation.
-- Show explicit gap markers or dashed lines for periods where cohort check-in count is below
-  threshold (fewer than 3 responses in a reporting window).
-- Display an "n = X" annotation on each data point so institution users understand the sample
-  size behind each reading.
-- Label the x-axis with actual check-in dates, not evenly spaced months.
-- Add a disclaimer to the PDF and portal: "Wellbeing data points represent completed check-ins,
-  not continuous monitoring."
-
-**Phase relevance:** Phase 15 (PDF trend section), Phase 16 (portal chart).
+Use `role="alert"` only for a single message appearing directly in response to a specific user
+action. For validation summaries, use `role="status"` (polite) or rely on `aria-describedby`
+linking fields to their error text. Never make multiple `role="alert"` elements visible in the
+same interaction cycle.
 
 ---
 
-### Pitfall 8: Attention Flag Aggregation Exposing Individual Identities to Institution Contacts
+### Pitfall 10: Kiosk Countdown Timer Announces Every Second
 
 **What goes wrong:**
-`ithink_attention_flags` stores `contributor_id` and `institution_id`. If the institution portal
-surfaces "X members flagged this month" and the institution has a small cohort, the contact can
-identify individuals — especially because attention flags are event-driven (one per iThink signal)
-rather than periodic. A single flag in a 5-person cohort is a near-certain re-identification.
+`KioskWarningOverlay` renders the countdown `{secondsLeft}` inside `<div aria-live="polite">`.
+This causes a screen reader announcement every single second ("30", "29", "28"...). The polite
+queue saturates, other announcements are delayed, and the overlay becomes unusable for screen
+reader users.
 
 **Prevention:**
-- Apply the same k=10 cohort threshold used for wellbeing bands.
-- Report only the ratio of flagged vs. cleared flags per period, never raw counts if cohort < 10.
-- Do not expose `clearedBy`, `followUpNotes`, or `contributorId` to institution-facing endpoints
-  under any circumstances — these are internal admin fields on the `ithink_attention_flags` table.
-- The institution portal API serialisation must explicitly exclude these columns; do not rely on
-  the ORM not selecting them by default.
-
-**Phase relevance:** Phase 16 (institution portal attention section).
+Remove `aria-live` from the tick counter element entirely. The `alertdialog` role with
+`aria-describedby` pointing to the descriptive paragraph already handles the initial announcement
+when the overlay mounts. For countdown urgency, announce only at significant thresholds (10
+seconds, 5 seconds) using a separate `aria-live="assertive"` region that is only updated at those
+specific points — never on every tick.
 
 ---
 
-### Pitfall 9: Wellbeing Consent Scope Creep — Check-in Consent Does Not Cover Third-Party Disclosure
+### Pitfall 11: File Upload Progress Not Announced to Screen Readers
 
 **What goes wrong:**
-The existing `consent_records` table captures consent for `purpose: 'wellbeing_checkin'` with
-`policyVersion: '1.0'`. That consent covers storing and displaying the score to the contributor.
-It does not cover transmitting aggregated data derived from those scores to an institution third
-party. Under UK GDPR Art. 9(2)(a) (explicit consent for special category data), the consent must
-specify each purpose — aggregation for institutional reporting is a new purpose.
-
-**Why it happens:**
-Teams assume consent obtained for data collection implicitly covers derived analytics. The ICO
-has explicitly rejected this: purpose limitation is strictly interpreted for special category data.
-
-**Consequences:**
-Including data from contributors who have not specifically consented to institutional reporting
-constitutes unlawful processing of special category data under UK GDPR.
+`UploadCV` shows a loading spinner overlay during `upload.isPending` but the "Uploading your
+CV..." text is inside a visually-overlaid div, not a live region. Screen reader users activate
+the upload drop zone, the page goes quiet, and they have no indication whether anything is
+happening. The `role="button"` drop zone also sets `disabled` (via `upload.isPending`) without
+providing `aria-disabled="true"` on the container — the two communicate different information to
+assistive technology.
 
 **Prevention:**
-- Update the consent flow to include a clear, separate consent purpose before institution
-  reporting is enabled: e.g. `purpose: 'institutional_reporting'`.
-- Only contributors who have granted `institutional_reporting` consent should have their data
-  included in institution aggregations.
-- The cohort size for reporting may therefore be smaller than total institution membership — the
-  suppression threshold (k=10) applies to the opted-in count, not the enrolled count.
-- Document this constraint in the DPIA.
-
-**Phase relevance:** Phase 15/16 — consent must be updated before aggregation queries are written.
+Add a `role="status"` element adjacent to the drop zone that is always in the DOM but empty when
+not uploading. When `upload.isPending` becomes true, populate it with "Uploading your CV, please
+wait." This fires the screen reader announcement without the visual overlay requiring assistive
+technology awareness. Also set `aria-disabled="true"` on the drop zone container when disabled
+(not just visual opacity), and ensure the error state sets `aria-invalid="true"`.
 
 ---
 
-## Minor Pitfalls
-
----
-
-### Pitfall 10: statsJson Cache in institutions Table Becoming Stale
+### Pitfall 12: WCAG 2.2 SC 2.4.11 — Focus Obscured by Fixed Content
 
 **What goes wrong:**
-The `institutions` table has a `stats_json` column as a fallback cache. The live stats route in
-`routes/institutions.ts` recomputes stats on every request and ignores `stats_json`. If the PDF
-report or a scheduled job reads `stats_json` as a fast path instead of querying live, it will
-report stale figures — potentially showing numbers from before a member left or before new
-challenges were completed.
+WCAG 2.2 AA includes SC 2.4.11 (Focus Not Obscured - Minimum): a focused element must not be
+completely hidden by author-created fixed or sticky content. The current layout has no sticky
+header, but the `ConsentBanner` renders as a fixed element at the bottom of the viewport. If a
+user is tabbing through content near the bottom of the page while the banner is visible, focused
+elements will be completely obscured by the banner — a direct SC 2.4.11 failure.
 
 **Prevention:**
-- Never read `stats_json` in any reporting code path; treat it as write-only.
-- If performance requires a cache, introduce an explicit `refreshed_at` timestamp alongside the
-  cached value and reject reads older than N hours.
-- Add a code comment to the `statsJson` field in schema.ts flagging it as a legacy cache.
-
-**Phase relevance:** Phase 15 (PDF report data collection).
+For the `ConsentBanner`: either make it modal (require dismiss before any other interaction,
+which already works with the Escape/click-outside close pattern) or add `scroll-padding-bottom`
+equal to the banner height to the `<html>` element. Test by Tab-focusing elements near the bottom
+of the viewport with the banner visible.
 
 ---
 
-### Pitfall 11: Admin Router requireRole Allows community_manager on Admin-Only Operations
+### Pitfall 13: Notification Items Are `<li onClick>` Without Keyboard Activation
 
 **What goes wrong:**
-`router.use(authMiddleware, requireRole("community_manager"))` is applied to the entire
-`adminRouter`. The current guard passes if `role === target || role === 'admin'` — a CM can
-invoke any admin endpoint. Operations that should be admin-only (creating institution portal
-accounts, configuring report delivery schedules across multiple institutions) are reachable by
-CMs under the current design.
+Each notification item in `NotificationBell` is a `<li onClick>`. `onClick` on a non-interactive
+element fires on mouse click and on Enter when the element has `tabIndex`, but does not fire on
+Space (the expected keyboard activation for buttons). More critically, there is no `tabIndex` on
+the `<li>` elements at all — keyboard users cannot reach individual notifications.
 
 **Prevention:**
-- Introduce a `requireAdmin()` middleware for high-privilege operations and apply it to individual
-  routes that create institution accounts or manage delivery schedules.
-- Review all new Phase 15/16 admin routes against the CM vs. admin permission model before
-  implementation.
-
-**Phase relevance:** Phase 16 (institution user management endpoints).
+Replace `<li onClick>` with `<li><button type="button">...</button></li>`. The button handles
+keyboard activation (Enter and Space), focus, and disabled state natively. This also resolves the
+screen reader role ambiguity — `<li>` with `onClick` is announced as a list item, not an
+interactive control.
 
 ---
 
-### Pitfall 12: SWEMWBS Raw Score vs. Rasch-Transformed Score in Band Calculations
+## Technical Debt Patterns
 
-**What goes wrong:**
-The `wemwbs_score` column stores the raw 7-item sum (range 7-35). SWEMWBS scoring guidelines
-require Rasch transformation for accurate band classification. If bands are derived by
-partitioning the raw score directly (e.g. 7-17 = low, 18-26 = medium, 27-35 = high), they will
-not match the validated cut-points in the published literature, and any interpretation made by
-institutions will be clinically inaccurate.
-
-**Why it happens:**
-The Rasch lookup table is not widely known; developers apply equal-interval banding by default.
-
-**Prevention:**
-- Apply the official Rasch transformation lookup table before computing bands. The transformation
-  converts the raw integer sum to a decimal metric score using a 35-row lookup.
-  Source: WEMWBS User Guide v2 and the 2025 Frontiers in Psychiatry paper on SWEMWBS
-  categorisation.
-- Store the transformed score in a separate column (`wemwbs_rasch_score`) or compute it at query
-  time from the lookup table; never derive bands from the raw integer directly.
-
-**Phase relevance:** Phase 15 (wellbeing aggregation query).
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Ad-hoc `<input>` instead of shared `Input` component | Faster to write inline | No `aria-invalid`, no `aria-describedby`, inconsistent focus ring contrast, errors not announced | Never — always use shared component |
+| `role="button"` on `<div>` | Appears accessible in DOM inspection | No keyboard activation (Enter/Space), no inherent disabled state, not a native button | Never — use `<button>` |
+| `aria-label` on icon button without screen reader test | Satisfies axe-core | Label may be wrong, unhelpful, or contradict visible text | Only acceptable if tested with a real screen reader |
+| Chart `aria-hidden` without companion data table | Suppresses false positives in automated scan | Screen reader users receive no data | Never — always pair with accessible table or `accessibilityLayer` |
+| `focus:ring-primary-500/30` instead of full-opacity ring | Softer visual appearance | 1.4:1 contrast ratio — WCAG SC 1.4.11 failure | Never in user-facing interactive elements |
+| Conditional rendering of error message as `role="alert"` inline | Alert fires on mount | Multiple simultaneous alerts if several errors become visible together | Only one `role="alert"` visible per interaction |
 
 ---
 
-## Phase-Specific Warnings
+## Integration Gotchas
 
-| Phase Topic | Likely Pitfall | Mitigation |
-|---|---|---|
-| Wellbeing band aggregation query | Raw score banding (Pitfall 12), small-cohort re-identification (Pitfall 2) | Apply Rasch transform; enforce k=10 suppression at DB layer |
-| Institution-facing PDF content | WEMWBS licence (Pitfall 1), consent scope (Pitfall 9) | Confirm commercial licence before build; add institutional_reporting consent purpose |
-| PDF generation and email send | pdfkit memory (Pitfall 5), Resend size limits (Pitfall 6) | Stream to buffer; size-gate at 8 MB before attaching |
-| PDF scheduled delivery job | Duplicate execution (Pitfall 4) | PostgreSQL advisory lock or NODE_APP_INSTANCE guard |
-| Attention trend chart | Sparse data false continuity (Pitfall 7), small-cohort re-identification (Pitfall 8) | Scatter + regression line; suppress below k=10; exclude admin-only columns |
-| Institution portal auth | Role collision and cross-tenant access (Pitfall 3) | Separate login endpoint; explicit userType JWT claim; audit existing routes |
-| Institution portal admin endpoints | CM over-permission (Pitfall 11) | requireAdmin() for create/manage operations |
-| Stats cache in PDF data pipeline | Stale stats_json (Pitfall 10) | Never read cache in reporting path |
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| Recharts | Rendering chart with no `aria-hidden` and no data alternative | `aria-hidden="true"` on chart container + companion `<table className="sr-only">`, OR add `accessibilityLayer` prop to chart component |
+| Radix UI Accordion | Hand-rolling accordion-style patterns elsewhere in the codebase | Always use Radix `Accordion.Root/Item/Trigger/Content` — ARIA states are handled automatically |
+| react-dropzone | Relying on visual overlay to communicate upload state | Add `role="status"` live region outside the drop zone; set `aria-disabled` not just visual `opacity` |
+| React Router `<Link>` | Link has no active-state ARIA semantics | Use `<NavLink>` with `aria-current={isActive ? "page" : undefined}` |
+| Tailwind v4 focus utilities | `focus:ring-*/[opacity < 100]` considered safe because a ring is present | Audit all semi-transparent focus rings — they fail the 3:1 contrast requirement for SC 1.4.11 |
+| Custom modals (`role="dialog"`) | `aria-modal="true"` assumed to lock focus | `aria-modal` is a screen reader hint only; JavaScript focus trap is required separately |
+
+---
+
+## Performance Traps
+
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| `aria-live` on a value updated every interval tick | Screen reader queue saturated; other announcements drop or are delayed indefinitely | Update live regions only at meaningful thresholds, never on every timer tick | Immediately — as with kiosk countdown |
+| Multiple `role="alert"` elements made visible together | Assertive announcement queue overloaded; user hears partial or garbled messages | Single assertive announcement per interaction; use `role="status"` for everything else | Any page with simultaneous validation errors |
+| Large DOM tree injected into live region | Announcement reads every text node — extremely long | Inject summary text only ("3 items", not all item content) | Any live region receiving more than a sentence of content |
+
+---
+
+## UX Pitfalls
+
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| Success message shown by unmounting form and replacing with static text (`AddMemberModal` success state) | Screen reader users hear nothing — no live region fires on the replacement content | Render success in a `role="status"` element that is always in the DOM, populated on success |
+| Error text not linked to its field via `aria-describedby` (`AddMemberModal` inline `<input>`) | Screen reader reads the field name only; the error below is not associated with the field | Use `aria-describedby="error-id"` on the input and `id="error-id"` on the error `<p>`; also set `aria-invalid="true"` |
+| Colour alone signals unread notification status (left border accent) | Colour-blind users cannot distinguish read/unread | Add visually-hidden text ("unread") to unread notification items |
+| Nav links have no active-page indicator for screen readers | Screen reader users cannot confirm which page they are on | `aria-current="page"` on the active `<NavLink>` |
+
+---
+
+## "Looks Done But Isn't" Checklist
+
+- [ ] **Skip link visible on focus:** Present in `AppShell` (`<a href="#main-content">`) — verify it
+  is the first focusable element AND becomes visible when focused (not just positioned off-screen
+  forever).
+- [ ] **Modal focus trap:** `role="dialog"` and `aria-modal="true"` are present — verify Tab cannot
+  escape to background content while the modal is open.
+- [ ] **Focus returned after modal close:** Modals close programmatically — verify focus returns to
+  the element that triggered the modal, not `document.body`.
+- [ ] **Chart data table:** `WellbeingChart` has `<table className="sr-only">` — verify
+  `AttentionTrendChart` (and any future charts) have equivalent before marking complete.
+- [ ] **Route announcement:** Some pages update `document.title` in `useEffect` — verify a screen
+  reader announces the page change on every route transition, not just pages with the title effect.
+- [ ] **`aria-expanded` on all disclosure toggles:** Grep for `setOpen` / `useState(false)` with a
+  conditional render — verify every trigger button has `aria-expanded={open}`.
+- [ ] **Escape key handling:** Every open panel, dropdown, and modal — verify Escape closes it and
+  returns focus to the trigger.
+- [ ] **Colour contrast in all states:** Automated tools only check default state — manually verify
+  focus, hover, disabled, and error states meet 3:1 (non-text) or 4.5:1 (text) ratios.
+- [ ] **Accessible authentication (WCAG 3.3.8):** Password and phone login flows — verify no
+  cognitive puzzle (image CAPTCHA) is required without alternative, and that password fields allow
+  paste (F109 failure if paste is blocked).
+- [ ] **Target size (WCAG 2.5.8):** 24×24 CSS px minimum for interactive elements — spot-check
+  small action buttons. The notification bell button (`p-2` wrapping a 20×20 icon = ~40×40 total,
+  passes). Inline text-only action buttons ("Mark all read", "Enable Notifications") may be below
+  24px height without sufficient padding.
+- [ ] **`role="alert"` used correctly:** Verify no page has multiple `role="alert"` elements
+  becoming visible simultaneously from a single user action.
+
+---
+
+## Recovery Strategies
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| No route-change focus management | LOW | Add `useRouteChangeAnnouncer` hook to `AppShell`; add `tabIndex={-1}` to `<main>` |
+| Missing `aria-expanded` everywhere | LOW–MEDIUM | Grep `setOpen` + conditional render; add `aria-expanded`, `aria-controls`, panel `id` to each |
+| No focus trap in custom modals | MEDIUM | Replace with Radix `Dialog` (breaking change to modal API) or add `focus-trap-react` wrapper |
+| Chart accessibility gap | LOW | Copy `WellbeingChart` pattern to `AttentionTrendChart`; make a shared `ChartWithDataTable` wrapper |
+| Kiosk countdown live region spam | LOW | Remove `aria-live` from tick element; add threshold-only announcer |
+| Missing `aria-expanded` on notification bell | LOW | Add four attributes to one button element |
+| Focus not returned after modal close | LOW–MEDIUM | Add `triggerRef` pattern to all modal callers; call `.focus()` on close |
+| `role="alert"` stacking in InstitutionManagement | LOW | Audit error render conditions; replace simultaneous alerts with `role="status"` |
+| Semi-transparent focus rings | LOW | Replace all `focus:ring-*/30` with `focus:ring-accent-500` globally |
+
+---
+
+## Pitfall-to-Phase Mapping
+
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| No route-change focus management | Phase 1: Foundation | Screen reader test: navigate routes, confirm page title or heading announced |
+| Missing `aria-expanded` on all disclosures | Phase 2: Interactive Components | Axe-core passes + manual keyboard check of every toggle |
+| Custom modals lack focus trap and return | Phase 2: Interactive Components | Keyboard-only modal flow test; Escape closes and returns focus |
+| `AttentionTrendChart` no accessible alternative | Phase 3: Data Visualisation | Screen reader navigates to chart; table data is announced, SVG is aria-hidden |
+| Automated audit treated as compliance | Phase 1: Audit Planning | Manual test plan reviewed and signed off before remediation begins |
+| Semi-transparent focus ring contrast failure | Phase 2: Focus Indicators | Chrome DevTools contrast checker on every interactive state |
+| No `aria-current` on active nav | Phase 1: Foundation | Screen reader reads "Dashboard, link, current page" on active route |
+| Notification dropdown no Escape key | Phase 2: Interactive Components | Keyboard: open bell, press Escape, confirm closed and focus returned to bell |
+| Multiple simultaneous `role="alert"` | Phase 2: Interactive Components | Audit InstitutionManagement error patterns; trigger multiple errors at once |
+| Kiosk countdown `aria-live` per tick | Phase 2: Interactive Components | Screen reader test of kiosk warning overlay — confirm no per-second announcement |
+| File upload progress not announced | Phase 3: Forms | Screen reader test: drop file, confirm "Uploading" announced, confirm success/error announced |
+| Focus obscured by ConsentBanner | Phase 2: Layout | Tab through page bottom with ConsentBanner visible; confirm focused elements are not fully hidden |
+| Notification items not keyboard-operable | Phase 2: Interactive Components | Tab to bell, open, Tab to first item, press Enter — confirm navigation occurs |
+| Password paste prevention (SC 3.3.8) | Phase 1: Audit | Check all password inputs for `onPaste` handler blocking paste |
 
 ---
 
 ## Sources
 
-- [ICO: How do we ensure anonymisation is effective?](https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/data-sharing/anonymisation/how-do-we-ensure-anonymisation-is-effective/)
-  ICO guidance on k-anonymity limitations and UK GDPR anonymisation requirements. HIGH confidence.
-- [WEMWBS Licences & Pricing — Warwick Innovations](https://warwick.ac.uk/services/innovations/wemwbs/licenses/)
-  Third-party commercial licence requirement from Dec 2024. HIGH confidence via search verification.
-- [WEMWBS FAQ — Warwick Innovations](https://warwick.ac.uk/services/innovations/wemwbs/faq/)
-  Non-commercial licence cannot be used to provide WEMWBS to other parties. HIGH confidence.
-- [OWASP Multi-Tenant Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Multi_Tenant_Security_Cheat_Sheet.html)
-  Tenant isolation, role collision, session contamination. HIGH confidence.
-- [Tenant Infrastructure Risks — FusionAuth](https://fusionauth.io/blog/multi-tenant-hijack-2)
-  JWT tenant scope and cross-tenant access patterns. MEDIUM confidence.
-- [Multi-Tenant Leakage: Row-Level Security Failures](https://medium.com/@instatunnel/multi-tenant-leakage-when-row-level-security-fails-in-saas-da25f40c788c)
-  Insufficient logical separation leading to data leakage. MEDIUM confidence.
-- [pdfkit memory leak issue #258](https://github.com/foliojs/pdfkit/issues/258)
-  Memory leak on repeat PDF render requests. HIGH confidence (official issue tracker).
-- [pdfkit memory and performance issue #728](https://github.com/foliojs/pdfkit/issues/728)
-  Performance and memory issues with large documents. HIGH confidence (official issue tracker).
-- [pdfkit OOM issue #1289](https://github.com/foliojs/pdfkit/issues/1289)
-  Heap exhaustion on large page counts. HIGH confidence (official issue tracker).
-- [node-cron duplicate execution in cluster — issue #393](https://github.com/node-cron/node-cron/issues/393)
-  Duplicate job firing in PM2 cluster mode. HIGH confidence (official issue tracker).
-- [Preventing Duplicate Cron Job Execution in Scaled Environments](https://medium.com/@WMRayan/preventing-duplicate-cron-job-execution-in-scaled-environments-52ab0a13f258)
-  Advisory lock and instance-guard patterns. MEDIUM confidence.
-- [Email size limits and attachment restrictions — GlockApps](https://glockapps.com/blog/email-file-size-limits-and-attachment-restrictions/)
-  25 MB SMTP limit, base64 33% overhead. MEDIUM confidence.
-- [How file size and MIME types affect deliverability — Suped](https://www.suped.com/knowledge/email-deliverability/technical/how-does-email-file-size-and-mime-types-affect-email-deliverability)
-  Deliverability impact of large attachments. MEDIUM confidence.
-- [Time series visualisation best practices — Metabase](https://www.metabase.com/blog/how-to-visualize-time-series-data)
-  Handling missing data, avoiding false continuity in sparse series. MEDIUM confidence.
-- [SWEMWBS categorisation — Frontiers in Psychiatry 2025](https://www.frontiersin.org/journals/psychiatry/articles/10.3389/fpsyt.2025.1674009/full)
-  Band cut-points and Rasch transformation requirements. HIGH confidence (peer-reviewed).
-- [WEMWBS User Guide v2 — official PDF](https://s3.amazonaws.com/helpscout.net/docs/assets/5f97128852faff0016af3a34/attachments/5fe10a9eb624c71b7985b8f3/WEMWBS-Scale.pdf)
-  Official scoring and Rasch transformation lookup. HIGH confidence (official documentation).
+- W3C WCAG 2.2 Understanding Docs:
+  [SC 2.4.11 Focus Not Obscured](https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum),
+  [SC 2.5.7 Dragging Movements](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements),
+  [SC 3.3.8 Accessible Authentication](https://www.w3.org/WAI/WCAG22/Understanding/accessible-authentication-minimum)
+- W3C Failure Techniques:
+  [F110 — sticky footer obscures focused elements](https://www.w3.org/WAI/WCAG22/Techniques/failures/F110.html),
+  [F109 — preventing password paste](https://www.w3.org/WAI/WCAG22/Techniques/failures/F109.html)
+- Deque:
+  [WAI-ARIA Top 6 Mistakes to Avoid](https://www.deque.com/blog/wai-aria-top-6-mistakes-to-avoid/),
+  [How to make interactive charts accessible](https://www.deque.com/blog/how-to-make-interactive-charts-accessible/),
+  [Automated Accessibility Coverage Report (57% statistic)](https://www.deque.com/automated-accessibility-coverage-report/)
+- Sara Soueidan:
+  [Accessible notifications with ARIA Live Regions Part 1](https://www.sarasoueidan.com/blog/accessible-notifications-with-aria-live-regions-part-1/),
+  [Focus indicators guide](https://www.sarasoueidan.com/blog/focus-indicators/)
+- Recharts:
+  [GitHub issue #2801 — accessibility support](https://github.com/recharts/recharts/issues/2801),
+  [GitHub discussion #4484 — accessibility direction](https://github.com/recharts/recharts/discussions/4484)
+- React Router:
+  [GitHub discussion #9863 — SPA focus not reset on route change](https://github.com/remix-run/react-router/discussions/9863)
+- Radix UI: [Accessibility overview](https://www.radix-ui.com/primitives/docs/overview/accessibility)
+- AllAccessible:
+  [WCAG 2.2 Complete Guide 2025](https://www.allaccessible.org/blog/wcag-22-complete-guide-2025)
+- oidaisdes.org: [Common ARIA Mistakes](https://www.oidaisdes.org/common-aria-mistakes.en/)
+- Live codebase analysis: `packages/web/src` — 2026-03-30
+
+---
+*Pitfalls research for: WCAG 2.2 AA retrofitting on existing React/Vite SPA (Indomitable Unity)*
+*Researched: 2026-03-30*

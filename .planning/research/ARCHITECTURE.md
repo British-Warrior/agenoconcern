@@ -1,676 +1,522 @@
-# Architecture Patterns
+# Architecture Research
 
-**Project:** Indomitable Unity v1.3 — Enhanced Reporting & Institution Portal
-**Researched:** 2026-03-25
-**Confidence:** HIGH (all patterns grounded in direct codebase inspection of v1.2 completed state)
-
----
-
-## Existing Architecture Baseline (v1.2 Completed)
-
-### Server File Map
-
-```
-packages/server/src/
-├── config/env.ts                        # getEnv() — validated env vars
-├── db/
-│   ├── index.ts                         # getDb() — singleton Drizzle instance
-│   └── schema.ts                        # All Drizzle table definitions
-├── middleware/
-│   ├── auth.ts                          # authMiddleware + requireRole(role)
-│   ├── api-key-auth.ts                  # VANTAGE X-Api-Key auth
-│   └── error-handler.ts
-├── pdf/
-│   ├── fonts/Inter-Regular.ttf          # Committed fonts (~96KB each)
-│   ├── fonts/Inter-Bold.ttf
-│   └── institution-report.ts            # buildInstitutionReport(ReportData) → PDFDocument
-├── routes/
-│   ├── admin.ts                         # adminRouter — community_manager + admin only
-│   │                                    # Mounts: institution CRUD, contributor mgmt,
-│   │                                    #         attention flags, PDF report endpoint
-│   ├── institutions.ts                  # Public GET /api/institutions/:slug (no auth)
-│   ├── wellbeing.ts                     # /checkin, /due, /history (contributor auth)
-│   ├── webhooks.ts                      # ithinkWebhookHandler (raw body, HMAC-SHA256)
-│   └── [auth, challenges, circles, payments, impact, notifications, vantage, challenger]
-├── services/
-│   ├── notification.service.ts          # notifyBatch(ids, payload)
-│   ├── wellbeing-reminder.job.ts        # node-cron daily at 09:00 UTC
-│   └── [auth, cv, llm, matching, s3, stripe]
-└── express-app.ts                       # Route assembly — raw body before express.json()
-```
-
-### Web File Map (relevant subset)
-
-```
-packages/web/src/
-├── api/
-│   ├── admin.ts          # CM API functions + downloadInstitutionReport (raw fetch/blob)
-│   ├── attention.ts      # getAttentionFlags, getAttentionHistory, resolveFlag
-│   ├── client.ts         # apiClient — JSON responses only, not usable for binary
-│   └── wellbeing.ts
-├── hooks/
-│   ├── useAttention.ts   # useAttentionFlags, useAttentionHistory, useResolveFlag
-│   └── useInstitutions.ts
-└── pages/admin/
-    ├── AttentionDashboard.tsx    # Active flags + history tabs
-    └── InstitutionManagement.tsx # Institution CRUD + PDF download button + date range
-```
-
-### Auth Surfaces
-
-| Route Scope | Guard Applied | Roles Allowed |
-|-------------|--------------|---------------|
-| `adminRouter` (all routes) | `authMiddleware` + `requireRole("community_manager")` | community_manager, admin |
-| Contributor routes | `authMiddleware` | contributor, community_manager, admin |
-| Public institution page | None | Anyone |
-| VANTAGE routes | `apiKeyMiddleware` | External systems with valid key |
-| iThink webhook | HMAC-SHA256 + timestamp window | iThink system only |
-
-Note: `requireRole("community_manager")` passes `admin` through (see `middleware/auth.ts` line 62: checks `role !== role && role !== "admin"`).
-
-### Existing Key Schema Tables
-
-| Table | Key Columns | Notes |
-|-------|-------------|-------|
-| `contributors` | id, role, status | Role enum: contributor, community_manager, admin, challenger |
-| `institutions` | id, slug, name, city, isActive, statsJson | `statsJson` is a cache field |
-| `contributor_institutions` | contributor_id, institution_id, assigned_at | Many-to-many junction |
-| `wellbeing_checkins` | contributor_id, wemwbs_score, ucla_score, completed_at | Time-series health data |
-| `ithink_attention_flags` | contributor_id, institution_id, cleared_at, signal_type | One row per iThink signal |
-| `webhook_deliveries` | delivery_id (unique), processed_at | Idempotency log |
-| `contributor_hours` | contributor_id, circle_id, hours_logged, logged_at | Activity ledger |
-| `challenge_interests` | contributor_id, challenge_id, created_at | Challenge participation |
-
-### Route Mount Order (express-app.ts — critical for new features)
-
-```
-1. POST /api/payments/webhook   — express.raw() (Stripe)
-2. POST /api/webhooks/ithink    — express.raw() (iThink HMAC-signed)
-3. app.use(express.json())      ← all raw-body routes MUST be above this
-4. All other routes
-5. app.use(adminRouter) at /api/admin
-```
+**Domain:** WCAG 2.2 AA remediation — React/Vite SPA (Indomitable Unity)
+**Researched:** 2026-03-30
+**Confidence:** HIGH (direct codebase inspection + verified WCAG 2.2 documentation + recharts wiki)
 
 ---
 
-## New Features: Integration Points
+## Existing Accessibility Baseline
 
-### Feature 1: Wellbeing Aggregation in PDF
+Before prescribing architecture, a full inspection of the codebase establishes what already works and what does not. This prevents redundant work and clarifies the true gap.
 
-**Status of dependencies:** Fully available. `wellbeing_checkins` table exists with `wemwbs_score`, `ucla_score`, `completed_at`, `contributor_id`. PDF route exists at `GET /api/admin/institutions/:slug/report.pdf`. `buildInstitutionReport` is a pure function accepting a `ReportData` struct.
+**Already implemented correctly:**
+- Global `*:focus-visible` outline rule in `app.css` (3px amber, `outline-offset: 2px`) — meets WCAG 2.4.7 and 2.2's 2.4.11
+- `.skip-link` class and `<a href="#main-content">Skip to main content</a>` in `AppShell` — meets 2.4.1
+- `<main id="main-content" role="main">`, `<header role="banner">`, `<footer role="contentinfo">` landmarks in `AppShell`
+- `<nav aria-label="Main navigation">` in `Navbar`
+- `Input` component uses `useId`, `aria-describedby`, `aria-invalid`, and `role="alert"` on error text
+- `Button` uses `aria-busy` on loading state, `aria-hidden` on the spinner SVG
+- `Alert` uses `role="alert"` (errors/warnings) and `role="status"` (info/success)
+- `WellbeingChart` has `aria-hidden="true"` on the recharts container and a companion `<table className="sr-only">` — the correct pattern
+- `KioskWarningOverlay` has `role="alertdialog"`, `aria-modal`, `aria-labelledby`, `aria-describedby`, and `aria-live` on the countdown
+- `CircleFormationModal` and `AddMemberModal` have `role="dialog"`, `aria-modal`, `aria-labelledby`
+- `ToggleSwitch` in `InstitutionManagement` has `role="switch"` and `aria-checked`
+- `WellbeingForm` uses `<fieldset>`/`<legend>` for each radio group, radio inputs are `sr-only` with visible styled labels
+- `document.title` set per page component via `useEffect` — consistent across all 25+ pages
+- All primary and semantic colours documented as 7:1+ contrast on white in `app.css` comments
+- `--spacing-touch: 3rem` (48px minimum touch target) defined in theme
 
-**Modified files only — no new files, no new tables.**
+**Gaps identified by inspection:**
 
-#### Modified: `packages/server/src/pdf/institution-report.ts`
+| Gap | Affected Component(s) | WCAG Criterion |
+|-----|----------------------|----------------|
+| No focus trap — Tab escapes modals into page behind | `CircleFormationModal`, `AddMemberModal`, `ConfirmDialog` in InstitutionManagement | 2.1.2 |
+| No focus return to trigger on modal close | Same modals as above | 2.4.3 |
+| No focus movement on route change | All shells | 2.4.3 |
+| No global announcement channel for async success/failure | Mutation handlers throughout app | 4.1.3 |
+| `NotificationBell` dropdown has no `aria-expanded`, no Escape handler, no focus return | `NotificationBell.tsx` | 2.1.1, 4.1.2 |
+| Navbar inline buttons ("Enable Notifications", "Install App") have no `aria-label` | `Navbar.tsx` | 4.1.2 |
+| `AttentionTrendChart` lacks `accessibilityLayer` prop and companion table | `AttentionTrendChart.tsx` | 1.1.1, 4.1.2 |
+| `AddMemberModal` uses a raw `<input>` instead of the accessible `Input` component | `AddMemberModal.tsx` | 1.3.1, 3.3.1 |
+| No `aria-current="page"` on active Navbar links | `Navbar.tsx` | 4.1.2 |
+| `ToggleSwitch` is local to `InstitutionManagement.tsx` — not shared | `InstitutionManagement.tsx` | n/a (DX/maintenance) |
 
-Extend the exported `ReportData` interface with an optional wellbeing field:
+---
 
+## Standard Architecture
+
+### System Overview
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                        Layout Shell Layer                        │
+│  AppShell (skip link, landmarks)                                 │
+│  Minimal shells: InstitutionPortalRoute, ChallengerRoute, CMRoute│
+├──────────────────────────────────────────────────────────────────┤
+│                   Accessibility Infrastructure                   │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌───────────────┐  │
+│  │ AnnounceProvider │  │ RouteChangeSync  │  │ useFocusTrap  │  │
+│  │ (context + DOM   │  │ (focus → h1 on   │  │ (hook — used  │  │
+│  │  live region)    │  │  pathname change) │  │  inside Modal)│  │
+│  └────────┬─────────┘  └────────┬─────────┘  └──────┬────────┘  │
+│           │                     │                    │           │
+├───────────┴─────────────────────┴────────────────────┴───────────┤
+│                      Shared UI Component Layer                   │
+│  Input  Button  Alert  Card  Modal  ToggleSwitch                 │
+├──────────────────────────────────────────────────────────────────┤
+│                        Page / Feature Layer                      │
+│  pages/   components/challenges/   components/circles/           │
+│  components/wellbeing/   components/attention/   layout/         │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### Component Responsibilities
+
+| Component | Responsibility | Integration Point |
+|-----------|----------------|-------------------|
+| `AnnounceProvider` (new) | Owns the single global `aria-live="polite"` region; exposes `useAnnounce()` hook | Wrap `<App>` in `main.tsx` |
+| `RouteChangeSync` (new) | On `pathname` change: moves focus to `main h1` | Mount as sibling to `<Outlet>` in each layout shell |
+| `useFocusTrap` (new hook) | Constrains Tab/Shift-Tab inside a container ref; restores focus to trigger on deactivate | Used internally by `Modal`; not used directly by consumers |
+| `Modal` (new shared wrapper) | Combines `role="dialog"`, `aria-modal`, `aria-labelledby`, backdrop click-close, Escape-close, `useFocusTrap` | Replace all ad-hoc modal divs in circles, challenges, admin |
+| `Input` (existing — minor update) | Already correct; add `aria-required={required}` (1 line) | No consumer changes needed |
+| `NotificationBell` (existing — update) | Add `aria-expanded`, `aria-haspopup="listbox"`, Escape handler, focus return on close | Modify in place |
+| `AttentionTrendChart` (existing — update) | Add `accessibilityLayer` to `BarChart`; add `sr-only` companion table | Pattern matches existing `WellbeingChart` |
+| `ToggleSwitch` (existing — promote) | Already correct in InstitutionManagement; extract to `components/ui/ToggleSwitch.tsx` | Move only, no logic changes |
+
+---
+
+## Recommended Project Structure
+
+New files land alongside existing conventions. No restructuring of existing directories.
+
+```
+src/
+├── components/
+│   ├── a11y/                           # New — accessibility infrastructure
+│   │   ├── AnnounceProvider.tsx        # Context + live region DOM node + useAnnounce hook
+│   │   ├── RouteChangeSync.tsx         # Moves focus to h1 on pathname change
+│   │   └── useFocusTrap.ts             # Hook: Tab/Shift-Tab containment + trigger restore
+│   ├── ui/
+│   │   ├── Modal.tsx                   # New shared dialog shell (wraps useFocusTrap)
+│   │   ├── ToggleSwitch.tsx            # Promoted from InstitutionManagement
+│   │   ├── Button.tsx                  # Existing — correct as-is
+│   │   ├── Input.tsx                   # Existing — add aria-required (1 line)
+│   │   ├── Alert.tsx                   # Existing — correct as-is
+│   │   └── Card.tsx                    # Existing — correct as-is
+│   ├── layout/
+│   │   ├── AppShell.tsx                # Add <RouteChangeSync />
+│   │   └── Navbar.tsx                  # Add aria-current, aria-expanded, aria-labels
+│   ├── circles/
+│   │   ├── CircleFormationModal.tsx    # Migrate to <Modal>
+│   │   └── AddMemberModal.tsx          # Migrate to <Modal>, use <Input>
+│   └── attention/
+│       └── AttentionTrendChart.tsx     # Add accessibilityLayer + sr-only table
+└── main.tsx                            # Wrap <App> with <AnnounceProvider>
+```
+
+### Structure Rationale
+
+- **`components/a11y/`:** Infrastructure that has no visual output belongs separate from visual UI. Grouping accessibility utilities together makes them easy to find and prevents them being distributed across unrelated feature folders.
+- **`components/ui/Modal.tsx`:** Centralises all dialog accessibility requirements. Every modal gets correct ARIA, focus trap, and Escape key handling automatically, without each author maintaining a checklist.
+- **`components/ui/ToggleSwitch.tsx`:** The InstitutionManagement version is already correctly implemented. Promoting it prevents future pages writing their own broken switch.
+
+---
+
+## Architectural Patterns
+
+### Pattern 1: Announcement Provider (Global Live Region)
+
+**What:** A React context that owns a single `aria-live="polite"` region injected at app root. Any component calls `useAnnounce("Circle created")` and the message is read by screen readers then cleared.
+
+**When to use:** Any async operation whose result is not already surfaced by inline `role="alert"` content. Primary cases: successful mutations (circle created, member added, challenge submitted), navigation confirmations.
+
+**Trade-offs:** A single live region avoids the race condition caused by multiple simultaneous live regions, where screen readers can drop or reorder announcements. The 50ms reset-before-set pattern forces re-announcement even when the same message fires twice in a row. The `sr-only` div must exist in the DOM before any announcement fires — placing `AnnounceProvider` at root satisfies this.
+
+Inline `role="alert"` on form errors (already in `Input` and `Alert`) is correct and distinct — that pattern handles synchronous validation feedback and should not be changed to use this channel.
+
+**Example:**
 ```typescript
-export interface ReportData {
-  institutionName: string;
-  institutionCity: string | null;
-  stats: { contributors: number; challenges: number; hours: number };
-  generatedAt: Date;
-  dateRange: { startDate: Date | null; endDate: Date | null };
-  // NEW — undefined or null when below privacy threshold
-  wellbeing?: {
-    avgWemwbsScore: number;
-    avgUclaScore: number;
-    checkinCount: number;
-  } | null;
+// components/a11y/AnnounceProvider.tsx
+const AnnounceContext = createContext<(msg: string) => void>(() => {});
+
+export function AnnounceProvider({ children }: { children: ReactNode }) {
+  const [message, setMessage] = useState("");
+
+  const announce = useCallback((msg: string) => {
+    setMessage("");                       // clear first — forces re-read on duplicate messages
+    setTimeout(() => setMessage(msg), 50);
+  }, []);
+
+  return (
+    <AnnounceContext.Provider value={announce}>
+      {children}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {message}
+      </div>
+    </AnnounceContext.Provider>
+  );
 }
+
+export const useAnnounce = () => useContext(AnnounceContext);
 ```
 
-The `buildInstitutionReport` function renders a wellbeing section only when `data.wellbeing` is non-null. The privacy threshold decision lives in the route handler — the PDF module never knows about it.
+### Pattern 2: Route Change Focus Sync
 
-#### Modified: `GET /api/admin/institutions/:slug/report.pdf` in `routes/admin.ts`
+**What:** A component that listens to `useLocation()` and on each `pathname` change moves focus to the page's `<h1>` element inside `<main>`. The `<h1>` receives `tabIndex={-1}` to be programmatically focusable without entering the tab order.
 
-After the existing four aggregation queries (contributor IDs, challenge count, hours), add a fifth:
+**When to use:** Mount once inside each layout shell (`AppShell`, and the minimal portal/challenger shells) as a sibling to `<Outlet>`. Each shell gets its own instance. This is a zero-output component (renders `null`).
 
+**Trade-offs:** Focusing `<h1>` is the current industry consensus for SPAs (react-router official accessibility docs, January 2026 SPA accessibility guides, MDN React accessibility guide — all agree). Focusing `<main>` is an alternative but requires more consistent structural markup. `tabIndex={-1}` on `<h1>` does not affect sighted users — the focus ring only appears for programmatic focus in the context of keyboard navigation.
+
+`document.title` is already updated per page in this codebase. `RouteChangeSync` handles focus only and does not duplicate title management.
+
+**Example:**
 ```typescript
-// Fetch per-contributor wellbeing averages within the date window
-const wellbeingRows = await db
-  .select({
-    contributorId: wellbeingCheckins.contributorId,
-    avgWemwbs: sql<number>`avg(${wellbeingCheckins.wemwbsScore})`,
-    avgUcla: sql<number>`avg(${wellbeingCheckins.uclaScore})`,
-  })
-  .from(wellbeingCheckins)
-  .where(/* inArray(contributorIds) + optional date filters */)
-  .groupBy(wellbeingCheckins.contributorId);
+// components/a11y/RouteChangeSync.tsx
+export function RouteChangeSync() {
+  const { pathname } = useLocation();
 
-const WELLBEING_MIN_THRESHOLD = 5; // privacy gate — agree with stakeholders
-const checkinCount = wellbeingRows.length;
-
-const wellbeing = checkinCount >= WELLBEING_MIN_THRESHOLD
-  ? {
-      avgWemwbsScore: wellbeingRows.reduce((s, r) => s + r.avgWemwbs, 0) / checkinCount,
-      avgUclaScore:   wellbeingRows.reduce((s, r) => s + r.avgUcla, 0)   / checkinCount,
-      checkinCount,
+  useEffect(() => {
+    const h1 = document.querySelector<HTMLElement>("main h1");
+    if (h1) {
+      h1.tabIndex = -1;
+      h1.focus({ preventScroll: false });
     }
-  : null;
+  }, [pathname]);
 
-const reportData: ReportData = { ...existingFields, wellbeing };
+  return null;
+}
 ```
 
-**Data flow:**
-```
-GET /api/admin/institutions/:slug/report.pdf
-  → look up institution by slug
-  → fetch contributorIds
-  → [existing] hours + challenge aggregations
-  → [NEW] wellbeing aggregation → privacy threshold check
-  → buildInstitutionReport({ ...stats, wellbeing })
-  → doc.pipe(res) + doc.end()
-```
+### Pattern 3: useFocusTrap Hook
 
----
+**What:** A hook that accepts an `active` boolean and returns a `containerRef`. When `active` is true it: captures the current focused element as a restore target, moves focus to the first focusable child, intercepts Tab and Shift-Tab to cycle within the container, and on deactivation restores focus to the captured trigger.
 
-### Feature 2: Attention Trends
+**When to use:** Modals and alertdialogs only. Do not apply to menus or dropdowns — those use roving `tabindex` (ARIA authoring practices for composite widgets).
 
-**Status of dependencies:** Fully available. `ithink_attention_flags` exists with `institution_id`, `created_at`, `cleared_at`. The existing attention routes (`/attention`, `/attention/history`) establish the institution-scoping pattern.
+**Trade-offs:** A custom hook keeps the dependency graph minimal. The library `focus-trap-react` (~6KB, peer dep chain) provides the same core behaviour plus rare features (custom initial focus selectors, delay activation, `allowOutsideClick`). Those features are not needed here. If complex nested trap scenarios arise later (e.g., a modal that opens another modal), migrating to the library is straightforward.
 
-**Modified files only — no new tables.**
-
-#### Modified: `routes/admin.ts`
-
-Add a new route. Critical: register it BEFORE any `/:flagId` parameter routes (same constraint as the existing `/attention/history` comment in the file):
-
+**Example:**
 ```typescript
-// MUST be registered before /attention/:flagId/resolve
-router.get("/attention/trends", async (req, res) => {
-  const cmId = req.contributor!.id;
-  const db = getDb();
+// components/a11y/useFocusTrap.ts
+const FOCUSABLE_SELECTORS = [
+  'a[href]', 'button:not([disabled])', 'input:not([disabled])',
+  'select:not([disabled])', 'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(', ');
 
-  // Resolve CM institution from DB — never from JWT (existing pattern)
-  const [assignment] = await db
-    .select({ institutionId: contributorInstitutions.institutionId })
-    .from(contributorInstitutions)
-    .where(eq(contributorInstitutions.contributorId, cmId))
-    .limit(1);
+export function useFocusTrap(active: boolean) {
+  const containerRef = useRef<HTMLElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
 
-  if (!assignment) {
-    res.status(403).json({ error: "No institution assigned to this community manager" });
-    return;
-  }
+  useEffect(() => {
+    if (!active) return;
 
-  // Weekly counts for last 12 weeks
-  const weeklyCounts = await db.execute(sql`
-    SELECT
-      date_trunc('week', created_at) AS week_bucket,
-      count(*)                       AS total,
-      count(cleared_at)              AS resolved
-    FROM ithink_attention_flags
-    WHERE institution_id = ${assignment.institutionId}
-      AND created_at >= now() - interval '12 weeks'
-    GROUP BY week_bucket
-    ORDER BY week_bucket DESC
-  `);
+    triggerRef.current = document.activeElement as HTMLElement;
+    const container = containerRef.current;
+    if (!container) return;
 
-  res.json({ weeklyCounts: weeklyCounts.rows });
-});
-```
+    const focusable = Array.from(
+      container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS)
+    );
+    focusable[0]?.focus();
 
-#### Modified: `packages/web/src/api/attention.ts`
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Tab') return;
+      const els = Array.from(
+        container!.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS)
+      );
+      if (els.length === 0) return;
+      const first = els[0];
+      const last = els[els.length - 1];
 
-Add `getAttentionTrends()` function following the same pattern as `getAttentionFlags`.
-
-#### Modified: `packages/web/src/hooks/useAttention.ts`
-
-Add `useAttentionTrends()` TanStack Query hook.
-
-#### Modified: `packages/web/src/pages/admin/AttentionDashboard.tsx`
-
-Add a third tab ("Trends") to the existing two-tab layout. The trends tab renders a chart or a weekly summary table. Check whether recharts is already in the dependency tree before importing a charting library.
-
----
-
-### Feature 3: PDF Scheduling and Auto-Delivery
-
-**Status of dependencies:** Resend is already configured. `node-cron` is already installed and in use (`wellbeing-reminder.job.ts`). `buildInstitutionReport` is reusable. The PDF route's data aggregation is proven. New schema table required.
-
-**This is the most architecturally novel feature.** It introduces: a new DB table, a new cron job, and the first use of Resend for file attachments.
-
-#### New Schema: `pdf_report_schedules` table
-
-Add to `packages/server/src/db/schema.ts`:
-
-```typescript
-export const reportFrequencyEnum = pgEnum("report_frequency", ["monthly", "quarterly"]);
-
-export const pdfReportSchedules = pgTable("pdf_report_schedules", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  institutionId: uuid("institution_id")
-    .notNull()
-    .references(() => institutions.id, { onDelete: "cascade" }),
-  frequency: reportFrequencyEnum("frequency").notNull(),
-  recipientEmail: varchar("recipient_email", { length: 255 }).notNull(),
-  isActive: boolean("is_active").notNull().default(true),
-  lastSentAt: timestamp("last_sent_at", { withTimezone: true }),
-  nextSendAt: timestamp("next_send_at", { withTimezone: true }).notNull(),
-  createdBy: uuid("created_by").references(() => contributors.id, { onDelete: "set null" }),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-});
-```
-
-`nextSendAt` is computed at creation (e.g. first day of next month for monthly). The cron job queries `WHERE is_active = true AND next_send_at <= now()`. After dispatch, the job updates `last_sent_at = now()` and computes the new `next_send_at`.
-
-#### New File: `packages/server/src/services/pdf-report.job.ts`
-
-Follows the exact structure of `wellbeing-reminder.job.ts`:
-
-```typescript
-import cron from "node-cron";
-// ...
-
-export function startPdfReportJob(): void {
-  cron.schedule("0 6 * * *", async () => {  // 06:00 UTC daily
-    try {
-      await runPdfReportJob();
-    } catch (err) {
-      console.error("[pdf-report-job] Error:", err);
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     }
-  });
-  console.log("[pdf-report-job] Scheduled daily at 06:00 UTC");
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      triggerRef.current?.focus();    // restore focus on deactivate
+    };
+  }, [active]);
+
+  return containerRef;
+}
+```
+
+### Pattern 4: Shared Modal Wrapper
+
+**What:** A `Modal` component that encapsulates all dialog accessibility requirements. Consumers provide `isOpen`, `onClose`, `titleId`, and `children`. The modal handles everything else: ARIA roles, focus trap, Escape key, backdrop click, and focus restoration.
+
+**When to use:** All modals. Migrate existing `CircleFormationModal`, `AddMemberModal`, and `ConfirmDialog` (in InstitutionManagement) to use this wrapper. The existing API surface (`isOpen`/`onClose` props) is unchanged for consumers.
+
+**Trade-offs:** The wrapper owns the overlay and panel container. Internal content (title, body, actions) remains the consumer's responsibility. This avoids over-abstraction while guaranteeing baseline compliance from a single code path.
+
+**Example:**
+```typescript
+// components/ui/Modal.tsx
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  titleId: string;
+  children: ReactNode;
+  className?: string;
 }
 
-async function runPdfReportJob(): Promise<void> {
-  const db = getDb();
-  const now = new Date();
-  const dueSchedules = await db
-    .select()
-    .from(pdfReportSchedules)
-    .where(and(eq(pdfReportSchedules.isActive, true), lte(pdfReportSchedules.nextSendAt, now)));
+export function Modal({ isOpen, onClose, titleId, children, className = "" }: ModalProps) {
+  const trapRef = useFocusTrap(isOpen);
 
-  for (const schedule of dueSchedules) {
-    try {
-      await dispatchScheduledReport(db, schedule);
-    } catch (err) {
-      // Per-schedule catch — one failure does not abort the batch
-      console.error(`[pdf-report-job] Failed for schedule ${schedule.id}:`, err);
+  useEffect(() => {
+    if (!isOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
     }
-  }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      ref={trapRef as React.RefObject<HTMLDivElement>}
+    >
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div className={`relative bg-white rounded-[var(--radius-lg)] shadow-xl w-full max-w-md p-6 ${className}`}>
+        {children}
+      </div>
+    </div>
+  );
 }
 ```
 
-#### New File: `packages/server/src/services/pdf-email.service.ts`
+### Pattern 5: Chart with Companion Table
 
-**Key architectural constraint:** When sending via Resend as an email attachment, the PDF cannot be streamed — it must be buffered into a `Buffer` first. Resend's attachment API requires `content: Buffer`. This is the one correct use of buffering (contrast with the browser download endpoint where streaming is mandatory).
+**What:** Every recharts chart component renders two things: the visual chart with `aria-hidden="true"` on its wrapper, and a `<table className="sr-only">` containing the same data in structured form. Charts also receive the `accessibilityLayer` prop.
 
-```typescript
-import { buildInstitutionReport, type ReportData } from "../pdf/institution-report.js";
+**When to use:** All recharts components. Already implemented correctly in `WellbeingChart`. `AttentionTrendChart` needs to be updated to match.
 
-export async function sendPdfReportEmail(
-  recipientEmail: string,
-  reportData: ReportData,
-  filename: string,
-): Promise<void> {
-  const doc = buildInstitutionReport(reportData);
+**Trade-offs:** `accessibilityLayer` (HIGH confidence — confirmed in recharts wiki) adds ARIA labels, roles, and arrow-key navigation to the chart SVG, covering keyboard-only users who can interact with the chart. The companion table provides a fallback for screen reader users where SVG navigation is impractical. Both together cover all assistive technology cases.
 
-  // Buffer the PDF — required for Resend attachment API
-  const pdfBuffer = await bufferPdfDocument(doc);
-
-  const resend = new Resend(getEnv().RESEND_API_KEY);
-  await resend.emails.send({
-    from: "reports@indomitableunity.com",
-    to: recipientEmail,
-    subject: `Impact Report — ${reportData.institutionName}`,
-    html: `<p>Scheduled impact report for ${reportData.institutionName} is attached.</p>`,
-    attachments: [{ filename, content: pdfBuffer }],
-  });
-}
-
-function bufferPdfDocument(doc: PDFKit.PDFDocument): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    doc.on("data", (chunk: Buffer) => chunks.push(chunk));
-    doc.on("end", () => resolve(Buffer.concat(chunks)));
-    doc.on("error", reject);
-    doc.end();
-  });
-}
-```
-
-#### Modified: `packages/server/src/index.ts`
-
-```typescript
-startWellbeingReminderJob();
-startPdfReportJob();   // NEW
-```
-
-#### Modified: `packages/server/src/routes/admin.ts`
-
-Add schedule CRUD routes on the existing `adminRouter`:
-
-```
-POST   /api/admin/institutions/:id/report-schedules    — create schedule
-GET    /api/admin/institutions/:id/report-schedules    — list for institution
-PATCH  /api/admin/report-schedules/:scheduleId         — toggle active / change frequency
-DELETE /api/admin/report-schedules/:scheduleId         — delete
-```
-
-All guarded by the existing `adminRouter` middleware. The POST body (Zod-validated): `{ frequency: "monthly"|"quarterly", recipientEmail: string }`. `nextSendAt` is computed server-side.
-
-#### Modified: `packages/web/src/pages/admin/InstitutionManagement.tsx`
-
-Add a "Scheduled Reports" collapsible section to each institution card. Shows existing schedules (frequency badge, last sent, next send, active toggle). Includes an inline form to create a new schedule.
+Important: `accessibilityLayer` defaults to `false` in recharts 2.x (the version in use). It must be set explicitly on each chart component.
 
 ---
 
-### Feature 4: Institution Portal
+## Data Flow
 
-**Status of dependencies:** The role enum and auth middleware exist but do not include `"institution_user"`. A new junction table is needed. Resend welcome email is already used for regular contributors.
-
-**This is the highest-risk feature architecturally** — it introduces a new auth role and new portal-scoped routes.
-
-#### Modified Schema: `contributorRoleEnum` in `schema.ts`
-
-Add `"institution_user"` to the existing enum:
-
-```typescript
-export const contributorRoleEnum = pgEnum("contributor_role", [
-  "contributor",
-  "community_manager",
-  "admin",
-  "challenger",
-  "institution_user",   // NEW
-]);
-```
-
-PostgreSQL enum extension requires a migration. Drizzle-kit generates `ALTER TYPE contributor_role ADD VALUE 'institution_user'` — this is non-transactional in PostgreSQL and must be run outside a transaction block. Write the migration as a standalone SQL file (not inside a `BEGIN`/`COMMIT` block).
-
-#### New Schema: `institution_user_assignments` table
-
-This is distinct from `contributor_institutions` (which links regular contributors to their institution). Institution portal users need a clean link:
-
-```typescript
-export const institutionUserAssignments = pgTable("institution_user_assignments", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  contributorId: uuid("contributor_id")
-    .notNull()
-    .references(() => contributors.id, { onDelete: "cascade" }),
-  institutionId: uuid("institution_id")
-    .notNull()
-    .references(() => institutions.id, { onDelete: "cascade" }),
-  assignedAt: timestamp("assigned_at", { withTimezone: true }).defaultNow().notNull(),
-  assignedBy: uuid("assigned_by").references(() => contributors.id, { onDelete: "set null" }),
-}, (table) => [
-  unique("institution_user_assignments_unique").on(table.contributorId, table.institutionId),
-]);
-```
-
-#### New File: `packages/server/src/routes/institution-portal.ts`
-
-A separate router — NOT mounted on `adminRouter` (which blocks non-CM roles). The portal routes apply their own guard:
-
-```typescript
-const router = Router();
-router.use(authMiddleware);
-// Inline role check — institution_user OR admin (admin can preview the portal)
-router.use((req, res, next) => {
-  const role = req.contributor?.role;
-  if (role !== "institution_user" && role !== "admin") {
-    res.status(403).json({ error: "Insufficient permissions" });
-    return;
-  }
-  next();
-});
-
-// GET /api/institution-portal/dashboard
-// GET /api/institution-portal/wellbeing
-// GET /api/institution-portal/attention  (read-only — no resolve action)
-// GET /api/institution-portal/report.pdf (on-demand, reuses buildInstitutionReport)
-```
-
-All queries scope to the institution resolved from `institution_user_assignments WHERE contributor_id = req.contributor.id` — same DB-resolution pattern as the CM attention routes.
-
-#### Modified: `packages/server/src/express-app.ts`
-
-```typescript
-import { institutionPortalRoutes } from "./routes/institution-portal.js";
-// ...
-app.use("/api/institution-portal", institutionPortalRoutes);
-```
-
-#### Modified: `packages/server/src/routes/admin.ts`
-
-Add institution user management routes:
+### Announcement Flow
 
 ```
-POST   /api/admin/institution-users        — create institution_user account + send invite email
-GET    /api/admin/institution-users        — list all institution users with their institution
-DELETE /api/admin/institution-users/:id    — deactivate account
+Mutation onSuccess / onError callback
+    ↓
+useAnnounce() hook (from AnnounceContext)
+    ↓
+announce("Circle created")
+    ↓
+setMessage("") → setTimeout 50ms → setMessage("Circle created")
+    ↓
+<div role="status" aria-live="polite"> renders new message
+    ↓
+Screen reader reads message at polite priority
 ```
 
-Account creation uses the existing `contributors` table (inserts with `role: "institution_user"`) and sends a password-reset-style invite email via Resend (reuse `auth.service.ts` token pattern).
-
-#### New Frontend Files
-
-**`packages/web/src/api/institution-portal.ts`** — fetch functions for portal endpoints.
-
-**`packages/web/src/hooks/useInstitutionPortal.ts`** — TanStack Query hooks.
-
-**`packages/web/src/pages/institution-portal/PortalDashboard.tsx`** — read-only view: institution name, headcount, challenges, hours, wellbeing trend, attention flags (no resolve button).
-
-#### Modified Frontend
-
-**`packages/web/src/App.tsx` (or TanStack Router file)** — add routes under `/portal/`:
-
-```tsx
-// Protected with a new InstitutionPortalRoute guard component
-// that checks role === "institution_user" or role === "admin"
-<Route path="/portal/dashboard" element={<InstitutionPortalRoute><PortalDashboard /></InstitutionPortalRoute>} />
-```
-
-**`packages/web/src/pages/admin/InstitutionManagement.tsx`** — add "Portal Users" section to each institution card with invite and deactivate controls.
-
----
-
-## Component Boundaries
-
-| Component | Package | Responsibility | Communicates With |
-|-----------|---------|---------------|-------------------|
-| `routes/admin.ts` | server | CM CRUD (institutions, contributors, attention, schedules, institution users), PDF streaming | DB, `institution-report.ts`, `pdf-email.service.ts` |
-| `routes/institution-portal.ts` | server | Institution user read-only view, scoped to own institution | DB, `institution-report.ts` |
-| `routes/wellbeing.ts` | server | Contributor check-in submission and history | DB, consent records |
-| `pdf/institution-report.ts` | server | Stateless PDF document builder — no DB, no network | Called by route handlers and `pdf-email.service.ts` |
-| `services/pdf-report.job.ts` | server | Scheduled PDF dispatch — queries due schedules | DB, `pdf-email.service.ts` |
-| `services/pdf-email.service.ts` | server | Buffer PDF, attach to Resend email | `institution-report.ts`, Resend API |
-| `services/notification.service.ts` | server | Push notifications (unchanged) | DB, web-push |
-| `pages/admin/AttentionDashboard.tsx` | web | CM attention flags + history + trends | `api/attention.ts`, hooks |
-| `pages/admin/InstitutionManagement.tsx` | web | Institution CRUD, PDF, schedules, portal users | `api/admin.ts`, hooks |
-| `pages/institution-portal/PortalDashboard.tsx` | web | Institution user read-only dashboard | `api/institution-portal.ts`, hooks |
-
----
-
-## Data Flow Diagrams
-
-### On-Demand PDF (existing — extended with wellbeing)
+### Modal Focus Flow
 
 ```
-CM clicks "Generate Report"
-  → downloadInstitutionReport(slug, from, to)   [api/admin.ts]
-  → raw fetch → GET /api/admin/institutions/:slug/report.pdf
-  → adminRouter auth guard
-  → DB: institution by slug
-  → DB: contributor_institutions → contributorIds
-  → DB: contributor_hours (date-filtered)
-  → DB: challenge_interests (date-filtered)
-  → [NEW] DB: wellbeing_checkins (date-filtered, grouped by contributor)
-  → privacy threshold check → wellbeing = data or null
-  → buildInstitutionReport({ stats, wellbeing })
-  → doc.pipe(res) + doc.end()  ← streams to browser
-  → browser: blob URL → <a>.click() → file download
+User activates trigger button
+    ↓
+isOpen = true → Modal renders
+    ↓
+useFocusTrap(true) fires
+    ↓
+triggerRef captures document.activeElement (the button)
+    ↓
+First focusable element inside modal receives focus
+    ↓ (user Tab-navigates, cycles within modal, completes or cancels)
+onClose() called (Escape key / backdrop click / action button)
+    ↓
+isOpen = false → useFocusTrap cleanup runs
+    ↓
+triggerRef.current.focus() — focus returns to opening button
 ```
 
-### Scheduled PDF (new)
+### Route Change Focus Flow
 
 ```
-node-cron 06:00 UTC
-  → runPdfReportJob()
-  → DB: SELECT * FROM pdf_report_schedules WHERE is_active AND next_send_at <= now
-  → for each schedule:
-    → DB: institution + contributorIds + hours + challenges + wellbeing
-    → buildInstitutionReport(reportData)
-    → bufferPdfDocument(doc) → Buffer
-    → Resend.send({ to: recipientEmail, attachments: [pdfBuffer] })
-    → DB: UPDATE pdf_report_schedules SET last_sent_at, next_send_at
-```
-
-### Attention Trends (new)
-
-```
-CM opens AttentionDashboard → Trends tab
-  → useAttentionTrends()
-  → GET /api/admin/attention/trends
-  → adminRouter auth guard
-  → DB: resolve CM institution from contributor_institutions
-  → DB: GROUP BY date_trunc('week', created_at) on ithink_attention_flags
-        WHERE institution_id = :cmInstitutionId AND created_at >= now() - 12 weeks
-  → return { weeklyCounts: [{week, total, resolved}] }
-  → render chart or table in Trends tab
-```
-
-### Institution Portal (new)
-
-```
-Institution user accesses /portal/dashboard
-  → InstitutionPortalRoute: checks JWT role = "institution_user"
-  → GET /api/institution-portal/dashboard
-  → authMiddleware + inline role check
-  → DB: institution_user_assignments WHERE contributor_id = req.contributor.id
-  → DB: same aggregations as PDF route
-  → return { institutionName, stats, wellbeing }
-  → render PortalDashboard (read-only)
+User clicks Link (react-router navigation)
+    ↓
+useLocation().pathname changes
+    ↓
+RouteChangeSync useEffect fires
+    ↓
+document.title updated by page useEffect (already in every page — unchanged)
+    ↓
+querySelector("main h1").tabIndex = -1
+querySelector("main h1").focus()
+    ↓
+Screen reader announces heading text → user knows they are on a new page
 ```
 
 ---
 
-## Patterns to Follow
+## Integration Points
 
-### Pattern 1: Institution Scoping (must follow on every new route)
+### Existing Components: Modify vs Create New
 
-Resolve the actor's institution from the DB on every request. Never read it from the JWT payload.
+| Component | Action | What Changes |
+|-----------|--------|--------------|
+| `main.tsx` | Modify | Wrap `<App>` with `<AnnounceProvider>` |
+| `AppShell` | Modify | Add `<RouteChangeSync />` before `<Outlet>` |
+| `InstitutionPortalRoute`, `ChallengerRoute`, `CMRoute` | Modify | Add `<RouteChangeSync />` in each minimal shell |
+| `Navbar` | Modify | Add `aria-current="page"` on active links; add `aria-expanded`/`aria-haspopup` on bell button; add `type="button"` and `aria-label` on inline buttons |
+| `NotificationBell` | Modify | Add `aria-expanded={open}`, `aria-haspopup="listbox"`, Escape handler, focus return on close |
+| `Input` | Modify | Add `aria-required={required}` to `<input>` (1 line) |
+| `AddMemberModal` | Modify | Migrate to `<Modal>` wrapper; replace raw `<input>` with `<Input>` component |
+| `CircleFormationModal` | Modify | Migrate to `<Modal>` wrapper |
+| `InstitutionManagement` (ConfirmDialog) | Modify | Migrate to `<Modal>` wrapper |
+| `AttentionTrendChart` | Modify | Add `accessibilityLayer` to `<BarChart>`; add `sr-only` companion `<table>` |
+| `AnnounceProvider` + `useAnnounce` | Create new | `components/a11y/AnnounceProvider.tsx` |
+| `RouteChangeSync` | Create new | `components/a11y/RouteChangeSync.tsx` |
+| `useFocusTrap` | Create new | `components/a11y/useFocusTrap.ts` |
+| `Modal` | Create new | `components/ui/Modal.tsx` |
+| `ToggleSwitch` | Promote | Move from `InstitutionManagement.tsx` to `components/ui/ToggleSwitch.tsx` |
 
-```typescript
-// CM routes — existing pattern
-const [assignment] = await db
-  .select({ institutionId: contributorInstitutions.institutionId })
-  .from(contributorInstitutions)
-  .where(eq(contributorInstitutions.contributorId, cmId))
-  .limit(1);
+### Internal Boundaries
 
-// Institution portal routes — new pattern (same structure, different table)
-const [assignment] = await db
-  .select({ institutionId: institutionUserAssignments.institutionId })
-  .from(institutionUserAssignments)
-  .where(eq(institutionUserAssignments.contributorId, req.contributor!.id))
-  .limit(1);
-```
-
-### Pattern 2: Cron Job Structure (copy wellbeing-reminder.job.ts)
-
-Export `startXJob()` calling `cron.schedule(expression, handler)`. Wrap async handler in try/catch. For batch jobs (PDF scheduler), wrap each item's dispatch in its own try/catch so one failure does not abort the run. Call `startXJob()` from `index.ts`.
-
-### Pattern 3: PDF as Pure Function (never add DB access to institution-report.ts)
-
-`buildInstitutionReport(data: ReportData)` is and must remain stateless. All DB queries happen in the caller (route handler or job dispatcher). Pass a complete, typed `ReportData` object. The wellbeing field extension follows this: the route handler applies the privacy threshold and passes `wellbeing: data | null` — the PDF module never decides what the threshold is.
-
-### Pattern 4: Binary Download vs. Email Buffer
-
-- **Browser download:** `doc.pipe(res); doc.end()` — stream directly, never buffer.
-- **Email attachment:** Collect `doc.on("data")` chunks, await `doc.on("end")`, then `Buffer.concat(chunks)` — Resend attachment API requires a `Buffer`.
-
-Never buffer for browser downloads. Never try to stream to Resend.
-
-### Pattern 5: Route Registration Order for Specific Paths
-
-In `routes/admin.ts`, specific string paths must be registered before parameterised paths on the same segment. The new `/attention/trends` route follows the same constraint as `/attention/history` — register it immediately after `/attention/history` and before `/attention/:flagId/resolve`.
+| Boundary | Communication | Notes |
+|----------|---------------|-------|
+| `AnnounceProvider` ↔ feature components | React context via `useAnnounce` hook | No prop drilling; context is the correct scope |
+| `useFocusTrap` ↔ `Modal` | Ref returned from hook, attached to dialog container | Modal consumers do not interact with the trap directly |
+| `RouteChangeSync` ↔ layout shells | Renders as `null` sibling to `<Outlet>` | One instance per shell |
+| Existing modals ↔ `Modal` wrapper | `isOpen`/`onClose` props unchanged | Migration is mechanical — wrap existing JSX |
 
 ---
 
-## Anti-Patterns to Avoid
+## Suggested Build Order
 
-### Anti-Pattern 1: JWT-Based Institution Scoping
+This order respects dependencies: infrastructure before consumers, shared components before feature components.
 
-Reading `institutionId` from the JWT payload. JWT claims are stale for up to the token TTL after a CM is reassigned. Always resolve from the DB. This is a GDPR-adjacent data leakage risk.
+**Step 1 — Infrastructure (no existing code affected)**
+1. `useFocusTrap.ts` — self-contained; no dependencies
+2. `AnnounceProvider.tsx` — self-contained; wrap `main.tsx`
+3. `RouteChangeSync.tsx` — depends on `react-router` `useLocation` (already present)
 
-### Anti-Pattern 2: DB Queries Inside `buildInstitutionReport`
+**Step 2 — Shared UI (minimal changes to existing files)**
+4. `Modal.tsx` — new; consumes `useFocusTrap`
+5. `ToggleSwitch.tsx` — promote from InstitutionManagement (move only, no logic change)
+6. `Input.tsx` — add `aria-required` (1 line)
 
-The PDF module must stay stateless. Adding a `getDb()` call breaks reusability between the browser streaming path and the email buffering path, and makes the module untestable without a DB mock.
+**Step 3 — Layout and navigation fixes**
+7. `AppShell.tsx` — add `<RouteChangeSync />`; add it to minimal shells
+8. `Navbar.tsx` — `aria-current`, inline button `aria-label`s
+9. `NotificationBell.tsx` — `aria-expanded`, Escape handler, focus return
 
-### Anti-Pattern 3: Institution Portal Routes on `adminRouter`
+**Step 4 — Modal migrations (use the new `Modal` wrapper)**
+10. `CircleFormationModal.tsx` — migrate to `<Modal>`
+11. `AddMemberModal.tsx` — migrate to `<Modal>`, replace raw input with `<Input>`
+12. `InstitutionManagement` ConfirmDialog — migrate to `<Modal>`
 
-`adminRouter` applies `requireRole("community_manager")` globally. Institution users would receive 403 before reaching any portal logic. Create a separate router with its own guard.
+**Step 5 — Chart accessibility**
+13. `AttentionTrendChart.tsx` — `accessibilityLayer` + companion table
 
-### Anti-Pattern 4: PostgreSQL Enum Extension Inside a Transaction
+**Step 6 — Announcement wiring**
+14. Wire `useAnnounce` into mutation `onSuccess`/`onError` handlers across feature components: circle creation, member add, challenge submit, wellbeing check-in
 
-`ALTER TYPE contributor_role ADD VALUE 'institution_user'` is non-transactional in PostgreSQL. Wrapping it in `BEGIN`/`COMMIT` causes an error. Write the migration as a standalone SQL file outside a transaction block or use Drizzle's migration format that handles this.
-
-### Anti-Pattern 5: Sending PDF as Base64 String to Resend
-
-Resend's Node.js SDK accepts `Buffer` directly for attachment `content`. Using `.toString("base64")` adds 33% size overhead and an unnecessary encode/decode step. Pass the raw `Buffer`.
-
----
-
-## New vs. Modified File Inventory
-
-### New Files
-
-| File | Purpose |
-|------|---------|
-| `packages/server/src/services/pdf-report.job.ts` | Daily cron job: query due schedules, dispatch PDFs via email |
-| `packages/server/src/services/pdf-email.service.ts` | Buffer PDF document, send via Resend attachment |
-| `packages/server/src/routes/institution-portal.ts` | Institution user read-only portal routes |
-| `packages/web/src/api/institution-portal.ts` | Fetch functions for portal endpoints |
-| `packages/web/src/hooks/useInstitutionPortal.ts` | TanStack Query hooks for portal |
-| `packages/web/src/pages/institution-portal/PortalDashboard.tsx` | Institution user dashboard (read-only) |
-
-### Modified Files
-
-| File | Changes |
-|------|---------|
-| `packages/server/src/db/schema.ts` | Add `"institution_user"` to `contributorRoleEnum`; add `pdfReportSchedules` table; add `institutionUserAssignments` table; add `reportFrequencyEnum` |
-| `packages/server/src/pdf/institution-report.ts` | Extend `ReportData` with optional `wellbeing` field; render wellbeing section when present |
-| `packages/server/src/routes/admin.ts` | Add `/attention/trends` route; add schedule CRUD routes; add institution user CRUD routes |
-| `packages/server/src/index.ts` | Call `startPdfReportJob()` at startup |
-| `packages/server/src/express-app.ts` | Mount `institutionPortalRoutes` at `/api/institution-portal` |
-| `packages/web/src/api/attention.ts` | Add `getAttentionTrends()` |
-| `packages/web/src/hooks/useAttention.ts` | Add `useAttentionTrends()` |
-| `packages/web/src/pages/admin/AttentionDashboard.tsx` | Add Trends tab |
-| `packages/web/src/pages/admin/InstitutionManagement.tsx` | Add schedule management UI; add portal user management section |
-| `packages/web/src/api/admin.ts` | Add schedule CRUD functions; add institution user functions |
-
-### Unchanged Files (notable)
-
-| File | Why Not Changed |
-|------|----------------|
-| `packages/server/src/middleware/auth.ts` | `requireRole` is parameterised and already passes `admin`; portal routes implement their own inline role check rather than requiring middleware changes |
-| `packages/server/src/routes/institutions.ts` | Public landing page is unchanged |
-| `packages/server/src/routes/webhooks.ts` | No new webhooks in v1.3 |
-| `packages/server/src/services/wellbeing-reminder.job.ts` | Existing job unchanged |
+**Step 7 — Full audit**
+15. Run axe-core against all routes; verify contrast ratios on non-primary colours (accent amber on various backgrounds, focus ring on coloured backgrounds); check all remaining pages against the WCAG 2.2 AA checklist
 
 ---
 
-## Build Order
+## Anti-Patterns
 
-| Phase | Features | Why This Order |
-|-------|----------|----------------|
-| 1 | Wellbeing aggregation in PDF + Attention trends | No new tables. Purely additive to existing files. Build and verify before adding scheduling complexity. |
-| 2 | PDF scheduling + auto-delivery | Depends on complete PDF (with wellbeing). New table + cron job. Independent of institution portal. |
-| 3 | Institution portal | New role enum value + new table + new routes + new frontend. Independent of scheduling. Can run in parallel with phase 2. |
+### Anti-Pattern 1: Modal Without Focus Trap
 
-Schema migrations always first within a phase. For the enum extension migration (`institution_user` role value), write it as a raw SQL file outside a transaction — Drizzle-kit may generate it inside a transaction block by default, which PostgreSQL rejects for enum additions.
+**What people do:** Render `role="dialog"` with `aria-modal="true"` but no Tab interception — exactly the current state of `CircleFormationModal` and `AddMemberModal`.
+
+**Why it's wrong:** `aria-modal="true"` is a hint to screen readers to ignore background content, but browsers do not enforce Tab containment. Keyboard users can still Tab out of the modal into content that is visually hidden behind the overlay.
+
+**Do this instead:** Use `<Modal>` which embeds `useFocusTrap`. Every dialog gets Tab containment automatically.
+
+### Anti-Pattern 2: Multiple Independent Live Regions
+
+**What people do:** Add `aria-live="polite"` to individual component output wherever a status message appears.
+
+**Why it's wrong:** Multiple live regions updating simultaneously cause screen readers to drop or reorder announcements unpredictably.
+
+**Do this instead:** One `AnnounceProvider` at root. All transient status messages route through `useAnnounce()`. Inline `role="alert"` on synchronous validation errors (already correct in `Input` and `Alert`) is separate and should not change — that pattern is correct for immediate feedback.
+
+### Anti-Pattern 3: Live Region for Route Change Announcements
+
+**What people do:** Insert a hidden live region that announces route changes by broadcasting the page title.
+
+**Why it's wrong:** When focus moves to `<h1>`, screen readers already announce the heading text. A simultaneous live region announcement causes double-reading.
+
+**Do this instead:** `RouteChangeSync` moves focus to `<h1>`. Screen readers announce the heading. `document.title` is set per-page (already done). No route-change live region needed.
+
+### Anti-Pattern 4: `outline: none` Without Replacement
+
+**What people do:** Apply `focus:outline-none` in Tailwind to suppress the browser default ring, then forget to provide a replacement.
+
+**Why it's wrong:** The global `*:focus-visible` in `app.css` is correct, but a component-level `focus:outline-none` (note: `focus:` not `focus-visible:`) overrides it for all focus, including keyboard focus, breaking 2.4.7.
+
+**Do this instead:** When overriding global focus style on a component, use `focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2` — as already done correctly in `Button` and `ToggleSwitch`. Never use `focus:outline-none` without a `focus-visible:` replacement.
+
+### Anti-Pattern 5: Omitting `accessibilityLayer` on Charts
+
+**What people do:** Rely solely on the companion `sr-only` table and assume charts are sufficiently accessible.
+
+**Why it's wrong:** The companion table covers screen reader users, but keyboard-only users who are not using a screen reader receive no access to the chart's data without the accessibility layer's arrow-key navigation.
+
+**Do this instead:** Set `accessibilityLayer` on all chart components and keep the companion table. The `WellbeingChart` companion table pattern is already exemplary — replicate it in `AttentionTrendChart`.
+
+---
+
+## Scaling Considerations
+
+WCAG compliance adds negligible runtime overhead. The scaling concern here is maintenance rather than performance.
+
+| Scale | Maintenance Consideration |
+|-------|--------------------------|
+| Current (~25 pages, 3 layout shells) | `components/a11y/` folder; shared `Modal`; single `AnnounceProvider` — correctly scoped |
+| Adding pages or new layout shells | `RouteChangeSync` must be added to each new shell; new modals use `<Modal>` automatically |
+| Extracting a design system package | Move `a11y/` folder into the shared package alongside `ui/` components; consumers import from the shared package |
 
 ---
 
 ## Sources
 
-- Direct inspection: `packages/server/src/routes/admin.ts`, `routes/wellbeing.ts`, `routes/institutions.ts`, `express-app.ts`, `middleware/auth.ts`, `db/schema.ts`, `pdf/institution-report.ts`, `services/wellbeing-reminder.job.ts`
-- Direct inspection: `packages/web/src/pages/admin/AttentionDashboard.tsx`, `InstitutionManagement.tsx`, `api/admin.ts`, `api/attention.ts`
-- `.planning/phases/15-pdf-impact-report/15-RESEARCH.md` — pdfkit streaming vs. buffering, ESM font path, `ReportData` interface shape
-- `.planning/research/SUMMARY.md` (v1.2) — institution scoping pattern, attention route conventions
-- PostgreSQL docs — `ALTER TYPE ADD VALUE` is non-transactional (HIGH confidence)
-- Resend Node.js SDK docs — attachment `content` accepts `Buffer` (HIGH confidence — standard SDK behavior)
-- node-cron — `cron.schedule()` pattern, already in use in codebase
+- W3C WCAG 2.2 specification: https://www.w3.org/TR/WCAG22/
+- W3C Understanding 2.4.11 Focus Not Obscured (Minimum): https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum
+- W3C What's New in WCAG 2.2: https://www.w3.org/WAI/standards-guidelines/wcag/new-in-22/
+- React Router accessibility how-to: https://reactrouter.com/how-to/accessibility
+- Recharts and accessibility (official wiki): https://github.com/recharts/recharts/wiki/Recharts-and-accessibility
+- Focus management in React SPAs (January 2026): https://oneuptime.com/blog/post/2026-01-15-focus-management-react-spa/view
+- Accessible route change patterns (autofocus h1): https://jshakespeare.com/accessible-route-change-react-router-autofocus-heading/
+- React accessibility quick wins 2025 (skip links, focus traps, live regions): https://medium.com/@sureshdotariya/accessibility-quick-wins-in-reactjs-2025-skip-links-focus-traps-aria-live-regions-c926b9e44593
+- MDN React accessibility guide: https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Frameworks_libraries/React_accessibility
+- Codebase inspection: `AppShell.tsx`, `Navbar.tsx`, `Input.tsx`, `Button.tsx`, `Alert.tsx`, `Card.tsx`, `Modal`-pattern components, `WellbeingChart.tsx`, `AttentionTrendChart.tsx`, `WellbeingForm.tsx`, `NotificationBell.tsx`, `KioskWarningOverlay.tsx`, `CircleFormationModal.tsx`, `AddMemberModal.tsx`, `InstitutionManagement.tsx`, `app.css` — direct inspection 2026-03-30
+
+---
+
+*Architecture research for: WCAG 2.2 AA remediation — React/Tailwind SPA*
+*Researched: 2026-03-30*
