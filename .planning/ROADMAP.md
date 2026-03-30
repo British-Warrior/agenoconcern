@@ -79,11 +79,11 @@ Plans:
   2. After login, the contact sees a read-only dashboard showing their institution's contributor count, active challenges, and hours contributed
   3. The contact can download their institution's current PDF impact report without contacting the CM
   4. The contact can view the list of attention flags at their institution (read-only; they cannot resolve or dismiss flags)
-**Plans:** TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 18-01: Institution portal auth — separate session strategy, CM account creation UI, route guard
-- [ ] 18-02: Portal dashboard, PDF download, and attention flag read-only view
+- [ ] 18-01-PLAN.md — Portal auth: DB table, JWT middleware, server routes (login/refresh/me), frontend auth context + route guard + login page
+- [ ] 18-02-PLAN.md — Portal dashboard (stats, PDF download, attention flags read-only), CM account creation UI
 
 ## Progress
 
@@ -94,4 +94,4 @@ Plans:
 | 12-15 (Institutions -> PDF) | v1.2 | 10/10 | Complete | 2026-03-24 |
 | 16. Wellbeing & Attention Analytics | v1.3 | 2/2 | Complete | 2026-03-27 |
 | 17. Scheduled Report Delivery | v1.3 | 2/2 | Complete | 2026-03-30 |
-| 18. Institution Portal | v1.3 | 0/TBD | Not started | - |
+| 18. Institution Portal | v1.3 | 0/2 | Not started | - |
