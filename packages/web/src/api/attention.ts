@@ -1,5 +1,16 @@
 import { apiClient } from "./client.js";
 
+export interface TrendPoint {
+  isoWeek: string;
+  count: number;
+}
+
+export interface AttentionTrendData {
+  weeks: TrendPoint[];
+  direction: "Increasing" | "Stable" | "Decreasing";
+  activeCount: number;
+}
+
 export interface AttentionFlag {
   id: string;
   contributorId: string;
@@ -22,6 +33,10 @@ export function getAttentionFlags(): Promise<AttentionFlag[]> {
 
 export function getAttentionHistory(): Promise<AttentionHistoryEntry[]> {
   return apiClient<AttentionHistoryEntry[]>("/api/admin/attention/history");
+}
+
+export function getAttentionTrend(): Promise<AttentionTrendData> {
+  return apiClient<AttentionTrendData>("/api/admin/attention/trend");
 }
 
 export function resolveFlag(

@@ -3,6 +3,7 @@ import * as attentionApi from "../api/attention.js";
 
 const ATTENTION_KEY = ["admin", "attention"] as const;
 const HISTORY_KEY = ["admin", "attention", "history"] as const;
+const TREND_KEY = ["admin", "attention", "trend"] as const;
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
@@ -17,6 +18,13 @@ export function useAttentionHistory() {
   return useQuery({
     queryKey: HISTORY_KEY,
     queryFn: () => attentionApi.getAttentionHistory(),
+  });
+}
+
+export function useAttentionTrend() {
+  return useQuery({
+    queryKey: TREND_KEY,
+    queryFn: () => attentionApi.getAttentionTrend(),
   });
 }
 
