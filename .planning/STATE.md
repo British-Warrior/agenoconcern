@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income — bridging the pension gap while contributing to communities.
-**Current focus:** v1.4 WCAG Compliance — Phase 22: Screen Reader & ARIA Completeness
+**Current focus:** v1.4 WCAG Compliance — Phase 23: Audit, Verification & CI Gate
 
 ## Current Position
 
 Milestone: v1.4 — WCAG Compliance
-Phase: 22 of 23 (Screen Reader & ARIA Completeness) — Complete
-Plan: 2 of 2
-Status: Phase complete
-Last activity: 2026-03-30 — Completed 22-02 (AttentionTrendChart companion data table, SR-06)
+Phase: 23 of 23 (Audit, Verification & CI Gate) — In progress
+Plan: 1 of 2
+Status: In progress
+Last activity: 2026-03-30 — Completed 23-01 (heading hierarchy audit + PortalDashboard fix)
 
-Progress: [████████░░] 80% (v1.4: 4/5 phases complete)
+Progress: [█████████░] 90% (v1.4: 4.5/5 phases complete)
 
 ## Performance Metrics
 
@@ -68,6 +68,13 @@ v1.4 decisions logged to PROJECT.md as they are made.
 - formatWeekLabel reused for table cells — identical week display between chart axis and table
 - accessibilityLayer left at recharts 3.x default (enabled) — keyboard nav between bars complements the table
 
+**23-01 (2026-03-30):**
+- PortalDashboard header h1 changed to p — institution name still visually present in header bar, semantic h1 moved inside main
+- h1 placed as first element inside main before stats grid — consistent with Dashboard.tsx, ImpactDashboard.tsx pattern
+- Modal/portal dialog h2 elements (ConfirmDialog, ResolveDialog) do not affect page heading DOM order
+- ChallengeManage tab panel component correctly uses h2 without h1 — it renders inside ChallengeFeed which provides the page h1
+- All 35 page components verified: correct single-h1 hierarchy, no skipped heading levels, VIS-02 satisfied
+
 ### Pending Todos
 
 None.
@@ -81,5 +88,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: Phase 22, Plan 2 complete — AttentionTrendChart companion data table done
-Resume file: .planning/phases/23-wcag-ci-and-manual-testing/ (begin 23-01)
+Stopped at: Phase 23, Plan 1 complete — heading audit and PortalDashboard fix done
+Resume file: .planning/phases/23-audit-verification-ci-gate/23-02-PLAN.md
