@@ -131,11 +131,11 @@ Plans:
   1. `@axe-core/playwright` tests run in CI for every PR and fail the build when any WCAG 2.2 AA violation is introduced — zero false positives on the current codebase
   2. Every page in the application has a correct heading hierarchy (one h1 per page, logical h2/h3 nesting) — confirmed by automated audit and visual inspection
   3. A keyboard-only walkthrough of the five primary user flows (auth, challenge board, circle workspace, wellbeing check-in, notification centre) completes without getting stuck or losing focus context
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 23-01: Heading hierarchy audit and fixes across all pages
-- [ ] 23-02: axe-core Playwright CI setup, manual keyboard and screen reader test sign-off
+- [ ] 23-01-PLAN.md — Heading hierarchy audit and fixes (PortalDashboard h1 fix, systematic audit of all pages)
+- [ ] 23-02-PLAN.md — axe-core Playwright CI setup (packages/e2e, GitHub Actions workflow), manual keyboard and screen reader sign-off
 
 ---
 
