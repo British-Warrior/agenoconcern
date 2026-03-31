@@ -127,7 +127,7 @@ export function PortalDashboard() {
       <header className="bg-[#1a1d2e] text-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-semibold leading-tight">{institutionName}</h1>
+            <p className="text-lg font-semibold leading-tight">{institutionName}</p>
             <p className="text-xs text-[#c89a30] mt-0.5 font-medium uppercase tracking-wide">
               Institution Portal
             </p>
@@ -144,6 +144,9 @@ export function PortalDashboard() {
 
       {/* Main content */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
+
+        {/* Page title — inside main so RouteChangeSync can find it via main h1 */}
+        <h1 className="text-2xl font-bold text-neutral-900">{institutionName}</h1>
 
         {/* Stats section */}
         {isDashboardLoading ? (
