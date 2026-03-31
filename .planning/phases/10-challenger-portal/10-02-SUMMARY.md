@@ -31,9 +31,9 @@ decisions:
 metrics:
   duration: "7 min"
   completed_date: "2026-03-16"
-  tasks_completed: 2
+  tasks_completed: 3
   tasks_total: 3
-  status: awaiting-checkpoint
+  status: complete
 ---
 
 # Phase 10 Plan 02: Challenger Portal UI Summary
@@ -46,7 +46,7 @@ metrics:
 |---|------|--------|--------|
 | 1 | API client, React Query hooks, ChallengerRoute guard, routing setup | `4b83f4d` | Done |
 | 2 | Challenger portal pages — Register, Dashboard, Submit, Detail | `9767d3d` | Done |
-| 3 | Human verification checkpoint | — | Awaiting |
+| 3 | Human verification checkpoint | — | Approved (2026-03-21) |
 
 ## What Was Built
 
