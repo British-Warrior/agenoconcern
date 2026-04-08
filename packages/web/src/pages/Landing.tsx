@@ -35,7 +35,7 @@ export function Landing() {
         </Link>
       </div>
 
-      <p className="mt-6 text-base text-neutral-500">
+      <p className="mt-6 text-base text-neutral-600">
         Already have an account?{" "}
         <Link
           to={ROUTES.LOGIN}

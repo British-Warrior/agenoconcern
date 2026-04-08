@@ -24,25 +24,27 @@ for (const path of publicPages) {
   });
 }
 
-test('heading order: no skipped levels on home page', async ({ page }) => {
-  await page.goto('/');
-  await page.waitForLoadState('networkidle');
+for (const path of publicPages) {
+  test(`heading order: ${path} — no skipped levels`, async ({ page }) => {
+    await page.goto(path);
+    await page.waitForLoadState('networkidle');
 
-  // Gather all heading levels in DOM order
-  const levels = await page.evaluate(() => {
-    const headings = Array.from(
-      document.querySelectorAll('h1, h2, h3, h4, h5, h6'),
-    );
-    return headings.map((h) => parseInt(h.tagName.slice(1), 10));
+    // Gather all heading levels in DOM order
+    const levels = await page.evaluate(() => {
+      const headings = Array.from(
+        document.querySelectorAll('h1, h2, h3, h4, h5, h6'),
+      );
+      return headings.map((h) => parseInt(h.tagName.slice(1), 10));
+    });
+
+    // Verify no heading jumps more than one level down at a time
+    for (let i = 1; i < levels.length; i++) {
+      const prev = levels[i - 1];
+      const curr = levels[i];
+      expect(
+        curr <= prev + 1,
+        `Heading level skipped from h${prev} to h${curr} at index ${i} on ${path}`,
+      ).toBe(true);
+    }
   });
-
-  // Verify no heading jumps more than one level down at a time
-  for (let i = 1; i < levels.length; i++) {
-    const prev = levels[i - 1];
-    const curr = levels[i];
-    expect(
-      curr <= prev + 1,
-      `Heading level skipped from h${prev} to h${curr} at index ${i}`,
-    ).toBe(true);
-  }
-});
+}

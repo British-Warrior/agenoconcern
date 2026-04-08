@@ -119,6 +119,7 @@ export function WellbeingForm({
                       className={`
                         flex items-center gap-2 px-4 py-2 rounded-[var(--radius-md)] border cursor-pointer
                         text-sm font-medium transition-colors
+                        focus-within:outline focus-within:outline-3 focus-within:outline-[var(--color-accent-500)] focus-within:outline-offset-2
                         ${isSelected
                           ? "bg-primary-800 text-white border-primary-800"
                           : "bg-white text-neutral-700 border-neutral-300 hover:border-primary-700"
@@ -174,6 +175,7 @@ export function WellbeingForm({
                       className={`
                         flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] border cursor-pointer
                         text-sm font-medium transition-colors
+                        focus-within:outline focus-within:outline-3 focus-within:outline-[var(--color-accent-500)] focus-within:outline-offset-2
                         ${isSelected
                           ? "bg-primary-800 text-white border-primary-800"
                           : "bg-white text-neutral-700 border-neutral-300 hover:border-primary-700"

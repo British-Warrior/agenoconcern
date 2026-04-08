@@ -14,7 +14,7 @@ export function CookiePolicy() {
       <h1 className="text-2xl font-bold text-neutral-900 mb-2">
         Cookie Policy
       </h1>
-      <p className="text-sm text-neutral-500 mb-8">
+      <p className="text-sm text-neutral-600 mb-8">
         Version 1.0 &mdash; Last updated: March 2026
       </p>
 

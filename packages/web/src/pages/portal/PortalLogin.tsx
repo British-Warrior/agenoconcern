@@ -45,7 +45,7 @@ export function PortalLogin() {
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-neutral-50">
+    <main className="flex justify-center items-center min-h-screen bg-neutral-50">
       <Card className="w-full max-w-md">
         <h1 className="text-2xl font-bold text-neutral-900 text-center mb-6">
           Institution Portal
@@ -83,6 +83,6 @@ export function PortalLogin() {
           </Button>
         </form>
       </Card>
-    </div>
+    </main>
   );
 }

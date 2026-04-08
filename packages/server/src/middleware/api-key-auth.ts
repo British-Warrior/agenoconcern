@@ -1,7 +1,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import type { Request, Response, NextFunction } from "express";
 import { eq, and, gt } from "drizzle-orm";
-import { rateLimit } from "express-rate-limit";
+import { rateLimit, ipKeyGenerator } from "express-rate-limit";
 import { getDb } from "../db/index.js";
 import { apiKeys } from "../db/schema.js";
 
@@ -95,7 +95,7 @@ export const vantageRateLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => {
     const apiKey = req.headers["x-api-key"];
-    return typeof apiKey === "string" ? apiKey : (req.ip ?? "unknown");
+    return typeof apiKey === "string" ? apiKey : ipKeyGenerator(req);
   },
   handler: (_req, res) => {
     res.status(429).json({ error: "Rate limit exceeded" });

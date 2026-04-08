@@ -54,7 +54,7 @@ export function AppShell() {
             >
               Manage Cookies
             </button>
-            <span className="ml-auto text-neutral-400">
+            <span className="ml-auto text-neutral-500">
               &copy; {new Date().getFullYear()} Indomitable Unity
             </span>
           </div>

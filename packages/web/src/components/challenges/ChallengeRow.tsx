@@ -20,7 +20,6 @@ export function ChallengeRow({ challenge }: ChallengeRowProps) {
       className="
         bg-white border border-neutral-200
         rounded-[var(--radius-md)]
-        overflow-hidden
       "
     >
       {/* Collapsed header */}
