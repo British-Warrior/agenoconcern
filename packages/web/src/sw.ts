@@ -1,12 +1,16 @@
 /// <reference lib="webworker" />
 
-import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching";
+import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from "workbox-precaching";
+import { NavigationRoute, registerRoute } from "workbox-routing";
 
 declare let self: ServiceWorkerGlobalScope;
 
 // Workbox precaching (vite-plugin-pwa injects __WB_MANIFEST)
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
+
+// SPA navigation fallback — serve index.html for all navigation requests
+registerRoute(new NavigationRoute(createHandlerBoundToURL("/index.html")));
 
 // Push notification handler
 self.addEventListener("push", (event) => {

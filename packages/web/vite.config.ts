@@ -14,7 +14,6 @@ export default defineConfig({
       registerType: "prompt",
       injectManifest: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
-        navigateFallback: "/index.html",
       },
       manifest: {
         name: "Indomitable Unity",
