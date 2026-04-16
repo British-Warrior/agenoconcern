@@ -1,5 +1,32 @@
 # Milestones: Indomitable Unity
 
+## v1.4 WCAG Compliance (Shipped: 2026-04-16)
+
+**Delivered:** Full WCAG 2.2 AA audit and remediation — keyboard navigation, focus management, screen reader support, ARIA patterns, semantic HTML, and an axe-core CI gate preventing regressions on every PR.
+
+**Phases completed:** 19-23 (10 plans total)
+
+**Key accomplishments:**
+
+- SPA accessibility foundation — RouteChangeSync for screen reader route announcements, eslint-plugin-jsx-a11y strict mode, prefers-reduced-motion, aria-current on nav
+- Focus infrastructure — custom useFocusTrap hook, shared Modal wrapper with createPortal, AnnounceProvider with live region, focus ring contrast standardised across 20 files
+- Interactive component remediation — 3 modals migrated to shared wrapper, NotificationBell keyboard-operable with role=menu, aria-expanded on all disclosure widgets
+- Screen reader completeness — form error linking, badge count announcements, skeleton loading roles, AttentionTrendChart companion data table, auth autocomplete
+- CI regression gate — axe-core Playwright tests on all public pages, GitHub Actions workflow on every PR, heading hierarchy verified across all 35 pages, manual keyboard sign-off passed
+
+**Stats:**
+
+- 95 files changed (+6,143 lines)
+- 26,753 lines of TypeScript/TSX/CSS (total codebase)
+- 5 phases, 10 plans, 21 requirements (all shipped)
+- 17 days from 2026-03-30 to 2026-04-16
+
+**Git range:** `4614208` -> `8757775`
+
+**What's next:** TBD — next milestone planning
+
+---
+
 ## v1.3 Enhanced Reporting & Institution Portal (Shipped: 2026-03-30)
 
 **Delivered:** Wellbeing analytics in PDF reports, automated scheduled delivery to institution contacts, and a self-service institution portal with separate auth, stats dashboard, PDF download, and read-only attention flags.

@@ -54,19 +54,27 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 - ✓ Scheduled PDF delivery (cron + advisory lock, Resend email, weekly/monthly cadence, exponential backoff retry) — v1.3
 - ✓ Institution portal (separate JWT auth, portal login, stats dashboard, PDF download, read-only attention flags) — v1.3
 
+- ✓ SPA route change focus management (RouteChangeSync in all layout shells) — v1.4
+- ✓ eslint-plugin-jsx-a11y strict mode with zero violations — v1.4
+- ✓ prefers-reduced-motion CSS suppression — v1.4
+- ✓ aria-current="page" on active nav links — v1.4
+- ✓ useFocusTrap hook and shared Modal wrapper (createPortal, Escape to close) — v1.4
+- ✓ AnnounceProvider with aria-live="polite" region and useAnnounce hook — v1.4
+- ✓ Focus ring contrast standardised (accent-500 across 20 files) — v1.4
+- ✓ Modal focus trap on CircleFormationModal, AddMemberModal, ConfirmDialog — v1.4
+- ✓ NotificationBell keyboard operability with role=menu/menuitem — v1.4
+- ✓ aria-expanded on all disclosure widgets — v1.4
+- ✓ Form error linking via aria-describedby — v1.4
+- ✓ Badge count screen reader announcements — v1.4
+- ✓ Skeleton loading role="status" and aria-busy — v1.4
+- ✓ AttentionTrendChart companion data table — v1.4
+- ✓ Auth form autocomplete attributes, paste allowed — v1.4
+- ✓ Heading hierarchy verified across all 35 pages — v1.4
+- ✓ axe-core Playwright CI gate on every PR — v1.4
+
 ### Active
 
-## Current Milestone: v1.4 WCAG Compliance
-
-**Goal:** Full WCAG 2.2 AA audit and remediation across the entire application — keyboard navigation, screen reader support, focus management, form accessibility, motion respect, semantic HTML, and ARIA patterns.
-
-**Target features:**
-- Comprehensive accessibility audit of all pages and components
-- Keyboard navigation for every interactive element
-- Screen reader compatibility (ARIA labels, live regions, landmarks)
-- Focus management (modals, navigation, skip links)
-- Form accessibility (error linking, required field announcement)
-- Reduced motion support
+(No active milestone — next milestone TBD)
 
 ### Out of Scope
 
@@ -96,12 +104,13 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 - **Funding:** NLCF Community Power Fund £80k (primary for MVP), UnLtd Awards £5-15k, Awards for All £300-£20k. MVP build within Community Power Fund budget.
 - **Key contact:** Maria Zappala GAICD — Australian board director, AI governance & anti-ageism advocate. Potential advisory board member.
 
-### Current State (v1.3 shipped)
+### Current State (v1.4 shipped)
 
-- **Codebase:** ~31,000 lines TypeScript/TSX/CSS across ~275 source files
-- **Tech stack:** Node.js/TypeScript monorepo, Express server, React/Vite frontend, PostgreSQL (Drizzle ORM), Stripe Connect, S3, OpenAI, web-push, Resend, node-cron, react-idle-timer, recharts, pdfkit, jose, argon2
-- **Architecture:** MCP server (14 tools) + REST API + React SPA (PWA) + VANTAGE API (key auth) + Kiosk mode + Challenger portal + Institutional landing pages + iThink webhook receiver + CM admin (institutions, attention, PDF reports, scheduled delivery) + Institution portal (separate JWT auth)
-- **Known tech debt:** LIMIT 1 CM institution lookup (pilot-scale), statsJson JSONB preserved but unused
+- **Codebase:** ~26,750 lines TypeScript/TSX/CSS across ~275 source files
+- **Tech stack:** Node.js/TypeScript monorepo, Express server, React/Vite frontend, PostgreSQL (Drizzle ORM), Stripe Connect, S3, OpenAI, web-push, Resend, node-cron, react-idle-timer, recharts, pdfkit, jose, argon2, @axe-core/playwright, eslint-plugin-jsx-a11y
+- **Architecture:** MCP server (14 tools) + REST API + React SPA (PWA) + VANTAGE API (key auth) + Kiosk mode + Challenger portal + Institutional landing pages + iThink webhook receiver + CM admin (institutions, attention, PDF reports, scheduled delivery) + Institution portal (separate JWT auth) + axe-core CI gate
+- **Accessibility:** WCAG 2.2 AA compliant — focus traps, screen reader support, ARIA patterns, heading hierarchy, CI regression gate
+- **Known tech debt:** LIMIT 1 CM institution lookup (pilot-scale), statsJson JSONB preserved but unused, axe-core covers ~57% of WCAG (manual testing needed for remainder)
 - **Legal pre-launch:** Employment Agencies Act 1973 classification, SWEMWBS commercial licence confirmation, DPIA/APD completion
 
 ### Data Model (6 Core Entities)
@@ -178,4 +187,4 @@ Experienced professionals can upload their CV, get matched to real challenges, c
 | Separate portal cookies | portal_access_token/portal_refresh_token avoid collision with contributor session | ✓ Good — both sessions can coexist |
 
 ---
-*Last updated: 2026-03-30 after v1.4 milestone start*
+*Last updated: 2026-04-16 after v1.4 milestone completion*

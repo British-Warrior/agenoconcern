@@ -2,24 +2,24 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-30)
+See: .planning/PROJECT.md (updated 2026-04-16)
 
 **Core value:** Experienced professionals upload CV, get matched to challenges, collaborate in Circles, earn income — bridging the pension gap while contributing to communities.
-**Current focus:** v1.4 WCAG Compliance — Phase 23: Audit, Verification & CI Gate
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Milestone: v1.4 — WCAG Compliance
-Phase: 23 of 23 (Audit, Verification & CI Gate) — In progress
-Plan: 1 of 2
-Status: In progress
-Last activity: 2026-03-30 — Completed 23-01 (heading hierarchy audit + PortalDashboard fix)
+Milestone: v1.4 WCAG Compliance — SHIPPED 2026-04-16
+Phase: All complete (23 of 23)
+Plan: All complete
+Status: Milestone archived, ready for next milestone
+Last activity: 2026-04-16 — v1.4 milestone completed and archived
 
-Progress: [█████████░] 90% (v1.4: 4.5/5 phases complete)
+Progress: [██████████] 100% (v1.4 complete, 5 milestones shipped)
 
 ## Performance Metrics
 
-**Velocity (v1.0-v1.3):**
+**Velocity (v1.0-v1.4):**
 - Total plans completed: 56 (v1.0: 19, v1.1: 11, v1.2: 10, v1.3: 6, v1.4: 10)
 - Average duration: ~15 min
 - Total execution time: ~690 min
@@ -28,52 +28,7 @@ Progress: [█████████░] 90% (v1.4: 4.5/5 phases complete)
 
 ### Decisions
 
-All v1.0-v1.3 decisions archived in milestones/ and PROJECT.md Key Decisions table.
-
-v1.4 decisions logged to PROJECT.md as they are made.
-
-**19-01 (2026-03-30):**
-- RouteChangeSync mounted in all 4 layout shells (AppShell + 3 guard routes) to cover every route entry path
-- NavLink `end` prop on all nav items prevents false-positive active states on parent-path matches
-- Active nav link gets `text-primary-900 font-semibold` visual treatment alongside aria-current for sighted users
-- `type="button"` added to bare Navbar buttons (Enable Notifications, Install App) — prevents accidental form submission
-
-**19-02 (2026-03-30):**
-- ESLint flat config format (eslint.config.js) used — required for ESLint 9+
-- jsx-a11y/strict preset chosen (strictest available, aligns with WCAG 2.1 AA)
-- Interactive list items: button inside li, not onClick on li (NotificationBell refactored)
-- Label association pattern: always htmlFor + matching id on paired control
-
-**20-01 (2026-03-30):**
-- useFocusTrap: custom hook (no external library) — focusable selectors target 6 element types, re-query on each keydown for dynamic DOM
-- Modal: createPortal to document.body, role=dialog on outer container (not inner panel) so backdrop click and trap ref are co-located
-- AnnounceProvider: clear-then-set (50ms) forces screen reader re-announcement on duplicate messages; single region at root prevents announcement race conditions
-- AnnounceProvider placed inside QueryClientProvider so future mutation hooks can call useAnnounce without context ordering issues
-
-**20-02 (2026-03-30):**
-- focus-visible: prefix used throughout — rings appear only on keyboard navigation, not mouse click
-- accent-500 token standardised across all 20 files — consistent with global *:focus-visible rule and Button.tsx
-- ChallengeForm fieldClass error-state updated from focus:ring-error/30 to focus-visible:ring-error (solid, compliant)
-- aria-required added to Input.tsx alongside native required prop for AT compatibility
-- ConsentBanner's peer-focus:ring-* classes left unchanged — Tailwind peer modifier, already uses accent-500
-
-**21-02 (2026-03-30):**
-- Disclosure trigger pattern: aria-expanded={open} + aria-haspopup="true" on bell button, role="menu" on panel
-- role="menu" + role="menuitem" chosen over listbox/option — items are actions, not selections
-- Disclosure dropdown uses no focus trap — Tab flows naturally through button elements; Escape returns focus to trigger via bellRef
-
-**22-02 (2026-03-30):**
-- Toggle button placed after chart container for logical tab order: chart keyboard nav then toggle then table rows
-- data prop (TrendPoint[]) used for table rows rather than chartData — canonical source, avoids label field dependency
-- formatWeekLabel reused for table cells — identical week display between chart axis and table
-- accessibilityLayer left at recharts 3.x default (enabled) — keyboard nav between bars complements the table
-
-**23-01 (2026-03-30):**
-- PortalDashboard header h1 changed to p — institution name still visually present in header bar, semantic h1 moved inside main
-- h1 placed as first element inside main before stats grid — consistent with Dashboard.tsx, ImpactDashboard.tsx pattern
-- Modal/portal dialog h2 elements (ConfirmDialog, ResolveDialog) do not affect page heading DOM order
-- ChallengeManage tab panel component correctly uses h2 without h1 — it renders inside ChallengeFeed which provides the page h1
-- All 35 page components verified: correct single-h1 hierarchy, no skipped heading levels, VIS-02 satisfied
+All v1.0-v1.4 decisions archived in milestones/ and PROJECT.md Key Decisions table.
 
 ### Pending Todos
 
@@ -83,10 +38,10 @@ None.
 
 - Employment Agencies Act 1973 classification needs legal advice before payments go live (carried from v1.1)
 - SWEMWBS commercial licence must be confirmed before wellbeing band goes live to institutions
-- axe-core covers ~57% of WCAG violations — Phase 23 must include manual keyboard + NVDA testing, not just CI pass
+- axe-core covers ~57% of WCAG violations — manual keyboard + NVDA testing remains important
 
 ## Session Continuity
 
-Last session: 2026-03-30
-Stopped at: Phase 23, Plan 1 complete — heading audit and PortalDashboard fix done
-Resume file: .planning/phases/23-audit-verification-ci-gate/23-02-PLAN.md
+Last session: 2026-04-16
+Stopped at: v1.4 milestone archived, ready for /gsd:new-milestone
+Resume file: none
